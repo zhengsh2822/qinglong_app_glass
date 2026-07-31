@@ -17,7 +17,9 @@ import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
 import 'package:qinglong_app/module/in_app_purchase_page.dart';
+import 'package:qinglong_app/module/others/backup_page.dart';
 import 'package:qinglong_app/module/others/change_account_page.dart';
+import 'package:qinglong_app/module/others/dependencies/dependency_setting_page.dart';
 import 'package:qinglong_app/module/others/sort_account_page.dart';
 import 'package:qinglong_app/module/others/text_size_page.dart';
 import 'package:qinglong_app/module/others/update_password_page.dart';
@@ -630,6 +632,28 @@ class OtherPageState extends ConsumerState<OtherPage>
                         ),
                         buildOtherFun2("关于软件", CupertinoIcons.info_circle, () {
                           Navigator.of(context).pushNamed(Routes.routeAbout);
+                        }),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        buildOtherFun2("依赖设置", CupertinoIcons.cube_box, () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (context) =>
+                                  const DependencySettingPage(),
+                            ),
+                          );
+                        }),
+                        buildOtherFun2("备份恢复", CupertinoIcons.cloud_upload,
+                            () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (context) => const BackupPage(),
+                            ),
+                          );
                         }),
                       ],
                     ),

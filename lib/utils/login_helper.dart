@@ -108,6 +108,9 @@ class LoginHelper {
         context,
       ).updateUserName(host, "", "", !loginByUserName(), alias);
     }
+    // 复位登录页跳转标志，允许下次再次触发跳转
+    // 修复原 bug：pushedLoginPage 一旦 true 永不复位，导致后续无法再次弹窗
+    SingleAccountPageState.ofHttp(context)?.resetExitLoginFlag();
   }
 
   bool loginByUserName() {
