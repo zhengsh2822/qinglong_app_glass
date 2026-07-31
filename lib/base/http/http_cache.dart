@@ -1,13 +1,19 @@
+import 'dart:collection';
+
 /// HTTP 响应缓存
 ///
 /// 设计要点:
 /// 1. 每个账号独立实例(_instances 按 index 隔离),避免跨账号数据泄漏
 /// 2. 内部维护两套索引:
-///    - `_cache`: key -> _CacheEntry,用于点查
+///    - `_cache`: key -> _CacheEntry,用于点查(LinkedHashMap 保持 LRU 顺序)
 ///    - `_prefixIndex`: prefix -> Set<key>,用于按前缀批量失效,避免 O(n) 遍历
 /// 3. 分级 TTL: 不同资源类型使用不同过期时长,避免短 TTL 频繁回源
+/// 4. LRU 上限: 单账号最多 [maxEntries] 条,超出时淘汰最久未访问的条目,防止内存无界增长
 class HttpCache {
   static final Map<int, HttpCache> _instances = {};
+
+  /// 单账号缓存最大条目数,超出后淘汰最久未访问的条目
+  static const int maxEntries = 200;
 
   factory HttpCache(int index) {
     return _instances.putIfAbsent(index, () => HttpCache._());
@@ -15,7 +21,9 @@ class HttpCache {
 
   HttpCache._();
 
-  final Map<String, _CacheEntry> _cache = {};
+  /// LinkedHashMap 保持插入顺序,get 时移到末尾,实现 LRU 淘汰
+  final Map<String, _CacheEntry> _cache =
+      LinkedHashMap<String, _CacheEntry>();
 
   /// 前缀索引:资源前缀(如 /api/scripts) -> 该前缀下所有缓存 key
   /// 用于 O(1) 找到某类资源的全部 key,失效时直接遍历该 Set 即可
@@ -28,6 +36,9 @@ class HttpCache {
       _removeEntry(key);
       return null;
     }
+    // LRU: 命中时移到末尾,标记为最近访问
+    _cache.remove(key);
+    _cache[key] = entry;
     return entry.data as T?;
   }
 
@@ -38,6 +49,16 @@ class HttpCache {
     }
     _cache[key] = _CacheEntry(data, ttl);
     _addToPrefixIndex(key);
+    // LRU 淘汰: 超出上限时移除最久未访问的条目(_cache 的第一个)
+    _evictIfFull();
+  }
+
+  /// 达到上限时淘汰最旧的条目
+  void _evictIfFull() {
+    while (_cache.length > maxEntries) {
+      final oldestKey = _cache.keys.first;
+      _removeEntry(oldestKey);
+    }
   }
 
   void invalidate(String key) {

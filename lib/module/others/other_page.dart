@@ -100,7 +100,7 @@ class OtherPageState extends ConsumerState<OtherPage>
       final trimmed = newAlias.trim();
       if (trimmed == currentAlias) return;
       final alias = trimmed.isEmpty ? null : trimmed;
-      // 更新当前账号的别名（含持久化）
+      // 更新内存中的 UserInfoViewModel（含 tokenBeans 持久化）
       userInfo.updateToken(
         currentIndex,
         userInfo.host,
@@ -108,15 +108,11 @@ class OtherPageState extends ConsumerState<OtherPage>
         userInfo.useSecretLogined,
         alias,
       );
-      // 同步更新历史账号的别名
-      final multiVM = getIt<MultiAccountUserInfoViewModel>();
-      for (final bean in multiVM.historyAccounts) {
-        if (bean.host == userInfo.host) {
-          bean.alias = alias;
-          multiVM.save2HistoryAccount(bean);
-          break;
-        }
-      }
+      // 同步持久化到 tokenBeans 和 historyAccounts，确保重启后不丢失
+      getIt<MultiAccountUserInfoViewModel>().updateAliasForHost(
+        userInfo.host,
+        alias,
+      );
       "名称已更新".toast();
       setState(() {});
     });

@@ -32,6 +32,12 @@ class _AddDependencyPageState extends ConsumerState<AddDependencyPage> {
   }
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,

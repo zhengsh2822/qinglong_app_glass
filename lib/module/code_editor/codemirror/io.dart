@@ -71,6 +71,13 @@ class CodeMirrorViewState extends CodeMirrorViewImplState<CodeMirrorView> {
   }
 
   @override
+  void dispose() {
+    // 释放 WebView controller 引用,避免 JS Channel 和 HttpClientAdapter 累积
+    _controller = null;
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final codeBgColor = ref.watch(themeProvider).themeColor.codeBgColor();
     return LayoutBuilder(

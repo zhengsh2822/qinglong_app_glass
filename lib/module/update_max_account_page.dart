@@ -31,6 +31,12 @@ class _UpdateMaxAccountPageState extends ConsumerState<UpdateMaxAccountPage> {
   }
 
   @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     final Widget page = GestureDetector(

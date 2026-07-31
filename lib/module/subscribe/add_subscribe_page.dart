@@ -82,6 +82,25 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
   }
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    _linkController.dispose();
+    _branchController.dispose();
+    _cronController.dispose();
+    _intervalController.dispose();
+    _privateKeyController.dispose();
+    _userNameController.dispose();
+    _userPasswordController.dispose();
+    _whiteListController.dispose();
+    _blackListController.dispose();
+    _depController.dispose();
+    _suffixController.dispose();
+    _taskBeforeController.dispose();
+    _taskAfterController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,

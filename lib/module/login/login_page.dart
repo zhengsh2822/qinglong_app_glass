@@ -800,23 +800,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (newAlias == null) return;
       final trimmed = newAlias.trim();
       if (trimmed == (bean.alias ?? '')) return;
-      // 更新历史账号
-      bean.alias = trimmed.isEmpty ? null : trimmed;
+      final alias = trimmed.isEmpty ? null : trimmed;
+      // 更新内存中的 bean 并持久化到 historyAccounts（保持最近使用顺序）
+      bean.alias = alias;
       getIt<MultiAccountUserInfoViewModel>().save2HistoryAccount(bean);
-      // 同步更新 tokenBean 的别名
-      final tokenBeans = getIt<MultiAccountUserInfoViewModel>().tokenBeans;
-      for (int i = 0; i < tokenBeans.length; i++) {
-        if (tokenBeans[i].host == bean.host) {
-          getIt<MultiAccountUserInfoViewModel>().updateToken(
-            i,
-            tokenBeans[i].host,
-            tokenBeans[i].token,
-            tokenBeans[i].useSecretLogined,
-            trimmed.isEmpty ? null : trimmed,
-          );
-          break;
-        }
-      }
+      // 同步持久化到 tokenBeans，确保重启后不丢失
+      getIt<MultiAccountUserInfoViewModel>().updateAliasForHost(
+        bean.host,
+        alias,
+      );
       "名称已更新".toast();
       setState(() {});
     });

@@ -259,6 +259,9 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
 
   @override
   void dispose() {
+    _nameController.dispose();
+    _commandController.dispose();
+    _cronController.dispose();
     focusNode.dispose();
     super.dispose();
   }

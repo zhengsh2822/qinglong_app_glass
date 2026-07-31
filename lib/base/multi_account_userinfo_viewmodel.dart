@@ -133,6 +133,35 @@ class MultiAccountUserInfoViewModel {
     SpUtil.putString(spTokenBeanList, jsonEncode(tokenBeans));
   }
 
+  /// 更新指定账号的别名，同时持久化到 tokenBeans 和 historyAccounts。
+  /// 仅按 host 匹配更新别名，不改变 historyAccounts 的顺序。
+  /// 用于「修改名称」场景，确保两份存储同步，避免重启后丢失。
+  void updateAliasForHost(String? host, String? alias) {
+    if (host == null || host.isEmpty) return;
+
+    bool tokenChanged = false;
+    for (var bean in tokenBeans) {
+      if (bean.host == host) {
+        bean.alias = alias;
+        tokenChanged = true;
+      }
+    }
+    if (tokenChanged) {
+      SpUtil.putString(spTokenBeanList, jsonEncode(tokenBeans));
+    }
+
+    bool historyChanged = false;
+    for (var bean in historyAccounts) {
+      if (bean.host == host) {
+        bean.alias = alias;
+        historyChanged = true;
+      }
+    }
+    if (historyChanged) {
+      SpUtil.putString(spLoginHistory, jsonEncode(historyAccounts));
+    }
+  }
+
   void resetTokenBeans(List<TokenBean> bean) {
     SpUtil.putString(spTokenBeanList, jsonEncode(bean));
     tokenBeans.clear();

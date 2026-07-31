@@ -1,4 +1,8 @@
+import 'package:qinglong_app/base/http/http.dart';
+import 'package:qinglong_app/base/http/url.dart';
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
+import 'package:qinglong_app/module/home/system_bean.dart';
+import 'package:qinglong_app/utils/icloud_utils.dart';
 
 import '../main.dart';
 
@@ -34,11 +38,37 @@ class UserInfoViewModel {
     _passWord = null;
     _alias = null;
     _useSecertLogined = false;
+    // 清理该账号在 getIt 中的所有单例,避免内存堆积
+    _unregisterAccountSingletons(index);
   }
 
   void exitLoginFocus(int index) {
     _token = null;
     updateToken(index, _host, _token, _useSecertLogined, _alias);
+  }
+
+  /// 清理指定账号在 getIt 中注册的所有单例
+  /// 用于删除账号场景,避免多账号反复操作导致内存堆积
+  static void _unregisterAccountSingletons(int index) {
+    final name = index.toString();
+    // Http 先调 clear 释放缓存和连接池,再 unregister
+    if (getIt.isRegistered<Http>(instanceName: name)) {
+      getIt<Http>(instanceName: name).clear();
+      getIt.unregister<Http>(instanceName: name);
+    }
+    if (getIt.isRegistered<UserInfoViewModel>(instanceName: name)) {
+      getIt.unregister<UserInfoViewModel>(instanceName: name);
+    }
+    if (getIt.isRegistered<SystemBean>(instanceName: name)) {
+      getIt.unregister<SystemBean>(instanceName: name);
+    }
+    if (getIt.isRegistered<Url>(instanceName: name)) {
+      getIt.unregister<Url>(instanceName: name);
+    }
+    if (getIt.isRegistered<ICloudUtils>(instanceName: name)) {
+      getIt.unregister<ICloudUtils>(instanceName: name);
+    }
+    // GlobalKey 不 unregister(框架会随 widget 卸载自动处理)
   }
 
   void updateToken(

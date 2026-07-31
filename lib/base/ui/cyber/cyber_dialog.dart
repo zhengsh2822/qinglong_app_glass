@@ -310,7 +310,11 @@ Future<bool?> showEditTaskDialog(
         ),
       ),
     ),
-  );
+  ).whenComplete(() {
+    nameController.dispose();
+    commandController.dispose();
+    cronController.dispose();
+  });
 }
 
 const TextStyle _labelStyle = TextStyle(
@@ -441,17 +445,19 @@ Future<String?> showEditScriptDialog(
             const SizedBox(height: 20),
 
             _buildCyberButtonRow(
-              cancelLabel: '取消',
-              confirmLabel: '保存',
-              danger: false,
-              onCancel: () => Navigator.of(context).pop(),
-              onConfirm: () => Navigator.of(context).pop(contentController.text),
-            ),
-          ],
+                cancelLabel: '取消',
+                confirmLabel: '保存',
+                danger: false,
+                onCancel: () => Navigator.of(context).pop(),
+                onConfirm: () => Navigator.of(context).pop(contentController.text),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+  ).whenComplete(() {
+    contentController.dispose();
+  });
 }
 
 Future<String?> showCyberInputDialog(
@@ -505,17 +511,19 @@ Future<String?> showCyberInputDialog(
             ),
             const SizedBox(height: 24),
             _buildCyberButtonRow(
-              cancelLabel: cancelLabel,
-              confirmLabel: confirmLabel,
-              danger: false,
-              onCancel: () => Navigator.of(context).pop(),
-              onConfirm: () => Navigator.of(context).pop(controller.text),
-            ),
-          ],
+                cancelLabel: cancelLabel,
+                confirmLabel: confirmLabel,
+                danger: false,
+                onCancel: () => Navigator.of(context).pop(),
+                onConfirm: () => Navigator.of(context).pop(controller.text),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+  ).whenComplete(() {
+    controller.dispose();
+  });
 }
 
 Future<int?> showCyberFrequencyDialog(
@@ -597,21 +605,23 @@ Future<int?> showCyberFrequencyDialog(
               danger: false,
               onCancel: () => Navigator.of(context).pop(),
               onConfirm: () {
-                final value = int.tryParse(controller.text);
-                if (value == null || value > maxValue) {
-                  '最大可设置$maxValue$unit'.toast();
-                  return;
-                }
-                if (value < minValue) {
-                  '最小可设置$minValue$unit'.toast();
-                  return;
-                }
-                Navigator.of(context).pop(value);
-              },
-            ),
-          ],
+                  final value = int.tryParse(controller.text);
+                  if (value == null || value > maxValue) {
+                    '最大可设置$maxValue$unit'.toast();
+                    return;
+                  }
+                  if (value < minValue) {
+                    '最小可设置$minValue$unit'.toast();
+                    return;
+                  }
+                  Navigator.of(context).pop(value);
+                },
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+  ).whenComplete(() {
+    controller.dispose();
+  });
 }
