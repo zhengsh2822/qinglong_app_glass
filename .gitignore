@@ -29,6 +29,15 @@ restore.ps1
 debug_helper.ps1
 /qinglong_app_v*.apk
 
+# Build outputs
+/apk_output/
+
+# IDE / editor local state
+/.trae/
+
+# Local session memory (not for version control)
+/SESSION_MEMORY.md
+
 # IntelliJ related
 *.iml
 *.ipr
