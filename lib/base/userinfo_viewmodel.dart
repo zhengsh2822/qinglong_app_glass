@@ -129,6 +129,10 @@ class UserInfoViewModel {
 
   String? get alias => _alias ?? _host;
 
+  /// 直接返回 _alias 字段，不回退到 host
+  /// 用于静默刷新 token 时保留原始别名，避免 alias 回退成 host
+  String? get rawAlias => _alias;
+
   bool isLogined() {
     return token != null && token!.isNotEmpty;
   }

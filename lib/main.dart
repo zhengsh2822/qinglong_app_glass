@@ -12,6 +12,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:logger/logger.dart';
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
+import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/animated_indexed_switch.dart';
@@ -228,6 +229,10 @@ class MultiAccountPageState extends ConsumerState<MultiAccountPage>
     with WidgetsBindingObserver {
   int _index = 0;
 
+  /// 当前激活的账号 index（静态，供 Http.exitLogin 判断是否在后台）
+  /// IndexedStack 会同时构建所有账号页面，非激活账号的网络失败弹窗需延迟到切换时
+  static int currentAccountIndex = 0;
+
   List<Widget> list = [];
 
   get index => _index;
@@ -237,7 +242,19 @@ class MultiAccountPageState extends ConsumerState<MultiAccountPage>
   void updateIndex(int index) {
     if (_index == index) return;
     _index = index;
+    currentAccountIndex = index;
     setState(() {});
+
+    // 切换到新账号后，检查该账号是否有待处理的登录失败弹窗
+    // 场景：IndexedStack 后台账号断网时 exitLogin 延迟弹窗，切换到此账号时触发
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!getIt.isRegistered<Http>(instanceName: index.toString())) return;
+      final http = getIt<Http>(instanceName: index.toString());
+      if (http.pendingExitLogin) {
+        http.pendingExitLogin = false;
+        http.exitLogin();
+      }
+    });
   }
 
   @override
@@ -265,6 +282,7 @@ class MultiAccountPageState extends ConsumerState<MultiAccountPage>
 
   @override
   void initState() {
+    currentAccountIndex = 0;
     if (SpUtil.getBool(spSingleInstance, defValue: false)) {
       list = [const RepaintBoundary(child: SingleAccountPage(index: 0))];
     } else {
