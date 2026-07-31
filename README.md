@@ -6,6 +6,11 @@
 
 > 本项目在原项目基础上进行了主题系统重构、多账号安全增强、仪表盘功能扩展、脚本搜索能力补全、京东助手独立模块化等改进，并移除了部分不兼容的依赖与功能。
 
+## 相关项目
+
+- [qinglong_app_glass_Wallpaper](https://github.com/zhengsh2822/qinglong_app_glass_Wallpaper) — 支持更换壁纸的版本
+
+
 ## App 功能介绍
 
 ### 仪表盘（对齐 Web 端）
@@ -127,9 +132,6 @@
 
 > Release 模式启用 ABI split（仅生成 arm64-v8a），Flutter 工具会误报"failed to produce an .apk file"，实际 APK 已生成在 `build\app\outputs\flutter-apk\app-arm64-v8a-release.apk`，使用 `build_apk.ps1` 可自动处理并复制为 `app-release.apk`。
 
-## 相关项目
-
-- [qinglong_app_glass_Wallpaper](https://github.com/zhengsh2822/qinglong_app_glass_Wallpaper) — 支持更换壁纸的版本
 
 ## 致谢
 
