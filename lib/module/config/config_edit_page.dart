@@ -390,7 +390,9 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
               ),
             ],
           ),
-    );
+    ).whenComplete(() {
+      controller.dispose();
+    });
   }
 
   void updateValueByKey(String key, String text) {

@@ -21,6 +21,12 @@ class ScriptUploadPageState extends ConsumerState<FloderAddPage> {
   final TextEditingController _nameController = TextEditingController();
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,

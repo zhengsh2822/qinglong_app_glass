@@ -213,7 +213,9 @@ class HomePageState extends ConsumerState<HomePage> {
                 ),
               ],
             ),
-      );
+      ).whenComplete(() {
+        controller.dispose();
+      });
     } else {
       SingleAccountPageState.of(
         context,

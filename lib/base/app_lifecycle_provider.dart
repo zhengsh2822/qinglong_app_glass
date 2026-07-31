@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
+import 'package:qinglong_app/base/http/http_cache.dart';
 
 /// 应用前后台生命周期状态
 enum AppLifecycleState {
@@ -71,8 +73,9 @@ class AppLifecycleProvider {
                 _controller!.add(_currentState);
                 break;
               case 'memory_pressure':
-                // 内存压力事件，可由其他订阅者响应（如清理缓存）
-                // 这里不映射到 AppLifecycleState，仅作为扩展点
+                // 系统内存压力事件：清理 HTTP 缓存和图片缓存,避免被系统杀进程
+                HttpCache.clearAll();
+                PaintingBinding.instance.imageCache.clear();
                 break;
             }
           }

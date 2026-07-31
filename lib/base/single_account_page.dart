@@ -163,7 +163,9 @@ class SingleAccountPageState extends State<SingleAccountPage> {
         host: bean.host,
         name: history.userName,
         password: history.password,
-        alias: history.alias,
+        // 优先取 historyAccounts 的别名，兜底取 tokenBeans 的别名，
+        // 避免修改名称后 historyAccounts 未命中导致重启丢失
+        alias: history.alias ?? bean.alias,
       );
 
       getIt.registerSingleton(
@@ -207,6 +209,8 @@ class SingleAccountPageState extends State<SingleAccountPage> {
 
   void registerHttp(String host) {
     if (getIt.isRegistered<Http>(instanceName: widget.index.toString())) {
+      // 先清理旧 Http 的缓存和连接池,避免账号切换时跨账号缓存残留
+      getIt<Http>(instanceName: widget.index.toString()).clear();
       getIt.unregister<Http>(instanceName: widget.index.toString());
     }
     getIt.registerSingleton(

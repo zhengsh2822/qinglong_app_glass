@@ -450,7 +450,9 @@ Future<String?> showInputDialog(
         ),
       );
     },
-  );
+  ).whenComplete(() {
+    controller.dispose();
+  });
 }
 
 Future<int?> showFrequencyDialog(
@@ -501,7 +503,9 @@ Future<int?> showFrequencyDialog(
         ),
       );
     },
-  );
+  ).whenComplete(() {
+    controller.dispose();
+  });
 }
 
 /// 频率输入弹窗内容（支持异步加载当前值）

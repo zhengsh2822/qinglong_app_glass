@@ -41,6 +41,7 @@ class _AddConfigPageState extends ConsumerState<AddConfigPage> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     focusNode.dispose();
     super.dispose();
   }

@@ -213,6 +213,9 @@ class _AddEnvPageState extends ConsumerState<AddEnvPage> with LazyLoadState<AddE
 
   @override
   void dispose() {
+    _nameController.dispose();
+    _valueController.dispose();
+    _remarkController.dispose();
     focusNode.dispose();
     super.dispose();
   }

@@ -46,6 +46,12 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
   }
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,

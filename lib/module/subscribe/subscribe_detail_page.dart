@@ -38,6 +38,13 @@ class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
     super.initState();
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _cronController.dispose();
+    super.dispose();
+  }
+
   void _enableSubscribe(BuildContext context, int disabled) {
     ref
         .read(

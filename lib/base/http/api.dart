@@ -261,6 +261,8 @@ class Api {
     return await getIt<Http>(instanceName: index.toString()).get<String>(
       getIt<Url>(instanceName: index.toString()).intimeLog(cron),
       null,
+      // 实时日志接口禁用缓存,否则 2s 轮询会被 TTL 缓存层抵消
+      useCache: false,
     );
   }
 
@@ -268,6 +270,7 @@ class Api {
     return await getIt<Http>(instanceName: index.toString()).get<String>(
       getIt<Url>(instanceName: index.toString()).intimeDepLog(cron),
       null,
+      useCache: false,
     );
   }
 
@@ -275,6 +278,7 @@ class Api {
     return await getIt<Http>(instanceName: index.toString()).get<String>(
       getIt<Url>(instanceName: index.toString()).intimeSubscribeLog(cron),
       null,
+      useCache: false,
     );
   }
 
