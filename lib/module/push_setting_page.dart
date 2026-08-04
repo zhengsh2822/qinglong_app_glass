@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
+import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/settings_widgets.dart';
@@ -191,6 +192,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
 
   void _showPushSelector(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+    final bool blurEnabled = ref.read(blurEffectProvider);
     showCupertinoModalPopup<void>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.5),
@@ -199,14 +201,14 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(18),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: OptionalBlur(
+              sigma: 20,
               child: Container(
                 decoration: BoxDecoration(
                   color:
                       isCyber
-                          ? Colors.black.withValues(alpha: 0.5)
-                          : Colors.white.withValues(alpha: 0.85),
+                          ? Colors.black.withValues(alpha: blurEnabled ? 0.5 : 1.0)
+                          : Colors.white.withValues(alpha: blurEnabled ? 0.85 : 1.0),
                   borderRadius: BorderRadius.circular(18),
                   border:
                       isCyber

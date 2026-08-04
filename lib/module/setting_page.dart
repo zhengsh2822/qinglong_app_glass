@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/button.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
@@ -196,6 +197,17 @@ class _SettingPageState extends ConsumerState<SettingPage> {
                       } else {
                         ref.read(themeProvider.notifier).changeTheme(modeLight);
                       }
+                      setState(() {});
+                    },
+                  ),
+                  settingsDivider,
+                  // 毛玻璃效果开关
+                  SettingsSwitchRow(
+                    icon: CupertinoIcons.sparkles,
+                    title: "毛玻璃效果",
+                    value: SpUtil.getBool(spBlurEffect, defValue: true),
+                    onChanged: (open) async {
+                      await setBlurEffect(ref, open);
                       setState(() {});
                     },
                   ),
