@@ -10,6 +10,8 @@ import 'package:flutter/gestures.dart'
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
 
 import '../routes.dart';
@@ -249,13 +251,17 @@ class _QlDepCupertinoContextMenuState extends State<QlDepCupertinoContextMenu>
       _childHidden = true;
     });
 
+    // 毛玻璃关闭时不应用 BackdropFilter（纯色蒙版）
+    final bool blurEnabled =
+        ProviderScope.containerOf(context).read(blurEffectProvider);
+
     _route = _ContextMenuRoute<void>(
       actions: widget.actions,
       barrierLabel: 'Dismiss',
-      filter: ui.ImageFilter.blur(
-        sigmaX: 5.0,
-        sigmaY: 5.0,
-      ),
+      filter:
+          blurEnabled
+              ? ui.ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0)
+              : null,
       contextMenuLocation: _contextMenuLocation,
       previousChildRect: _decoyChildEndRect!,
       builder: (BuildContext context, Animation<double> animation) {

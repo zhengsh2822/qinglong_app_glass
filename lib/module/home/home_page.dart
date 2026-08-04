@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/bottom_nav_bar.dart';
+import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/config/config_page.dart';
@@ -260,78 +261,7 @@ class HomePageState extends ConsumerState<HomePage> {
                     OtherPage(key: meKey),
                   ],
                 ),
-                bottomNavigationBar:
-                    ref.read(themeProvider).themeMode == modeCyber
-                        ? ClipRRect(
-                          // ClipRRect必须放在最外层！
-                          // BackdropFilter的高斯模糊会渲染到容器边界之外，
-                          // BoxDecoration的borderRadius无法裁剪BackdropFilter，
-                          // 只有ClipRRect的物理裁剪才能彻底消除圆角旁的直角溢出。
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            topRight: Radius.circular(20),
-                          ),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(
-                              sigmaX: 25.0,
-                              sigmaY: 25.0,
-                            ),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: ref
-                                    .watch(themeProvider)
-                                    .currentTheme
-                                    .bottomNavigationBarTheme
-                                    .backgroundColor
-                                    ?.withOpacity(0.65),
-                              ),
-                              height:
-                                  kBottomNavigationBarHeight +
-                                  MediaQuery.of(context).padding.bottom,
-                              width: MediaQuery.of(context).size.width,
-                              child: _buildBottomNav(context),
-                            ),
-                          ),
-                        )
-                        : Container(
-                          decoration: const BoxDecoration(
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(20),
-                              topRight: Radius.circular(20),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Color(0x15000000),
-                                blurRadius: 15,
-                                offset: Offset(0, -3),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(20),
-                              topRight: Radius.circular(20),
-                            ),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(
-                                sigmaX: 25.0,
-                                sigmaY: 25.0,
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: AppleColors.bgPrimary.withOpacity(
-                                    0.75,
-                                  ),
-                                ),
-                                height:
-                                    kBottomNavigationBarHeight +
-                                    MediaQuery.of(context).padding.bottom,
-                                width: MediaQuery.of(context).size.width,
-                                child: _buildBottomNav(context),
-                              ),
-                            ),
-                          ),
-                        ),
+                bottomNavigationBar: _buildBottomNavigationBar(context),
               ),
             ),
             Visibility(
@@ -366,6 +296,64 @@ class HomePageState extends ConsumerState<HomePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// 构建底部导航栏容器（统一赛博/Apple两种主题，受毛玻璃开关控制）
+  ///
+  /// GPU 优化：毛玻璃开关关闭时退化为纯色背景，零模糊开销；
+  /// 开启时保留 BackdropFilter 高斯模糊质感。
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    final isCyber = ref.watch(themeProvider).themeMode == modeCyber;
+    final bool blurEnabled = ref.watch(blurEffectProvider);
+    const radius = BorderRadius.only(
+      topLeft: Radius.circular(20),
+      topRight: Radius.circular(20),
+    );
+
+    final Color bgColor =
+        isCyber
+            ? (ref
+                    .watch(themeProvider)
+                    .currentTheme
+                    .bottomNavigationBarTheme
+                    .backgroundColor
+                    ?.withOpacity(blurEnabled ? 0.65 : 1.0) ??
+                Colors.black.withValues(alpha: blurEnabled ? 0.65 : 1.0))
+            : AppleColors.bgPrimary.withValues(alpha: blurEnabled ? 0.75 : 1.0);
+
+    final navContent = Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: radius,
+        boxShadow:
+            isCyber
+                ? null
+                : const [
+                  BoxShadow(
+                    color: Color(0x15000000),
+                    blurRadius: 15,
+                    offset: Offset(0, -3),
+                  ),
+                ],
+      ),
+      height: kBottomNavigationBarHeight + MediaQuery.of(context).padding.bottom,
+      width: MediaQuery.of(context).size.width,
+      child: _buildBottomNav(context),
+    );
+
+    if (!blurEnabled) {
+      // 毛玻璃关闭：纯色背景（不透明度 1.0），GPU 零模糊
+      return ClipRRect(borderRadius: radius, child: navContent);
+    }
+
+    // 毛玻璃开启：BackdropFilter 高斯模糊
+    return ClipRRect(
+      borderRadius: radius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: navContent,
       ),
     );
   }

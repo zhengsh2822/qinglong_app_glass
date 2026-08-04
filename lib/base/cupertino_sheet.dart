@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/blur_effect.dart';
 
-const double _sheetBlurSigma = 25.0;
 const double _sheetBarrierDim = 0.65;
 
 class CupertinoSheer extends ConsumerWidget {
@@ -115,6 +115,35 @@ class _AppleActionSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool blurEnabled =
+        ProviderScope.containerOf(context).read(blurEffectProvider);
+    final double bgAlpha = blurEnabled ? 0.75 : 1.0;
+    final sheetContent = Container(
+      decoration: BoxDecoration(
+        color: AppleColors.bgPrimary.withValues(alpha: bgAlpha),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.black.withValues(alpha: 0.08),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          ...list,
+          Container(
+            width: double.infinity,
+            height: 0.5,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            color: Colors.black.withValues(alpha: 0.1),
+          ),
+          CupertinoSheer(title: "取消", onTap: () {}),
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       child: SafeArea(
@@ -132,37 +161,16 @@ class _AppleActionSheet extends StatelessWidget {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(18),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(
-                sigmaX: _sheetBlurSigma,
-                sigmaY: _sheetBlurSigma,
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppleColors.bgPrimary.withValues(alpha: 0.75),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    width: 0.5,
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: 8),
-                    ...list,
-                    Container(
-                      width: double.infinity,
-                      height: 0.5,
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
-                      color: Colors.black.withValues(alpha: 0.1),
-                    ),
-                    CupertinoSheer(title: "取消", onTap: () {}),
-                    const SizedBox(height: 4),
-                  ],
-                ),
-              ),
-            ),
+            child:
+                blurEnabled
+                    ? BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: 20,
+                        sigmaY: 20,
+                      ),
+                      child: sheetContent,
+                    )
+                    : sheetContent,
           ),
         ),
       ),
@@ -188,43 +196,51 @@ class _CyberActionSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool blurEnabled =
+        ProviderScope.containerOf(context).read(blurEffectProvider);
+    final double bgAlpha = blurEnabled ? 0.3 : 1.0;
+    final sheetContent = Container(
+      decoration: BoxDecoration(
+        color: CyberColors.bg.withValues(alpha: bgAlpha),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: CyberColors.cyan.withValues(alpha: 0.2),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          ...list,
+          Container(
+            width: double.infinity,
+            height: 0.5,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            color: CyberColors.borderGlow.withValues(alpha: 0.25),
+          ),
+          CupertinoSheer(title: "取消", onTap: () {}),
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       child: SafeArea(
         top: false,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: _sheetBlurSigma,
-              sigmaY: _sheetBlurSigma,
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: CyberColors.bg.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: CyberColors.cyan.withValues(alpha: 0.2),
-                  width: 0.5,
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 8),
-                  ...list,
-                  Container(
-                    width: double.infinity,
-                    height: 0.5,
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    color: CyberColors.borderGlow.withValues(alpha: 0.25),
-                  ),
-                  CupertinoSheer(title: "取消", onTap: () {}),
-                  const SizedBox(height: 4),
-                ],
-              ),
-            ),
-          ),
+          child:
+              blurEnabled
+                  ? BackdropFilter(
+                    filter: ImageFilter.blur(
+                      sigmaX: 25,
+                      sigmaY: 25,
+                    ),
+                    child: sheetContent,
+                  )
+                  : sheetContent,
         ),
       ),
     );

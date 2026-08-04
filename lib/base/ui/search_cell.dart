@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_colors.dart';
 import '../theme.dart';
+import 'blur_effect.dart';
 
 class SearchCell extends ConsumerStatefulWidget {
   final TextEditingController controller;
@@ -37,6 +38,7 @@ class _SearchCellState extends ConsumerState<SearchCell> {
   Widget build(BuildContext context) {
     final theme = ref.watch(themeProvider);
     final bool isCyber = theme.themeMode == modeCyber;
+    final bool blurEnabled = ref.watch(blurEffectProvider);
 
     final Color bgColor =
         isCyber ? const Color(0xFF12121A) : AppleColors.bgTertiary;
@@ -50,80 +52,94 @@ class _SearchCellState extends ConsumerState<SearchCell> {
         isCyber ? CyberColors.descColor : AppleColors.textHint;
     final Color iconColor = isCyber ? CyberColors.cyan : AppleColors.textHint;
 
+    // 毛玻璃关闭时使用完全不透明背景
+    final double bgOpacity = blurEnabled ? (isCyber ? 1.0 : 0.85) : 1.0;
+
+    final Widget innerContainer = Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            bgColor.withOpacity(bgOpacity),
+            bgEndColor.withOpacity(bgOpacity),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: borderColor, width: isCyber ? 0.5 : 1),
+        boxShadow:
+            isCyber
+                ? null
+                : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.10),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(CupertinoIcons.search, size: 16, color: iconColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: widget.controller,
+              maxLines: 1,
+              textAlign: TextAlign.left,
+              textAlignVertical: TextAlignVertical.center,
+              style: TextStyle(fontSize: 14, color: textColor),
+              cursorColor: iconColor,
+              decoration: InputDecoration(
+                hintText: "搜索",
+                hintStyle: TextStyle(fontSize: 14, color: hintColor),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onSubmitted: (_) {
+                FocusManager.instance.primaryFocus?.unfocus();
+              },
+            ),
+          ),
+          if (widget.controller.text.isNotEmpty)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                widget.controller.text = "";
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Icon(
+                  CupertinoIcons.clear_circled_solid,
+                  size: 16,
+                  color: iconColor,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+
+    if (!blurEnabled) {
+      // 毛玻璃关闭：纯色背景，GPU 零模糊
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: innerContainer,
+      );
+    }
+
+    // 毛玻璃开启：BackdropFilter 高斯模糊
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                bgColor.withOpacity(isCyber ? 1.0 : 0.85),
-                bgEndColor.withOpacity(isCyber ? 1.0 : 0.85),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: borderColor, width: isCyber ? 0.5 : 1),
-            boxShadow:
-                isCyber
-                    ? null
-                    : [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.10),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(CupertinoIcons.search, size: 16, color: iconColor),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: widget.controller,
-                  maxLines: 1,
-                  textAlign: TextAlign.left,
-                  textAlignVertical: TextAlignVertical.center,
-                  style: TextStyle(fontSize: 14, color: textColor),
-                  cursorColor: iconColor,
-                  decoration: InputDecoration(
-                    hintText: "搜索",
-                    hintStyle: TextStyle(fontSize: 14, color: hintColor),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  onSubmitted: (_) {
-                    FocusManager.instance.primaryFocus?.unfocus();
-                  },
-                ),
-              ),
-              if (widget.controller.text.isNotEmpty)
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    widget.controller.text = "";
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: Icon(
-                      CupertinoIcons.clear_circled_solid,
-                      size: 16,
-                      color: iconColor,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
+        child: innerContainer,
       ),
     );
   }

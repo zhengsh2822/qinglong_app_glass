@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/blur_effect.dart';
 
 /// 胶囊形输入框
 ///
@@ -49,6 +50,8 @@ class GlassTextField extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider).themeMode;
     final isDark = themeMode == modeDark || themeMode == modeCyber;
+    // 毛玻璃关闭时背景置为完全不透明（纯色）
+    final blurEnabled = ref.watch(blurEffectProvider);
     // 与卡片同色系描边，但宽度更细（0.5 vs 卡片 1.0）
     final borderColor = isDark ? CyberColors.borderGlow : AppleColors.cardBorder;
     const radius = 24.0;
@@ -56,7 +59,9 @@ class GlassTextField extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: isDark
-            ? CyberColors.cardBg.withOpacity(0.5)
+            ? (blurEnabled
+                ? CyberColors.cardBg.withOpacity(0.5)
+                : CyberColors.cardBg)
             : AppleColors.bgSecondary,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: borderColor, width: 0.5),

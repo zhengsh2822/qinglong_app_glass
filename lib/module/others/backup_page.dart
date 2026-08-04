@@ -8,6 +8,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
+import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/file_picker_utils.dart';
@@ -455,6 +456,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
+        final bool blurEnabled = ref.watch(blurEffectProvider);
         return Container(
           decoration: BoxDecoration(
             color: Colors.transparent,
@@ -464,7 +466,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: Container(
               color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary)
-                  .withOpacity(0.95),
+                  .withOpacity(blurEnabled ? 0.95 : 1.0),
               padding:
                   const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               child: SafeArea(
@@ -570,6 +572,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
+        final bool blurEnabled = ref.watch(blurEffectProvider);
         return Container(
           decoration: BoxDecoration(
             color: Colors.transparent,
@@ -579,7 +582,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: Container(
               color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary)
-                  .withOpacity(0.95),
+                  .withOpacity(blurEnabled ? 0.95 : 1.0),
               padding:
                   const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               child: SafeArea(
@@ -713,6 +716,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
+        final bool blurEnabled = ref.watch(blurEffectProvider);
         return Container(
           height: MediaQuery.of(context).size.height * 0.85,
           decoration: BoxDecoration(
@@ -723,7 +727,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: Container(
               color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary)
-                  .withOpacity(0.95),
+                  .withOpacity(blurEnabled ? 0.95 : 1.0),
               child: Column(
                 children: [
                   // 顶部拖拽条

@@ -1,7 +1,9 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
+import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 class CyberDialog {
@@ -31,6 +33,11 @@ class CyberDialog {
           curve: Curves.easeOutCubic,
           reverseCurve: Curves.easeInCubic,
         );
+        // 读取毛玻璃开关（动画期间不变化）
+        final bool blurEnabled =
+            ProviderScope.containerOf(context).read(blurEffectProvider);
+        // 毛玻璃关闭时背景置为完全不透明（纯色），符合"关闭=纯色"契约
+        final double cardAlpha = blurEnabled ? CyberDialog.dimOpacity : 1.0;
         return AnimatedBuilder(
           animation: curved,
           builder: (context, _) {
@@ -59,35 +66,20 @@ class CyberDialog {
                             borderRadius: BorderRadius.circular(
                               CyberDialog.borderRadius,
                             ),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(
-                                sigmaX: CyberDialog.blurSigma * t,
-                                sigmaY: CyberDialog.blurSigma * t,
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.fromLTRB(
-                                  28,
-                                  28,
-                                  28,
-                                  24,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: CyberColors.bg.withValues(
-                                    alpha: CyberDialog.dimOpacity,
-                                  ),
-                                  borderRadius: BorderRadius.circular(
-                                    CyberDialog.borderRadius,
-                                  ),
-                                  border: Border.all(
-                                    color: CyberColors.cyan.withValues(
-                                      alpha: 0.2,
-                                    ),
-                                    width: 0.5,
-                                  ),
-                                ),
-                                child: child,
-                              ),
-                            ),
+                            child:
+                                blurEnabled
+                                    ? BackdropFilter(
+                                      // sigma 固定，不随动画 t 变化
+                                      filter: ImageFilter.blur(
+                                        sigmaX: 25,
+                                        sigmaY: 25,
+                                      ),
+                                      child: _cyberDialogCard(
+                                        cardAlpha,
+                                        child,
+                                      ),
+                                    )
+                                    : _cyberDialogCard(cardAlpha, child),
                           ),
                         ),
                       ),
@@ -101,6 +93,22 @@ class CyberDialog {
       },
     );
   }
+}
+
+/// 赛博弹窗卡片背景容器（提取复用，避免 blurEnabled 分支重复代码）
+Widget _cyberDialogCard(double cardAlpha, Widget child) {
+  return Container(
+    padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
+    decoration: BoxDecoration(
+      color: CyberColors.bg.withValues(alpha: cardAlpha),
+      borderRadius: BorderRadius.circular(CyberDialog.borderRadius),
+      border: Border.all(
+        color: CyberColors.cyan.withValues(alpha: 0.2),
+        width: 0.5,
+      ),
+    ),
+    child: child,
+  );
 }
 
 class CyberInputDecoration {

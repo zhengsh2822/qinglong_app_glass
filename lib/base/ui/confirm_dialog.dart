@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 const double _dialogBlurSigma = 25.0;
@@ -179,6 +180,13 @@ Widget _buildDialogPage({
     curve: Curves.easeOutCubic,
     reverseCurve: Curves.easeInCubic,
   );
+  // 读取毛玻璃开关（动画期间不变化，避免每帧重读）
+  final bool blurEnabled =
+      ProviderScope.containerOf(context).read(blurEffectProvider);
+  // 毛玻璃关闭时背景置为完全不透明（纯色），符合"关闭=纯色"契约
+  final Color cardBg =
+      blurEnabled ? theme.cardBg : theme.cardBg.withValues(alpha: 1.0);
+
   return AnimatedBuilder(
     animation: curved,
     builder: (context, _) {
@@ -207,26 +215,17 @@ Widget _buildDialogPage({
                       constraints: const BoxConstraints(maxWidth: 380),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(_dialogBorderRadius),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(
-                            sigmaX: _dialogBlurSigma * t,
-                            sigmaY: _dialogBlurSigma * t,
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: theme.cardBg,
-                              borderRadius: BorderRadius.circular(
-                                _dialogBorderRadius,
-                              ),
-                              border: Border.all(
-                                color: theme.borderColor,
-                                width: theme.borderWidth,
-                              ),
-                              boxShadow: theme.shadows,
-                            ),
-                            child: child,
-                          ),
-                        ),
+                        child:
+                            blurEnabled
+                                ? BackdropFilter(
+                                  // sigma 固定，不随动画 t 变化，避免每帧重算模糊
+                                  filter: ImageFilter.blur(
+                                    sigmaX: 20,
+                                    sigmaY: 20,
+                                  ),
+                                  child: _dialogCard(cardBg, theme, child),
+                                )
+                                : _dialogCard(cardBg, theme, child),
                       ),
                     ),
                   ),
@@ -237,6 +236,19 @@ Widget _buildDialogPage({
         ),
       );
     },
+  );
+}
+
+/// 弹窗卡片背景容器（提取复用，避免 blurEnabled 分支重复代码）
+Widget _dialogCard(Color cardBg, _DialogTheme theme, Widget child) {
+  return Container(
+    decoration: BoxDecoration(
+      color: cardBg,
+      borderRadius: BorderRadius.circular(_dialogBorderRadius),
+      border: Border.all(color: theme.borderColor, width: theme.borderWidth),
+      boxShadow: theme.shadows,
+    ),
+    child: child,
   );
 }
 
