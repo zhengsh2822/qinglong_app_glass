@@ -26,7 +26,7 @@ class _InAppPurchasePageState extends ConsumerState<InAppPurchasePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSection("新增功能与设计", [
-                "三种主题模式：赛博朋克（青色霓虹+玻璃态）、Apple（#00cccc 纯色+模糊弹窗）、白色（18px 圆角规范），黑色已并入赛博",
+                "三种主题模式：赛博、Apple（#00cccc 纯色+模糊弹窗）、白色（18px 圆角规范），黑色已并入赛博",
                 "多账号 HTTP 缓存隔离，防止跨账号数据泄漏",
                 "仪表盘对齐 Web 端：新增 7 日趋势自绘折线图（无 fl_chart 依赖）、今日耗时 Top5、执行次数 Top5、标签统计、实时运行态（含 PID）、系统资源，老版本服务端自动隐藏不支持的卡片",
                 "脚本搜索能力补全：列表页常驻胶囊搜索栏（300ms 防抖递归过滤）；查看/编辑页弹出式搜索卡片，支持 /re/flags 正则语法、上下导航、200ms 防抖、CodeMirror 高亮匹配",
@@ -37,7 +37,6 @@ class _InAppPurchasePageState extends ConsumerState<InAppPurchasePage> {
                 "HTTP 容错：ResponseType.plain + 手动 jsonDecode，过滤底层库 JSON 错误",
                 "悬浮时钟功能",
                 "Flutter 3.29.3 + Dart 3.7.2 全面升级，性能大幅提升",
-                "R8 混淆已关闭，提高兼容性",
               ], isAdvance: true),
               const SizedBox(height: 15),
               _buildSection("性能与功耗优化", [

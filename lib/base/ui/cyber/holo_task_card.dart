@@ -60,28 +60,33 @@ class _BreathingGlowState extends State<BreathingGlow>
   @override
   Widget build(BuildContext context) {
     if (!widget.active) return widget.child;
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Container(
-          // padding留出光晕渲染空间，防止被ListView/Slidable裁剪
-          padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 2),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: widget.glowColor.withValues(
-                  alpha: 0.12 * _animation.value,
+    // RepaintBoundary 隔离呼吸动画，避免向上冒泡触发列表重绘
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          return Container(
+            // padding留出光晕渲染空间，防止被ListView/Slidable裁剪
+            padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 2),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  // GPU 优化：只让 color.alpha 动画，blurRadius/spreadRadius 固定
+                  // 避免 GPU 每帧重新生成阴影纹理
+                  color: widget.glowColor.withValues(
+                    alpha: 0.12 * _animation.value,
+                  ),
+                  blurRadius: 8,
+                  spreadRadius: 0.5,
                 ),
-                blurRadius: 6 * _animation.value + 2,
-                spreadRadius: 0.5 * _animation.value,
-              ),
-            ],
-          ),
-          child: child,
-        );
-      },
-      child: widget.child,
+              ],
+            ),
+            child: child,
+          );
+        },
+        child: widget.child,
+      ),
     );
   }
 }
@@ -188,41 +193,44 @@ class _HoloTaskCardState extends State<HoloTaskCard>
     final statusColor = _statusColor();
     final isRunning = widget.status == HoloTaskStatus.running;
 
-    return AnimatedBuilder(
-      animation: _breathAnimation,
-      builder: (context, child) {
-        // 运行中时 BoxShadow 的 spreadRadius 和 opacity 随呼吸动画变化
-        final glowAlpha = isRunning ? _breathAnimation.value : 0.0;
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-          decoration: BoxDecoration(
-            // 半透明深灰卡片背景
-            color: CyberColors.cardBg,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color:
-                  isPinned
-                      ? CyberColors.cyan.withValues(alpha: 0.6)
-                      : CyberColors.borderGlow,
-              width: isPinned ? 1.5 : 1,
-            ),
-            boxShadow:
-                isRunning
-                    ? [
-                      // 青色呼吸光晕：spreadRadius 和 blurRadius 随动画值变化
-                      BoxShadow(
-                        color: CyberColors.cyan.withValues(
-                          alpha: 0.15 * glowAlpha,
+    // RepaintBoundary 隔离呼吸动画，避免向上冒泡触发列表重绘
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _breathAnimation,
+        builder: (context, child) {
+          // 运行中时只让 BoxShadow 的 color.alpha 随呼吸动画变化
+          // blurRadius/spreadRadius 固定，避免 GPU 每帧重新生成阴影纹理
+          final glowAlpha = isRunning ? _breathAnimation.value : 0.0;
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              // 半透明深灰卡片背景
+              color: CyberColors.cardBg,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color:
+                    isPinned
+                        ? CyberColors.cyan.withValues(alpha: 0.6)
+                        : CyberColors.borderGlow,
+                width: isPinned ? 1.5 : 1,
+              ),
+              boxShadow:
+                  isRunning
+                      ? [
+                        // 青色呼吸光晕：只让 alpha 动画，blur/spread 固定
+                        BoxShadow(
+                          color: CyberColors.cyan.withValues(
+                            alpha: 0.15 * glowAlpha,
+                          ),
+                          blurRadius: 16,
+                          spreadRadius: 2,
                         ),
-                        blurRadius: 12 * glowAlpha + 4,
-                        spreadRadius: 2 * glowAlpha,
-                      ),
-                    ]
-                    : [],
-          ),
-          child: child,
-        );
-      },
+                      ]
+                      : [],
+            ),
+            child: child,
+          );
+        },
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -343,6 +351,7 @@ class _HoloTaskCardState extends State<HoloTaskCard>
           ),
         ),
       ),
+    ),
     );
   }
 

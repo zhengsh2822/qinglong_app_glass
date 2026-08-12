@@ -44,6 +44,15 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- 开启 Impeller 渲染引擎
+             Impeller 是 Flutter 新渲染引擎，对 GPU 友好：
+             - 预编译 shader，消除 shader jank
+             - 更高效的 BackdropFilter/阴影/裁剪处理
+             - 降低 GPU 负载和功耗
+             Android 14+ 默认开启，低版本通过此配置手动启用 -->
+        <meta-data
+            android:name="io.flutter.renderer"
+            android:value="impeller" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

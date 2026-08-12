@@ -13,33 +13,37 @@ class RunningWidget extends ConsumerWidget {
     final isCyber = ref.read(themeProvider).themeMode == modeCyber;
     final color =
         isCyber ? CyberColors.cyan : ref.watch(themeProvider).primaryColor;
-    return Container(
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(2),
-        border: Border.all(color: color, width: 1),
-        boxShadow:
-            isCyber
-                ? [
-                  BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 4),
-                ]
-                : null,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 3),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          LoadingWidget(color: color, size: 12),
-          const SizedBox(width: 3),
-          Text(
-            "运行中",
-            style: TextStyle(
-              color: color,
-              fontSize: 9,
-              fontFamily: isCyber ? CyberColors.monoFont : null,
+    // RepaintBoundary 隔离 LoadingWidget 的无限循环动画，
+    // 避免向上冒泡触发整个列表项重绘（GPU 优化关键）
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(2),
+          border: Border.all(color: color, width: 1),
+          boxShadow:
+              isCyber
+                  ? [
+                    BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 4),
+                  ]
+                  : null,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            LoadingWidget(color: color, size: 12),
+            const SizedBox(width: 3),
+            Text(
+              "运行中",
+              style: TextStyle(
+                color: color,
+                fontSize: 9,
+                fontFamily: isCyber ? CyberColors.monoFont : null,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
