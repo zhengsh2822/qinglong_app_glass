@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/http/http.dart';
-import 'package:qinglong_app/module/appkey/appkey_page.dart';
 import 'package:qinglong_app/module/appkey/appkey_viewmodel.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 import '../../base/commit_button.dart';
 import '../../base/ql_app_bar.dart';
 import '../../base/single_account_page.dart';
-import '../../base/theme.dart';
-import '../../base/ui/drop.dart';
+import '../../base/ui/selectable_chip.dart';
 import '../subscribe/add_subscribe_page.dart';
 
 
@@ -29,6 +27,17 @@ class AddAppKeyPage extends ConsumerStatefulWidget {
 
 class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
   final TextEditingController _nameController = TextEditingController();
+
+  /// 全部可选权限（与青龙面板 scopes 对应）
+  static const List<String> _allPermissions = [
+    '定时任务',
+    '环境变量',
+    '配置文件',
+    '脚本管理',
+    '任务日志',
+    '依赖管理',
+    '系统信息',
+  ];
 
   List<String> selectedPermissions = ["定时任务"];
 
@@ -122,57 +131,25 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
                   const SizedBox(
                     height: 10,
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      onTextFieldTap();
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: selectedPermissions.isEmpty
-                        ? Text(
-                            "请选择",
-                            style: TextStyle(
-                              color: ref
-                                  .watch(themeProvider)
-                                  .themeColor
-                                  .descColor(),
-                              fontSize: 16,
-                            ),
-                          )
-                        : Material(
-                            color: Colors.transparent,
-                            child: Wrap(
-                              runSpacing: 5,
-                              spacing: 5,
-                              children: selectedPermissions
-                                  .map((e) => Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 3,
-                                          horizontal: 5,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: ref
-                                              .watch(themeProvider)
-                                              .themeColor
-                                              .descColor(),
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                        ),
-                                        child: Text(
-                                          e,
-                                          maxLines: 1,
-                                          style: TextStyle(
-                                            overflow: TextOverflow.ellipsis,
-                                            color: ref
-                                                .watch(themeProvider)
-                                                .themeColor
-                                                .blackAndWhite(),
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ))
-                                  .toList(),
-                            ),
-                          ),
+                  Wrap(
+                    runSpacing: 8,
+                    spacing: 8,
+                    children: _allPermissions.map((e) {
+                      final selected = selectedPermissions.contains(e);
+                      return SelectableChip(
+                        label: e,
+                        selected: selected,
+                        onToggle: (value) {
+                          setState(() {
+                            if (value) {
+                              selectedPermissions.add(e);
+                            } else {
+                              selectedPermissions.remove(e);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
                   ),
                 ],
               ),
@@ -181,34 +158,6 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
         ),
       ),
     );
-  }
-
-  void onTextFieldTap() {
-    DropDownState(
-      DropDown(
-        submitButtonText: "确定",
-        submitButtonColor: ref.watch(themeProvider).primaryColor,
-        searchHintText: "搜索",
-        bottomSheetTitle: "请选择你需要的权限",
-        searchBackgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        dataList: [
-          SelectedListItem(selectedPermissions.contains("定时任务"), "定时任务"),
-          SelectedListItem(selectedPermissions.contains("环境变量"), "环境变量"),
-          SelectedListItem(selectedPermissions.contains("配置文件"), "配置文件"),
-          SelectedListItem(selectedPermissions.contains("脚本管理"), "脚本管理"),
-          SelectedListItem(selectedPermissions.contains("任务日志"), "任务日志"),
-          SelectedListItem(selectedPermissions.contains("依赖管理"), "依赖管理"),
-          SelectedListItem(selectedPermissions.contains("系统信息"), "系统信息"),
-        ],
-        selectedItems: (List<String> selectedList) {
-          selectedPermissions.clear();
-          selectedPermissions.addAll(selectedList);
-          setState(() {});
-        },
-        selectedItem: (String selected) {},
-        enableMultipleSelection: true,
-      ),
-    ).showModal(context);
   }
 
   void commit() async {

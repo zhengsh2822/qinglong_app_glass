@@ -640,10 +640,15 @@ class Api {
   // 青龙面板 v2.21+ 新增：依赖代理 + Node/Python/Linux 镜像源配置
 
   /// 获取系统配置（含依赖设置字段：dependenceProxy/nodeMirror/pythonMirror/linuxMirror）
+  /// 禁用缓存：依赖设置页面每次打开都需要最新配置，避免 _origXxx 保存旧值导致比对错误
   Future<HttpResponse<String>> systemConfig() async {
     return await getIt<Http>(
       instanceName: index.toString(),
-    ).get<String>(getIt<Url>(instanceName: index.toString()).systemConfig, null);
+    ).get<String>(
+      getIt<Url>(instanceName: index.toString()).systemConfig,
+      null,
+      useCache: false,
+    );
   }
 
   /// 更新依赖代理（http_proxy/https_proxy）

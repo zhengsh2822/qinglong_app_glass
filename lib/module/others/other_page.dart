@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -97,6 +98,7 @@ class OtherPageState extends ConsumerState<OtherPage>
       title: '修改名称',
       hintText: '请输入名称',
       initialValue: currentAlias,
+      inputFormatters: [LengthLimitingTextInputFormatter(20)],
     ).then((newAlias) {
       if (newAlias == null) return;
       final trimmed = newAlias.trim();

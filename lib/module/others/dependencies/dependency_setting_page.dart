@@ -154,6 +154,10 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
     final results = <HttpResponse<String>>[];
     final detailLines = <String>[];
 
+    // needRelogin（token 失效 / 网络异常）时，Http 层已重建 Dio + 静默刷新 + 重试一次
+    // 重试仍失败会触发 exitLogin() 弹窗，此时后续字段继续请求也会失败，应提前终止
+    bool abortDueToRelogin = false;
+
     for (int i = 0; i < fns.length; i++) {
       final label = labels[i];
       detailLines.add('▶ $label');
@@ -165,6 +169,12 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
         } else {
           final raw = r.message?.isNotEmpty == true ? r.message : 'code=${r.code}';
           detailLines.add('  ✗ 失败: $raw');
+          // needRelogin 表示 token 失效或网络异常，后续请求也会失败，终止循环
+          if (r.needRelogin) {
+            abortDueToRelogin = true;
+            detailLines.add('  ⚠ 登录已过期或网络异常，已终止后续保存');
+            break;
+          }
         }
       } catch (e) {
         detailLines.add('  ✗ 异常: $e');
@@ -175,45 +185,68 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
 
     if (!mounted) return;
 
-    final allSuccess = results.every((r) => r.success);
+    final allSuccess = results.isNotEmpty && results.every((r) => r.success);
     setState(() => _saving = false);
 
-    if (allSuccess) {
-      // 更新原始值，避免重复保存
-      _origProxy = newProxy;
-      _origNode = newNode;
-      _origPython = newPython;
-      _origLinux = newLinux;
+    // 部分成功时，更新已成功字段的 _origXxx，避免下次重复发送
+    // 通过 labels 和 results 的对应关系判断哪些字段成功
+    if (results.isNotEmpty) {
+      for (int i = 0; i < results.length && i < labels.length; i++) {
+        if (!results[i].success) continue;
+        switch (labels[i]) {
+          case '依赖代理':
+            _origProxy = newProxy;
+            break;
+          case 'Python镜像源':
+            _origPython = newPython;
+            break;
+          case 'Node镜像源':
+            _origNode = newNode;
+            break;
+          case 'Linux镜像源':
+            _origLinux = newLinux;
+            break;
+        }
+      }
+    }
 
+    if (allSuccess) {
       final hasMirror = newNode.isNotEmpty || newLinux.isNotEmpty;
       if (hasMirror) {
         '依赖设置已保存，镜像源更新后将在后台重装依赖'.toast();
       } else {
         '依赖设置已保存'.toast();
       }
+    } else if (abortDueToRelogin) {
+      // needRelogin 失败：Http 层已触发 exitLogin() 弹窗（"连接失败，是否重新登录？"）
+      // 不再重复弹窗，仅 toast 提示
+      final detail = detailLines.join('\n');
+      debugPrint('[DependencySetting] 保存中断（登录/网络异常）:\n$detail');
+      '登录已过期或网络异常，请重试'.toast();
     } else {
       final detail = detailLines.join('\n');
       debugPrint('[DependencySetting] 保存失败:\n$detail');
       await Clipboard.setData(ClipboardData(text: detail));
       if (!mounted) return;
+      final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
       await showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: CyberColors.bg,
-          title: Text('保存失败', style: TextStyle(color: CyberColors.titleWhite)),
+          backgroundColor: isCyber ? CyberColors.bg : AppleColors.bgSecondary,
+          title: Text('保存失败', style: TextStyle(color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary)),
           content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
               child: SelectableText(
                 detail,
-                style: TextStyle(color: CyberColors.descColor, fontSize: 12, fontFamily: 'monospace'),
+                style: TextStyle(color: isCyber ? CyberColors.descColor : AppleColors.textSecondary, fontSize: 12, fontFamily: 'monospace'),
               ),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: Text('关闭', style: TextStyle(color: CyberColors.cyan)),
+              child: Text('关闭', style: TextStyle(color: isCyber ? CyberColors.cyan : AppleColors.accent)),
             ),
           ],
         ),
@@ -224,12 +257,18 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
   @override
   Widget build(BuildContext context) {
     final _ = ref.watch(themeProvider);
+    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+
+    // 根据主题模式动态选择颜色
+    final Color titleColor = isCyber ? CyberColors.titleWhite : AppleColors.textPrimary;
+    final Color subtitleColor = isCyber ? CyberColors.descColor : AppleColors.textSecondary;
+    final Color accentColor = isCyber ? CyberColors.cyan : AppleColors.accent;
 
     Widget body;
     if (_loading) {
       body = Center(
         child: LoadingWidget(
-          color: CyberColors.cyan,
+          color: accentColor,
           size: 30,
         ),
       );
@@ -244,17 +283,17 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
                 _errorMsg!,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: CyberColors.descColor,
+                  color: subtitleColor,
                   fontSize: 14,
                 ),
               ),
               const SizedBox(height: 16),
               CupertinoButton(
-                color: CyberColors.cyan.withOpacity(0.15),
+                color: accentColor.withOpacity(0.15),
                 onPressed: _loadConfig,
                 child: Text(
                   '重试',
-                  style: TextStyle(color: CyberColors.cyan, fontSize: 14),
+                  style: TextStyle(color: accentColor, fontSize: 14),
                 ),
               ),
             ],
@@ -277,6 +316,9 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
               subtitle: 'http_proxy / https_proxy，用于代理安装依赖',
               hint: '例如 http://127.0.0.1:7890',
               controller: _proxyController,
+              titleColor: titleColor,
+              subtitleColor: subtitleColor,
+              inputColor: titleColor,
             ),
             const SizedBox(height: AppleColors.spaceMd),
             _buildSection(
@@ -284,6 +326,9 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
               subtitle: 'pnpm config set registry，更新后会重装已安装的 nodejs 依赖',
               hint: '例如 https://registry.npmmirror.com',
               controller: _nodeController,
+              titleColor: titleColor,
+              subtitleColor: subtitleColor,
+              inputColor: titleColor,
             ),
             const SizedBox(height: AppleColors.spaceMd),
             _buildSection(
@@ -291,6 +336,9 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
               subtitle: 'pip3 config set global.index-url',
               hint: '例如 https://mirrors.aliyun.com/pypi/simple/',
               controller: _pythonController,
+              titleColor: titleColor,
+              subtitleColor: subtitleColor,
+              inputColor: titleColor,
             ),
             const SizedBox(height: AppleColors.spaceMd),
             _buildSection(
@@ -298,9 +346,12 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
               subtitle: '仅 Linux 平台生效',
               hint: '例如 https://mirrors.aliyun.com',
               controller: _linuxController,
+              titleColor: titleColor,
+              subtitleColor: subtitleColor,
+              inputColor: titleColor,
             ),
             const SizedBox(height: 30),
-            _buildSaveButton(),
+            _buildSaveButton(accentColor),
           ],
         ),
       );
@@ -320,7 +371,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
             child: AbsorbPointer(
               child: Center(
                 child: LoadingWidget(
-                  color: CyberColors.cyan,
+                  color: accentColor,
                   size: 30,
                 ),
               ),
@@ -335,6 +386,9 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
     required String subtitle,
     required String hint,
     required TextEditingController controller,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color inputColor,
   }) {
     return OtherPageCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -346,7 +400,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: CyberColors.titleWhite,
+              color: titleColor,
             ),
           ),
           const SizedBox(height: 4),
@@ -354,7 +408,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
             subtitle,
             style: TextStyle(
               fontSize: 12,
-              color: CyberColors.descColor,
+              color: subtitleColor,
             ),
           ),
           const SizedBox(height: 12),
@@ -364,7 +418,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
             maxLines: 1,
             style: TextStyle(
               fontSize: 14,
-              color: CyberColors.titleWhite,
+              color: inputColor,
             ),
           ),
         ],
@@ -372,7 +426,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
     );
   }
 
-  Widget _buildSaveButton() {
+  Widget _buildSaveButton(Color accentColor) {
     return SizedBox(
       width: double.infinity,
       child: OtherPageCard(
@@ -384,7 +438,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: CyberColors.cyan,
+              color: accentColor,
             ),
           ),
         ),

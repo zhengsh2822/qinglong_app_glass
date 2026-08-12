@@ -47,9 +47,12 @@ class DialogButton extends StatelessWidget {
       textColor = Colors.white;
       borderColor = primaryColor;
     } else {
+      // 取消按钮：赛博模式用白色，非赛博模式用黑色（浅色背景下可见）
       btnColor = Colors.transparent;
-      textColor = Colors.white;
-      borderColor = Colors.white.withValues(alpha: 0.3);
+      textColor = isCyber ? Colors.white : AppleColors.textPrimary;
+      borderColor = isCyber
+          ? Colors.white.withValues(alpha: 0.3)
+          : AppleColors.textPrimary.withValues(alpha: 0.3);
     }
 
     return Expanded(
@@ -58,8 +61,9 @@ class DialogButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
+            // 确定按钮：赛博模式 alpha 0.2，非赛博模式完全主色（避免透明度太浅）
             color: primary || danger
-                ? btnColor.withValues(alpha: isCyber ? 0.2 : 0.15)
+                ? (isCyber ? btnColor.withValues(alpha: 0.2) : btnColor)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(_dialogButtonRadius),
             border: primary || danger

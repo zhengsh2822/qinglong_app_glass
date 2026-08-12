@@ -9,7 +9,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
-import 'package:qinglong_app/module/task/task_bean.dart';
+import 'package:qinglong_app/module/others/task_log/task_log_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
@@ -97,18 +97,11 @@ class ScanPageState extends ConsumerState<ScanPage> {
       List<String> jsInstalled = [];
       List<String> pyInstalled = [];
       Api api = Api(SingleAccountPageState.of(context)?.index ?? 0);
-      List<TaskBean> list =
-          ref
-              .read(
-                SingleAccountPageState.ofTaskProvider(context)(
-                  getProviderName(context),
-                ).notifier,
-              )
-              .list;
+
+      // 获取已安装依赖列表
       List<DependencyBean> jsList = [];
       List<DependencyBean> pyList = [];
       var jsDep = await api.dependencies("nodejs");
-
       if (jsDep.success) {
         jsList.addAll(jsDep.bean ?? []);
       }
@@ -117,34 +110,83 @@ class ScanPageState extends ConsumerState<ScanPage> {
         pyList.addAll(pyDep.bean ?? []);
       }
 
-      for (TaskBean bean in list) {
+      // 改用历史日志扫描：获取日志文件列表，读取每个日志文件内容
+      // 原来用 inTimeLog 只能获取正在运行任务的实时日志，任务没运行时返回空
+      HttpResponse<List<TaskLogBean>> logResponse =
+          await SingleAccountPageState.ofApi(context).taskLog();
+
+      if (!logResponse.success || logResponse.bean == null) {
+        scaning = false;
+        setState(() {});
+        "获取日志列表失败".toast();
+        return;
+      }
+
+      List<TaskLogBean> logList = logResponse.bean!;
+      int totalFiles = 0;
+      int scannedFiles = 0;
+
+      // 先统计总文件数
+      for (TaskLogBean dir in logList) {
+        if (dir.files != null) {
+          // 每个目录只扫描最新2个日志文件，避免扫描过多
+          totalFiles += dir.files!.length > 2 ? 2 : dir.files!.length;
+        }
+        if (dir.children != null) {
+          totalFiles += dir.children!.length > 2 ? 2 : dir.children!.length;
+        }
+      }
+
+      for (TaskLogBean dir in logList) {
         if (scaning == false) break;
-        if (bean.command == null || bean.command!.isEmpty) continue;
-        String command = bean.command!.trim().split(" ").last;
-        if (!command.endsWith(".js") &&
-            !command.endsWith(".ts") &&
-            !command.endsWith(".py"))
-          continue;
 
-        _updateDescText("正在扫描: $command");
-        HttpResponse<String> response = await SingleAccountPageState.ofApi(
-          context,
-        ).inTimeLog(bean.sId!);
+        // 收集该目录下的日志文件名
+        List<String> fileNames = [];
+        if (dir.files != null && dir.files!.isNotEmpty) {
+          // files 按时间倒序，只取最新2个
+          for (int i = dir.files!.length - 1;
+              i >= 0 && fileNames.length < 2;
+              i--) {
+            fileNames.add(dir.files![i]);
+          }
+        }
+        if (dir.children != null && dir.children!.isNotEmpty) {
+          for (int i = dir.children!.length - 1;
+              i >= 0 && fileNames.length < 2;
+              i--) {
+            if (dir.children![i].title != null) {
+              fileNames.add(dir.children![i].title!);
+            }
+          }
+        }
 
-        String text = "";
+        String dirName = dir.name ?? "";
 
-        if (response.success &&
-            response.bean != null &&
-            response.bean!.isNotEmpty) {
-          text = response.bean ?? "";
-          String? found = foundReg(command, text);
-          if (found != null && found.isNotEmpty) {
-            var result = await autoInstallFounded(api, found, command);
-            if (result == true) {
-              if (command.endsWith(".py")) {
-                pyInstalled.add(found);
-              } else {
-                jsInstalled.add(found);
+        for (String fileName in fileNames) {
+          if (scaning == false) break;
+          scannedFiles++;
+          _updateDescText("正在扫描: $fileName ($scannedFiles/$totalFiles)");
+
+          HttpResponse<String> response = await SingleAccountPageState.ofApi(
+            context,
+          ).taskLogDetail(fileName, dirName);
+
+          if (response.success &&
+              response.bean != null &&
+              response.bean!.isNotEmpty) {
+            String text = response.bean ?? "";
+            // 同时搜索 nodejs 和 python 缺失依赖错误
+            List<String> foundDeps = foundAllReg(text);
+            for (String found in foundDeps) {
+              if (found.isEmpty) continue;
+              bool isPy = _isPythonDependency(text, found);
+              var result = await autoInstallFounded(api, found, isPy);
+              if (result == true) {
+                if (isPy) {
+                  if (!pyInstalled.contains(found)) pyInstalled.add(found);
+                } else {
+                  if (!jsInstalled.contains(found)) jsInstalled.add(found);
+                }
               }
             }
           }
@@ -155,12 +197,13 @@ class ScanPageState extends ConsumerState<ScanPage> {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (jsInstalled.isNotEmpty || pyInstalled.isNotEmpty) {
           final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+          String content =
+              'NodeJS:\n ${jsInstalled.join("\n").toString()} \n Python3:\n ${pyInstalled.join("\n").toString()}';
           if (isCyber) {
             showCyberConfirmDialog(
               context,
               title: '本次已安装如下依赖',
-              content:
-                  'NodeJS:\n ${jsInstalled.join("\n").toString()} \n Python3:\n ${pyInstalled.join("\n").toString()}',
+              content: content,
               confirmLabel: '知道了',
             );
             return;
@@ -171,9 +214,7 @@ class ScanPageState extends ConsumerState<ScanPage> {
             builder:
                 (childContext) => CupertinoAlertDialog(
                   title: const Text("本次已安装如下依赖"),
-                  content: Text(
-                    "NodeJS:\n ${jsInstalled.join("\n").toString()} \n Python3:\n ${pyInstalled.join("\n").toString()}",
-                  ),
+                  content: Text(content),
                   actions: [
                     CupertinoDialogAction(
                       child: Text(
@@ -199,6 +240,20 @@ class ScanPageState extends ConsumerState<ScanPage> {
       setState(() {});
       "扫描失败: $e".toast();
     }
+  }
+
+  /// 判断日志文本中找到的缺失依赖是 Python 还是 NodeJS
+  static bool _isPythonDependency(String text, String depName) {
+    // 通过上下文判断：如果 depName 附近有 "No module named"，则是 Python
+    int idx = text.indexOf(depName);
+    if (idx >= 0) {
+      int start = idx > 100 ? idx - 100 : 0;
+      String context = text.substring(start, idx + depName.length + 50);
+      if (context.contains("No module named")) return true;
+      if (context.contains("Cannot find module")) return false;
+    }
+    // 默认按名称特征判断：Python 模块通常不含大写字母
+    return false;
   }
 
   Widget scanWidget() {
@@ -273,10 +328,10 @@ class ScanPageState extends ConsumerState<ScanPage> {
   static Future<bool> autoInstallFounded(
     Api api,
     String found,
-    String command,
+    bool isPython,
   ) async {
     if (found.contains(".") || found.contains("/")) return false;
-    if (command.endsWith(".py")) {
+    if (isPython) {
       List<DependencyBean> pyList = [];
       var pyDep = await api.dependencies("python3");
       if (pyDep.success) {
@@ -314,60 +369,39 @@ class ScanPageState extends ConsumerState<ScanPage> {
     return false;
   }
 
-  static String? foundReg(String command, String text) {
-    if (text.isEmpty) return null;
+  /// 同时搜索 NodeJS 和 Python 缺失依赖错误，返回所有找到的依赖名
+  static List<String> foundAllReg(String text) {
+    if (text.isEmpty) return [];
 
-    if (command.isEmpty) return null;
+    List<String> results = [];
+    Set<String> seen = {}; // 去重
 
-    String? founded;
-    if (command.endsWith(".py")) {
-      RegExp firstReg = RegExp(r"No module named '(.*)'");
-
-      var firstMatch = firstReg.firstMatch(text);
-      int firstStart = firstMatch?.start ?? -1;
-      int firstEnd = firstMatch?.end ?? -1;
-
-      if (firstStart >= 0 && firstEnd >= 0) {
-        founded = text.substring(firstStart + 17, firstEnd - 1);
-      } else {
-        RegExp secondReg = RegExp(r'No module named "(.*)"');
-
-        var secondMatch = secondReg.firstMatch(text);
-        int secondStart = secondMatch?.start ?? -1;
-        int secondEnd = secondMatch?.end ?? -1;
-        if (secondStart >= 0 && secondEnd >= 0) {
-          founded = text.substring(secondStart + 17, secondEnd - 1);
-        }
-      }
-    } else {
-      RegExp firstReg = RegExp(r"Cannot find module '(.*)'");
-
-      var firstMatch = firstReg.firstMatch(text);
-      int firstStart = firstMatch?.start ?? -1;
-      int firstEnd = firstMatch?.end ?? -1;
-
-      if (firstStart >= 0 && firstEnd >= 0) {
-        founded = text.substring(firstStart + 20, firstEnd - 1);
-      } else {
-        RegExp secondReg = RegExp(r'Cannot find module "(.*)"');
-
-        var secondMatch = secondReg.firstMatch(text);
-        int secondStart = secondMatch?.start ?? -1;
-        int secondEnd = secondMatch?.end ?? -1;
-        if (secondStart >= 0 && secondEnd >= 0) {
-          founded = text.substring(secondStart + 20, secondEnd - 1);
+    // NodeJS: Cannot find module 'xxx' / "xxx"
+    for (final pattern in [
+      RegExp(r"Cannot find module '([^']+)'"),
+      RegExp(r'Cannot find module "([^"]+)"'),
+    ]) {
+      for (final match in pattern.allMatches(text)) {
+        String? dep = match.group(1);
+        if (dep != null && dep.isNotEmpty && !dep.contains(".") && !dep.contains("/")) {
+          if (seen.add(dep)) results.add(dep);
         }
       }
     }
 
-    if (founded != null && founded.isNotEmpty) {
-      if (founded.contains((".")) || founded.contains("/")) {
-        return null;
-      } else {
-        return founded;
+    // Python: No module named 'xxx' / "xxx"
+    for (final pattern in [
+      RegExp(r"No module named '([^']+)'"),
+      RegExp(r'No module named "([^"]+)"'),
+    ]) {
+      for (final match in pattern.allMatches(text)) {
+        String? dep = match.group(1);
+        if (dep != null && dep.isNotEmpty && !dep.contains(".") && !dep.contains("/")) {
+          if (seen.add(dep)) results.add(dep);
+        }
       }
     }
 
-    return null;
+    return results;
   }
 }
