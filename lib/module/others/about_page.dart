@@ -196,7 +196,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
                 ),
                 child: Text(
                   "基于 ayoulx/qinglong-app 二次开发：\n"
-                  "· 三种主题模式（赛博朋克 / Apple / 白色，黑色已并入赛博）\n"
+                  "· 三种主题模式（赛博 / Apple / 白色，黑色已并入赛博）\n"
                   "· 多账号 HTTP 缓存隔离，防止跨账号数据泄漏\n"
                   "· 仪表盘对齐 Web 端（7 日趋势自绘折线图 / Top5 耗时与执行次数 / 标签统计 / 实时运行态含 PID / 系统资源）\n"
                   "· 脚本搜索能力补全（列表常驻过滤 + 查看/编辑页弹出式搜索，支持正则与上下导航）\n"

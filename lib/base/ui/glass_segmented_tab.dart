@@ -98,11 +98,15 @@ class _TabBarSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: tabController.animation!,
-      builder: (context, child) {
-        final double animValue = tabController.animation!.value;
+    // GPU 优化：LayoutBuilder 提到 AnimatedBuilder 外层，
+    // 避免动画期间每帧重新执行 LayoutBuilder 的 builder（重新布局）
+    return LayoutBuilder(
+      builder: (context, constraints) {
         final int count = tabs.length;
+        final double totalWidth = constraints.maxWidth;
+        final double tabWidth = totalWidth / count;
+        const double horizontalPadding = 3.0;
+        final double thumbWidth = tabWidth - horizontalPadding * 2;
 
         return Container(
           height: 35,
@@ -112,8 +116,6 @@ class _TabBarSlider extends StatelessWidget {
             border: isCyber
                 ? Border.all(color: CyberColors.borderGlow, width: 0.5)
                 : null,
-            // 非赛博模式：参考内容卡片阴影（blurRadius 12, offset 0,4）
-            // 赛博模式：不使用阴影，保留外发光边框美学
             boxShadow:
                 isCyber
                     ? null
@@ -125,13 +127,13 @@ class _TabBarSlider extends StatelessWidget {
                       ),
                     ],
           ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final double totalWidth = constraints.maxWidth;
-              final double tabWidth = totalWidth / count;
-              const double horizontalPadding = 3.0;
-              final double thumbWidth = tabWidth - horizontalPadding * 2;
-              final double thumbLeft = horizontalPadding + animValue * tabWidth;
+          // AnimatedBuilder 只包裹需要随动画变化的部分（Stack）
+          child: AnimatedBuilder(
+            animation: tabController.animation!,
+            builder: (context, child) {
+              final double animValue = tabController.animation!.value;
+              final double thumbLeft =
+                  horizontalPadding + animValue * tabWidth;
 
               return Stack(
                 children: [

@@ -170,9 +170,9 @@ class _NotifyWidgetState extends State<NotifyWidget>
     _playController?.addListener(
           () {
         if (mounted) {
-          setState(() {
-            _offset = _offsetAnimation!.value;
-          });
+          // GPU 优化：动画期间只更新 _offset，不调用 setState 全量重建子树
+          // build 方法中的 AnimatedBuilder 会自动驱动重建
+          _offset = _offsetAnimation!.value;
         }
       },
     );
@@ -183,8 +183,21 @@ class _NotifyWidgetState extends State<NotifyWidget>
   Widget build(BuildContext context) {
     Size maxSize = MediaQuery.of(context).size;
 
-    return Positioned(
-      top: _offset,
+    // AnimatedBuilder 驱动动画期间的重建，避免 setState 全量重建子树
+    // 手动拖拽时仍用 setState 触发重建（_offset 已更新）
+    return AnimatedBuilder(
+      animation: _playController ?? AlwaysStoppedAnimation(0),
+      builder: (context, child) {
+        // 动画进行中时用 _offsetAnimation 的值，否则用 _offset（拖拽更新）
+        final double effectiveOffset =
+            (_playController?.isAnimating ?? false) && _offsetAnimation != null
+                ? _offsetAnimation!.value
+                : _offset;
+        return Positioned(
+          top: effectiveOffset,
+          child: child!,
+        );
+      },
       child: GestureDetector(
         onVerticalDragUpdate: (DragUpdateDetails details) {
           _cancelT();
