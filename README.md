@@ -120,17 +120,11 @@
 ## 构建打包
 
 ```powershell
-# Release 打包（禁用 R8 优化，自动复制到桌面并安装到已连接设备）
+# Release 打包
 .\build_apk.ps1
 
 # Debug 打包
 .\build_apk.ps1 -DebugMode
-
-# 仅构建，不复制不安装
-.\build_apk.ps1 -NoCopy -NoInstall
-```
-
-> Release 模式启用 ABI split（仅生成 arm64-v8a），Flutter 工具会误报"failed to produce an .apk file"，实际 APK 已生成在 `build\app\outputs\flutter-apk\app-arm64-v8a-release.apk`，使用 `build_apk.ps1` 可自动处理并复制为 `app-release.apk`。
 
 
 ## 致谢
