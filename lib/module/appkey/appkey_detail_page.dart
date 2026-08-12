@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/tag_chip.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
@@ -68,46 +69,12 @@ class _TaskDetailPageState extends ConsumerState<AppKeyDetailDetailPage> {
               ),
             ),
             const SizedBox(height: 5),
-            Material(
-              color: Colors.transparent,
-              child: Wrap(
-                runSpacing: 5,
-                spacing: 5,
-                children:
-                    AppKeyViewModel.getScopeNames(
-                          (widget.bean["scopes"] as List<dynamic>?),
-                        )
-                        .map(
-                          (e) => Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 3,
-                              horizontal: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  ref
-                                      .watch(themeProvider)
-                                      .themeColor
-                                      .descColor(),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Text(
-                              e,
-                              maxLines: 1,
-                              style: TextStyle(
-                                overflow: TextOverflow.ellipsis,
-                                color:
-                                    ref
-                                        .watch(themeProvider)
-                                        .themeColor
-                                        .blackAndWhite(),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-              ),
+            Wrap(
+              runSpacing: 5,
+              spacing: 5,
+              children: AppKeyViewModel.getScopeNames(
+                (widget.bean["scopes"] as List<dynamic>?),
+              ).map((e) => TagChip(label: e)).toList(),
             ),
             const Spacer(),
             Center(

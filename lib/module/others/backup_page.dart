@@ -10,6 +10,7 @@ import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
+import 'package:qinglong_app/base/ui/selectable_chip.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/file_picker_utils.dart';
 import 'package:qinglong_app/utils/icloud_utils.dart';
@@ -132,70 +133,19 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             runSpacing: 8,
             children: _backupOptions.entries.map((entry) {
               final selected = _selected.contains(entry.key);
-              return GestureDetector(
-                onTap: _processing
-                    ? null
-                    : () {
-                        setState(() {
-                          if (selected) {
-                            _selected.remove(entry.key);
-                          } else {
-                            _selected.add(entry.key);
-                          }
-                        });
-                      },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? (isCyber ? CyberColors.cyan : AppleColors.accent)
-                            .withOpacity(0.15)
-                        : Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: selected
-                          ? (isCyber ? CyberColors.cyan : AppleColors.accent)
-                              .withOpacity(0.6)
-                          : (isCyber
-                              ? CyberColors.descColor
-                              : AppleColors.textSecondary)
-                              .withOpacity(0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        selected
-                            ? CupertinoIcons.checkmark_circle_fill
-                            : CupertinoIcons.circle,
-                        size: 16,
-                        color: selected
-                            ? (isCyber ? CyberColors.cyan : AppleColors.accent)
-                            : (isCyber
-                                ? CyberColors.descColor
-                                : AppleColors.textSecondary),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        entry.value,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: selected
-                              ? (isCyber
-                                  ? CyberColors.titleWhite
-                                  : AppleColors.textPrimary)
-                              : (isCyber
-                                  ? CyberColors.descColor
-                                  : AppleColors.textSecondary),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              return SelectableChip(
+                label: entry.value,
+                selected: selected,
+                disabled: _processing,
+                onToggle: (value) {
+                  setState(() {
+                    if (value) {
+                      _selected.add(entry.key);
+                    } else {
+                      _selected.remove(entry.key);
+                    }
+                  });
+                },
               );
             }).toList(),
           ),

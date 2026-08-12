@@ -313,7 +313,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           label: '别名',
           controller: _aliasController,
           hint: '请输入别名(选填),仅用于展示',
-          inputFormatters: [LengthLimitingTextInputFormatter(10)],
+          inputFormatters: [LengthLimitingTextInputFormatter(20)],
         ),
       ],
     );
@@ -796,6 +796,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       title: '修改名称',
       hintText: '请输入名称',
       initialValue: bean.alias ?? '',
+      inputFormatters: [LengthLimitingTextInputFormatter(20)],
     ).then((newAlias) {
       if (newAlias == null) return;
       final trimmed = newAlias.trim();

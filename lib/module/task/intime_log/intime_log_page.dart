@@ -80,25 +80,25 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
       }
       content = newContent;
 
-      String? found = ScanPageState.foundReg(
-        widget.command ?? "",
-        content ?? "",
-      );
-      if (found != null &&
-          found.isNotEmpty &&
+      // 使用新的 foundAllReg 同时搜索 NodeJS 和 Python 缺失依赖
+      List<String> foundDeps = ScanPageState.foundAllReg(content ?? "");
+      if (foundDeps.isNotEmpty &&
           widget.command != null &&
           (widget.command!.endsWith(".js") ||
               widget.command!.endsWith(".ts") ||
               widget.command!.endsWith(".py")) &&
           SpUtil.getInt(spVIP, defValue: typeNormal) != typeNormal) {
         Api api = Api(SingleAccountPageState.of(context)?.index ?? 0);
-        var result = await ScanPageState.autoInstallFounded(
-          api,
-          found,
-          widget.command!,
-        );
-        if (result == true) {
-          "已安装依赖 $found".toast();
+        bool isPy = widget.command!.endsWith(".py");
+        for (String found in foundDeps) {
+          var result = await ScanPageState.autoInstallFounded(
+            api,
+            found,
+            isPy,
+          );
+          if (result == true) {
+            "已安装依赖 $found".toast();
+          }
         }
       }
       if (alwaysAuthScroll) {
