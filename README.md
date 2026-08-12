@@ -72,7 +72,7 @@
 
 ### 新增功能与设计
 
-- **三种主题模式**：赛博朋克（青色霓虹 #00F0FF + 玻璃态背景 + BackdropFilter 模糊）、Apple（#00cccc 纯色 + BackdropFilter 模糊弹窗）、白色（18px 圆角统一规范）。黑色主题已合并入赛博模式
+- **三种主题模式**：赛博、Apple（#00cccc 纯色 + BackdropFilter 模糊弹窗）、白色（18px 圆角统一规范）。黑色主题已合并入赛博模式
 - **主题切换动画**：基于 `AnimatedTheme`（300ms easeInOut）实现当前页面平滑过渡
 - **多账号 HTTP 缓存隔离**：HTTP 缓存按账号隔离，防止跨账号数据泄漏
 - **仪表盘功能扩展**：新增 4 个 API 端点（`/api/dashboard/trend`、`/top-time`、`/top-count`、`/labels`）及对应 UI 模块，自绘折线图（`CustomPaint`，无 fl_chart 依赖），老版本服务端自动隐藏不支持的卡片
