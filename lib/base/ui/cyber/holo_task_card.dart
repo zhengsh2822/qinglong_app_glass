@@ -291,7 +291,6 @@ class _HoloTaskCardState extends State<HoloTaskCard>
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontFamily: CyberColors.monoFont,
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: CyberColors.titleWhite,
@@ -303,7 +302,6 @@ class _HoloTaskCardState extends State<HoloTaskCard>
                         Text(
                           widget.schedule!,
                           style: TextStyle(
-                            fontFamily: CyberColors.monoFont,
                             fontSize: 11,
                             color: CyberColors.cyan.withValues(alpha: 0.7),
                           ),
@@ -341,7 +339,6 @@ class _HoloTaskCardState extends State<HoloTaskCard>
                         style: TextStyle(
                           fontSize: 10,
                           color: CyberColors.descColor,
-                          fontFamily: CyberColors.monoFont,
                         ),
                       ),
                   ],

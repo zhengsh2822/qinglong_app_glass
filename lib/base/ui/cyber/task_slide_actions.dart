@@ -188,7 +188,6 @@ class _CyberSlideButton extends StatelessWidget {
               style: TextStyle(
                 color: data.foregroundColor,
                 fontSize: 10,
-                fontFamily: CyberColors.monoFont,
                 fontWeight: FontWeight.w500,
               ),
             ),

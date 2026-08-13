@@ -35,7 +35,6 @@ class CupertinoSheer extends ConsumerWidget {
                 style: const TextStyle(
                   color: CyberColors.titleWhite,
                   fontSize: 16,
-                  fontFamily: CyberColors.monoFont,
                 ),
               ),
             ),

@@ -282,7 +282,6 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: isCyber ? CyberColors.monoFont : null,
                     color:
                         isCyber
                             ? CyberColors.titleWhite

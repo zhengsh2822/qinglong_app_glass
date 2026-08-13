@@ -306,7 +306,6 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                   style: TextStyle(
                     fontSize: isCyber ? 20 : 17,
                     fontWeight: FontWeight.w600,
-                    fontFamily: isCyber ? CyberColors.monoFont : null,
                     color:
                         isCyber
                             ? CyberColors.titleWhite
@@ -616,7 +615,6 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,
-                        fontFamily: isCyber ? CyberColors.monoFont : null,
                         color:
                             isCyber
                                 ? CyberColors.titleWhite
@@ -665,7 +663,6 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 13,
-                fontFamily: isCyber ? CyberColors.monoFont : null,
                 color:
                     isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
               ),
@@ -783,7 +780,6 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               '基准: ${cpus}核',
               style: TextStyle(
                 fontSize: isCyber ? 11 : 11,
-                fontFamily: isCyber ? CyberColors.monoFont : null,
                 color: isCyber
                     ? CyberColors.descColor
                     : AppleColors.textTertiary,
@@ -826,7 +822,6 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                       '${values[i].toStringAsFixed(2)}  ${percentDisplay.toStringAsFixed(0)}%',
                       style: TextStyle(
                         fontSize: isCyber ? 12 : 12,
-                        fontFamily: isCyber ? CyberColors.monoFont : null,
                         color: isCyber
                             ? CyberColors.titleWhite
                             : AppleColors.textPrimary,
@@ -904,7 +899,6 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: isCyber ? 12 : 13,
-                fontFamily: isCyber ? CyberColors.monoFont : null,
                 fontWeight: highlight && i == 0 ? FontWeight.w600 : null,
                 color: textColor,
               ),
@@ -934,7 +928,6 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
           style: TextStyle(
             fontSize: isCyber ? 18 : 17,
             fontWeight: FontWeight.w600,
-            fontFamily: isCyber ? CyberColors.monoFont : null,
             color: isCyber ? color : AppleColors.textPrimary,
           ),
         ),
@@ -968,7 +961,6 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               value,
               style: TextStyle(
                 fontSize: isCyber ? 12 : 13,
-                fontFamily: isCyber ? CyberColors.monoFont : null,
                 color:
                     isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
               ),
@@ -1008,7 +1000,6 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
             value,
             style: TextStyle(
               fontSize: 13,
-              fontFamily: isCyber ? CyberColors.monoFont : null,
               color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
             ),
           ),
@@ -1176,7 +1167,6 @@ class _TrendChartPainter extends CustomPainter {
     final textStyle = TextStyle(
       fontSize: isCyber ? 9 : 10,
       color: textColor,
-      fontFamily: isCyber ? CyberColors.monoFont : null,
     );
     const gridLines = 4;
     for (var i = 0; i <= gridLines; i++) {
@@ -1289,7 +1279,6 @@ class _TrendChartPainter extends CustomPainter {
       final dateStyle = TextStyle(
         fontSize: isCyber ? 9 : 10,
         color: textColor,
-        fontFamily: isCyber ? CyberColors.monoFont : null,
       );
       // 控制标签密度：超过 7 个则只显示首尾
       final showEvery = values.length > 8 ? (values.length / 6).ceil() : 1;

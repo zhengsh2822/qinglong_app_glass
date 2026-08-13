@@ -108,6 +108,7 @@ class ThemeViewModel extends ChangeNotifier {
 
   ThemeData getWhiteTheme() {
     return ThemeData.light().copyWith(
+      textTheme: ThemeData.light().textTheme.apply(fontFamily: 'MiSans'),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),
@@ -262,6 +263,7 @@ class ThemeViewModel extends ChangeNotifier {
 
   ThemeData getLightTheme() {
     return ThemeData.light().copyWith(
+      textTheme: ThemeData.light().textTheme.apply(fontFamily: 'MiSans'),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),
@@ -416,6 +418,7 @@ class ThemeViewModel extends ChangeNotifier {
 
   ThemeData getDartTheme() {
     return ThemeData.dark().copyWith(
+      textTheme: ThemeData.dark().textTheme.apply(fontFamily: 'MiSans'),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),
@@ -505,6 +508,7 @@ class ThemeViewModel extends ChangeNotifier {
   /// 赛博终端主题
   ThemeData getCyberTheme() {
     return ThemeData.dark().copyWith(
+      textTheme: ThemeData.dark().textTheme.apply(fontFamily: 'MiSans'),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),

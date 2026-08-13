@@ -39,7 +39,6 @@ class RunningWidget extends ConsumerWidget {
               style: TextStyle(
                 color: color,
                 fontSize: 9,
-                fontFamily: isCyber ? CyberColors.monoFont : null,
               ),
             ),
           ],

@@ -287,6 +287,8 @@ class OtherPageState extends ConsumerState<OtherPage>
                         _buildFeatureButton(
                           title: "仪表盘",
                           imagePath: "assets/images/icon_c.png",
+                          iconSize: 28,
+                          fontSize: 15,
                           onTap: () {
                             Navigator.of(
                               context,
@@ -306,6 +308,8 @@ class OtherPageState extends ConsumerState<OtherPage>
                                   ? "订阅管理"
                                   : "拉库管理",
                           imagePath: "assets/images/icon_subsctibe.png",
+                          iconSize: 28,
+                          fontSize: 15,
                           onTap: () {
                             if (getIt<SystemBean>(
                               instanceName:
@@ -333,6 +337,8 @@ class OtherPageState extends ConsumerState<OtherPage>
                         _buildFeatureButton(
                           title: "脚本管理",
                           imagePath: "assets/images/icon_s.png",
+                          iconSize: 28,
+                          fontSize: 15,
                           onTap: () {
                             Navigator.of(
                               context,
@@ -342,6 +348,8 @@ class OtherPageState extends ConsumerState<OtherPage>
                         _buildFeatureButton(
                           title: "依赖管理",
                           imagePath: "assets/images/icon_d.png",
+                          iconSize: 28,
+                          fontSize: 15,
                           onTap: () {
                             Navigator.of(
                               context,
@@ -418,10 +426,10 @@ class OtherPageState extends ConsumerState<OtherPage>
                     Row(
                       children: [
                         Expanded(
-                          child: buildOtherFun2(
-                            "多账号数",
-                            CupertinoIcons.infinite,
-                            () {
+                          child: _buildFeatureButton(
+                            title: "多账号数",
+                            icon: CupertinoIcons.infinite,
+                            onTap: () {
                               if (SpUtil.getBool(
                                 spSingleInstance,
                                 defValue: false,
@@ -440,19 +448,19 @@ class OtherPageState extends ConsumerState<OtherPage>
                           ),
                         ),
                         Expanded(
-                          child: buildOtherFun2(
-                            "京东助手",
-                            CupertinoIcons.gift,
-                            () {
+                          child: _buildFeatureButton(
+                            title: "京东助手",
+                            icon: CupertinoIcons.gift,
+                            onTap: () {
                               Navigator.of(context).pushNamed(Routes.routeJdck);
                             },
                           ),
                         ),
                         Expanded(
-                          child: buildOtherFun2(
-                            "悬浮时间",
-                            CupertinoIcons.clock,
-                            () async {
+                          child: _buildFeatureButton(
+                            title: "悬浮时间",
+                            icon: CupertinoIcons.clock,
+                            onTap: () async {
                               final started =
                                   await FloatingClockService.toggleFloating();
                               if (!started) {
@@ -494,10 +502,10 @@ class OtherPageState extends ConsumerState<OtherPage>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        buildOtherFun2(
-                          "扫描依赖",
-                          CupertinoIcons.doc_text_search,
-                          () {
+                        _buildFeatureButton(
+                          title: "扫描依赖",
+                          icon: CupertinoIcons.doc_text_search,
+                          onTap: () {
                             Navigator.of(context).push(
                               CupertinoPageRoute(
                                 builder: (context) => const ScanPage(),
@@ -505,10 +513,10 @@ class OtherPageState extends ConsumerState<OtherPage>
                             );
                           },
                         ),
-                        buildOtherFun2(
-                          "字体大小",
-                          CupertinoIcons.textformat_size,
-                          () {
+                        _buildFeatureButton(
+                          title: "字体大小",
+                          icon: CupertinoIcons.textformat_size,
+                          onTap: () {
                             Navigator.of(context).push(
                               CupertinoPageRoute(
                                 builder: (context) => const TextSizePage(),
@@ -516,17 +524,25 @@ class OtherPageState extends ConsumerState<OtherPage>
                             );
                           },
                         ),
-                        buildOtherFun2("文件备份", CupertinoIcons.cloud_upload, () {
-                          Navigator.of(context).pushNamed(Routes.routeICloud);
-                        }),
+                        _buildFeatureButton(
+                          title: "文件备份",
+                          icon: CupertinoIcons.cloud_upload,
+                          onTap: () {
+                            Navigator.of(context).pushNamed(Routes.routeICloud);
+                          },
+                        ),
                         if (!SpUtil.getBool(spSingleInstance, defValue: false))
-                          buildOtherFun2("账号排序", CupertinoIcons.arrow_swap, () {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (context) => const SortAccountPage(),
-                              ),
-                            );
-                          }),
+                          _buildFeatureButton(
+                            title: "账号排序",
+                            icon: CupertinoIcons.arrow_swap,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                CupertinoPageRoute(
+                                  builder: (context) => const SortAccountPage(),
+                                ),
+                              );
+                            },
+                          ),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -558,19 +574,19 @@ class OtherPageState extends ConsumerState<OtherPage>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        buildOtherFun2(
-                          "任务日志",
-                          CupertinoIcons.square_stack_3d_down_right,
-                          () {
+                        _buildFeatureButton(
+                          title: "任务日志",
+                          icon: CupertinoIcons.square_stack_3d_down_right,
+                          onTap: () {
                             Navigator.of(
                               context,
                             ).pushNamed(Routes.routeTaskLog);
                           },
                         ),
-                        buildOtherFun2(
-                          "登录日志",
-                          CupertinoIcons.text_badge_checkmark,
-                          () {
+                        _buildFeatureButton(
+                          title: "登录日志",
+                          icon: CupertinoIcons.text_badge_checkmark,
+                          onTap: () {
                             if (SingleAccountPageState.ofUserInfo(
                               context,
                             ).useSecretLogined) {
@@ -582,81 +598,104 @@ class OtherPageState extends ConsumerState<OtherPage>
                             }
                           },
                         ),
-                        buildOtherFun2("应用设置", CupertinoIcons.gear_alt, () {
-                          Navigator.of(context).push(
-                            CupertinoPageRoute(
-                              builder: (context) => const AppKeyPage(),
-                            ),
-                          );
-                        }),
-                        buildOtherFun2("通知设置", CupertinoIcons.envelope, () {
-                          Navigator.of(context).push(
-                            CupertinoPageRoute(
-                              builder: (context) => const PushSettingPage(),
-                            ),
-                          );
-                        }),
+                        _buildFeatureButton(
+                          title: "应用设置",
+                          icon: CupertinoIcons.gear_alt,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (context) => const AppKeyPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildFeatureButton(
+                          title: "通知设置",
+                          icon: CupertinoIcons.envelope,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (context) => const PushSettingPage(),
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        buildOtherFun2("修改密码", CupertinoIcons.lock_shield, () {
-                          if (SingleAccountPageState.ofUserInfo(
-                            context,
-                          ).useSecretLogined) {
-                            "使用client_id方式登录无法修改密码".toast();
-                          } else {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder:
-                                    (context) => const UpdatePasswordPage(),
-                              ),
-                            );
-                          }
-                        }),
-                        buildOtherFun2(
-                          "日志设置",
-                          CupertinoIcons.gobackward_30,
-                          () {
+                        _buildFeatureButton(
+                          title: "修改密码",
+                          icon: CupertinoIcons.lock_shield,
+                          onTap: () {
+                            if (SingleAccountPageState.ofUserInfo(
+                              context,
+                            ).useSecretLogined) {
+                              "使用client_id方式登录无法修改密码".toast();
+                            } else {
+                              Navigator.of(context).push(
+                                CupertinoPageRoute(
+                                  builder:
+                                      (context) => const UpdatePasswordPage(),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                        _buildFeatureButton(
+                          title: "日志设置",
+                          icon: CupertinoIcons.gobackward_30,
+                          onTap: () {
                             _delLog(context);
                           },
                         ),
-                        buildOtherFun2(
-                          "系统设置",
-                          CupertinoIcons.shield_lefthalf_fill,
-                          () {
+                        _buildFeatureButton(
+                          title: "系统设置",
+                          icon: CupertinoIcons.shield_lefthalf_fill,
+                          onTap: () {
                             Navigator.of(
                               context,
                             ).pushNamed(Routes.routeSetting);
                           },
                         ),
-                        buildOtherFun2("关于软件", CupertinoIcons.info_circle, () {
-                          Navigator.of(context).pushNamed(Routes.routeAbout);
-                        }),
+                        _buildFeatureButton(
+                          title: "关于软件",
+                          icon: CupertinoIcons.info_circle,
+                          onTap: () {
+                            Navigator.of(context).pushNamed(Routes.routeAbout);
+                          },
+                        ),
                       ],
                     ),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        buildOtherFun2("依赖设置", CupertinoIcons.cube_box, () {
-                          Navigator.of(context).push(
-                            CupertinoPageRoute(
-                              builder: (context) =>
-                                  const DependencySettingPage(),
-                            ),
-                          );
-                        }),
-                        buildOtherFun2("备份恢复", CupertinoIcons.cloud_upload,
-                            () {
-                          Navigator.of(context).push(
-                            CupertinoPageRoute(
-                              builder: (context) => const BackupPage(),
-                            ),
-                          );
-                        }),
+                        _buildFeatureButton(
+                          title: "依赖设置",
+                          icon: CupertinoIcons.cube_box,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (context) =>
+                                    const DependencySettingPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildFeatureButton(
+                          title: "备份恢复",
+                          icon: CupertinoIcons.cloud_upload,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (context) => const BackupPage(),
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ],
@@ -725,90 +764,41 @@ class OtherPageState extends ConsumerState<OtherPage>
     }
   }
 
-  /// 功能按钮（带图片 + 文字，AppleUI 风格）
-  /// 用于 4 按钮和 8 按钮卡片，4 个按钮用 spaceEvenly 紧凑排列
+  /// 统一功能按钮组件（支持图片或图标）
+  /// 顶部4按钮用图片28x28+fontSize15，其余用图标24x24+fontSize16
   Widget _buildFeatureButton({
     required String title,
-    required String imagePath,
     required GestureTapCallback onTap,
+    String? imagePath,
+    IconData? icon,
+    double iconSize = 24,
+    double fontSize = 16,
   }) {
-    return CupertinoButton(
-      padding: EdgeInsets.zero,
-      onPressed: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // 直接显示原图，保留图片细节（水滴/书签/文档/齿轮等）
-            // 不使用 ColorFiltered+srcIn，否则图片内部白色细节会变纯色
-            Image.asset(imagePath, width: 28, height: 28, fit: BoxFit.contain),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              maxLines: 1,
-              softWrap: false,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 15,
-                color: ref.watch(themeProvider).themeColor.titleColor(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget buildOtherFun(String title, String icon, GestureTapCallback onTap) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      child: CupertinoButton(
-        onPressed: onTap,
-        padding: EdgeInsets.zero,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 3),
-          child: Column(
-            children: [
-              // 直接显示原图，保留图片细节
-              Image.asset(icon, width: 24, fit: BoxFit.cover),
-              const SizedBox(height: 5),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: ref.watch(themeProvider).themeColor.titleColor(),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildOtherFun2(String title, IconData icon, GestureTapCallback onTap) {
+    final theme = ref.watch(themeProvider);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2),
       child: CupertinoButton(
         padding: EdgeInsets.zero,
         onPressed: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 3),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                color: ref.watch(themeProvider).primaryColor,
-                size: 24,
-              ),
+              if (imagePath != null)
+                Image.asset(imagePath, width: iconSize, height: iconSize, fit: BoxFit.contain)
+              else
+                Icon(icon, color: theme.primaryColor, size: iconSize),
               const SizedBox(height: 5),
               Text(
                 title,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 16,
-                  color: ref.watch(themeProvider).themeColor.titleColor(),
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500,
+                  color: theme.themeColor.titleColor(),
                 ),
               ),
             ],
