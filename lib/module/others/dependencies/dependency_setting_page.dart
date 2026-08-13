@@ -239,7 +239,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
             child: SingleChildScrollView(
               child: SelectableText(
                 detail,
-                style: TextStyle(color: isCyber ? CyberColors.descColor : AppleColors.textSecondary, fontSize: 12, fontFamily: 'monospace'),
+                style: TextStyle(color: isCyber ? CyberColors.descColor : AppleColors.textSecondary, fontSize: 12),
               ),
             ),
           ),

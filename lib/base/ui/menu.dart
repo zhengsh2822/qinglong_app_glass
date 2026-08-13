@@ -52,8 +52,8 @@ class _QLCupertinoContextMenuActionState
   static const Color _kBackgroundColorPressed = Color(0xFFDDDDDD);
   static const double _kButtonHeight = 30.0;
   static const TextStyle _kActionSheetActionStyle = TextStyle(
-    fontFamily: '.SF UI Text',
     inherit: false,
+    fontFamily: 'MiSans',
     fontSize: 14.0,
     fontWeight: FontWeight.w400,
     color: CupertinoColors.black,

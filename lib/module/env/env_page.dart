@@ -698,8 +698,6 @@ class EnvItemCell extends StatelessWidget {
                                     fontSize: isCyber ? 16 : 17,
                                     fontWeight:
                                         isCyber ? null : FontWeight.w600,
-                                    fontFamily:
-                                        isCyber ? CyberColors.monoFont : null,
                                   ),
                                   children: <TextSpan>[
                                     TextSpan(
@@ -779,7 +777,6 @@ class EnvItemCell extends StatelessWidget {
                                     .themeColor
                                     .descColor(),
                         fontSize: 12,
-                        fontFamily: isCyber ? CyberColors.monoFont : null,
                       ),
                     ),
                   ),
@@ -1109,15 +1106,14 @@ class EnvRecordListView extends ConsumerStatefulWidget {
 
 class _EnvRecordListViewState extends ConsumerState<EnvRecordListView>
     with AutomaticKeepAliveClientMixin {
-  final List<Widget> list = [];
-
   @override
   bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    list.clear();
+    // 使用局部变量，避免在 build 中修改实例字段
+    final List<Widget> children = [];
     int displayIndex = 0;
     for (int i = 0; i < widget.list.length; i++) {
       EnvBean value = widget.list[i];
@@ -1125,7 +1121,7 @@ class _EnvRecordListViewState extends ConsumerState<EnvRecordListView>
           (value.name?.contains(widget.searchText) ?? false) ||
           (value.value?.contains(widget.searchText) ?? false) ||
           (value.remarks?.contains(widget.searchText) ?? false)) {
-        list.add(
+        children.add(
           Padding(
             key: ValueKey(value.sId),
             padding: const EdgeInsets.only(bottom: 12),
@@ -1174,7 +1170,7 @@ class _EnvRecordListViewState extends ConsumerState<EnvRecordListView>
               .update(context, item.sId ?? "", newIndex, oldIndex);
         });
       },
-      children: list,
+      children: children,
     );
   }
 }

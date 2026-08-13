@@ -959,6 +959,10 @@ class _ListBodyState extends ConsumerState<ListBodyWidget>
     super.build(context);
     final lowerSearch = widget.searchText.toLowerCase();
     final isCyber = ref.read(themeProvider).themeMode == modeCyber;
+    // 预过滤列表，避免为不匹配项构建 SizedBox.shrink 浪费资源
+    final filteredList = lowerSearch.isEmpty
+        ? widget.list
+        : widget.list.where((item) => _matchSearch(item, lowerSearch)).toList();
     return ListView.separated(
       padding: EdgeInsets.only(
         bottom: kBottomNavigationBarHeight + 50,
@@ -966,10 +970,7 @@ class _ListBodyState extends ConsumerState<ListBodyWidget>
       ),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       itemBuilder: (context, index) {
-        TaskBean item = widget.list[index];
-        if (!_matchSearch(item, lowerSearch)) {
-          return const SizedBox.shrink();
-        }
+        TaskBean item = filteredList[index];
         return TaskItemCell(
           item,
           ref,
@@ -977,20 +978,12 @@ class _ListBodyState extends ConsumerState<ListBodyWidget>
           checkedCallback: (id) {
             widget.changed(id);
           },
-          checked: widget.checked.contains(widget.list[index].sId),
+          checked: widget.checked.contains(item.sId),
         );
       },
-      itemCount: widget.list.length,
+      itemCount: filteredList.length,
       separatorBuilder: (BuildContext context, int index) {
-        TaskBean item = widget.list[index];
-        if (!_matchSearch(item, lowerSearch)) {
-          return const SizedBox.shrink();
-        }
-        // 赛博模式：卡片间距12px，不用分割线
-        if (isCyber) {
-          return const SizedBox(height: 12);
-        }
-        // Apple主题：卡片间距12px，无分割线
+        // 卡片间距12px，不用分割线
         return const SizedBox(height: 12);
       },
     );
@@ -1379,8 +1372,6 @@ class TaskItemCell extends StatelessWidget {
                                           : AppleColors.textPrimary,
                                   fontSize: 17,
                                   fontWeight: isCyber ? null : FontWeight.w600,
-                                  fontFamily:
-                                      isCyber ? CyberColors.monoFont : null,
                                 ),
                               ),
                             ),
@@ -1434,7 +1425,6 @@ class TaskItemCell extends StatelessWidget {
                               ? CyberColors.cyan.withValues(alpha: 0.7)
                               : AppleColors.textPrimary.withValues(alpha: 0.65),
                       fontSize: isCyber ? 14 : 13,
-                      fontFamily: isCyber ? CyberColors.monoFont : null,
                     ),
                   ),
                 ),

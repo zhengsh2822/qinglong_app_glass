@@ -76,7 +76,6 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                           style: TextStyle(
                             fontSize: 14,
                             color: isCyber ? CyberColors.titleWhite : null,
-                            fontFamily: isCyber ? CyberColors.monoFont : null,
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -105,8 +104,6 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                                                   .watch(themeProvider)
                                                   .themeColor
                                                   .title2Color(),
-                                      fontFamily:
-                                          isCyber ? CyberColors.monoFont : null,
                                     ),
                                   ),
                                 ),
@@ -156,10 +153,6 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                                             color:
                                                 isCyber
                                                     ? CyberColors.titleWhite
-                                                    : null,
-                                            fontFamily:
-                                                isCyber
-                                                    ? CyberColors.monoFont
                                                     : null,
                                           ),
                                         ),
@@ -261,7 +254,6 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                                   isCyber
                                       ? CyberColors.cyan
                                       : AppleColors.textPrimary,
-                              fontFamily: isCyber ? CyberColors.monoFont : null,
                             ),
                           ),
                           GestureDetector(
@@ -330,10 +322,6 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                                             selected
                                                 ? FontWeight.w600
                                                 : FontWeight.w400,
-                                        fontFamily:
-                                            isCyber
-                                                ? CyberColors.monoFont
-                                                : null,
                                       ),
                                     ),
                                   ),

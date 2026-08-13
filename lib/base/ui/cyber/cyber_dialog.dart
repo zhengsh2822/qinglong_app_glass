@@ -129,7 +129,6 @@ class CyberInputDecoration {
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     hintStyle: TextStyle(
       color: Colors.white.withValues(alpha: 0.3),
-      fontFamily: CyberColors.monoFont,
       fontSize: 14,
     ),
   );
@@ -183,7 +182,6 @@ class CyberGhostButton extends StatelessWidget {
             style: TextStyle(
               color: textColor,
               fontSize: 15,
-              fontFamily: CyberColors.monoFont,
               fontWeight: primary || danger ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
@@ -250,7 +248,6 @@ Future<bool?> showEditTaskDialog(
                 style: TextStyle(
                   color: CyberColors.cyan,
                   fontSize: 17,
-                  fontFamily: CyberColors.monoFont,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -328,13 +325,11 @@ Future<bool?> showEditTaskDialog(
 const TextStyle _labelStyle = TextStyle(
   color: Colors.white70,
   fontSize: 12,
-  fontFamily: CyberColors.monoFont,
 );
 
 const TextStyle _inputStyle = TextStyle(
   color: CyberColors.titleWhite,
   fontSize: 14,
-  fontFamily: CyberColors.monoFont,
 );
 
 Future<bool?> showCyberConfirmDialog(
@@ -363,7 +358,6 @@ Future<bool?> showCyberConfirmDialog(
               style: TextStyle(
                 color: danger ? CyberColors.neonRed : CyberColors.cyan,
                 fontSize: 17,
-                fontFamily: CyberColors.monoFont,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -418,7 +412,6 @@ Future<String?> showEditScriptDialog(
               style: TextStyle(
                 color: CyberColors.cyan,
                 fontSize: 17,
-                fontFamily: CyberColors.monoFont,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -438,7 +431,6 @@ Future<String?> showEditScriptDialog(
                     style: const TextStyle(
                       color: CyberColors.titleWhite,
                       fontSize: 13,
-                      fontFamily: CyberColors.monoFont,
                       height: 1.5,
                     ),
                     decoration: const InputDecoration(
@@ -497,7 +489,6 @@ Future<String?> showCyberInputDialog(
               style: TextStyle(
                 color: CyberColors.cyan,
                 fontSize: 17,
-                fontFamily: CyberColors.monoFont,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -511,7 +502,6 @@ Future<String?> showCyberInputDialog(
               style: const TextStyle(
                 color: CyberColors.titleWhite,
                 fontSize: 14,
-                fontFamily: CyberColors.monoFont,
               ),
               decoration: CyberInputDecoration.standard.copyWith(
                 hintText: hintText,
@@ -562,7 +552,6 @@ Future<int?> showCyberFrequencyDialog(
               style: TextStyle(
                 color: CyberColors.cyan,
                 fontSize: 17,
-                fontFamily: CyberColors.monoFont,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -575,7 +564,6 @@ Future<int?> showCyberFrequencyDialog(
                   style: TextStyle(
                     color: CyberColors.titleWhite,
                     fontSize: 15,
-                    fontFamily: CyberColors.monoFont,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -588,7 +576,6 @@ Future<int?> showCyberFrequencyDialog(
                     style: const TextStyle(
                       color: CyberColors.titleWhite,
                       fontSize: 15,
-                      fontFamily: CyberColors.monoFont,
                     ),
                     decoration: CyberInputDecoration.standard.copyWith(
                       hintText: '',
@@ -601,7 +588,6 @@ Future<int?> showCyberFrequencyDialog(
                   style: TextStyle(
                     color: CyberColors.titleWhite,
                     fontSize: 15,
-                    fontFamily: CyberColors.monoFont,
                   ),
                 ),
               ],

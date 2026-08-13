@@ -13,6 +13,7 @@ import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/utils/share_utils.dart';
 import 'package:qinglong_app/base/ui/qlvisible.dart';
 import 'package:qinglong_app/base/ui/settings_widgets.dart';
+import 'package:qinglong_app/base/ui/other_page_card.dart';
 import 'package:qinglong_app/module/home/system_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -94,7 +95,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
                 ),
               ),
               const SizedBox(height: 30),
-              SettingsCard(
+              OtherPageCard(
                 child: Column(
                   children: [
                     Padding(
@@ -189,7 +190,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
                 padding: EdgeInsets.symmetric(horizontal: 30),
               ),
               const SizedBox(height: 10),
-              SettingsCard(
+              OtherPageCard(
                 padding: const EdgeInsets.symmetric(
                   vertical: 12,
                   horizontal: 15,
@@ -218,7 +219,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
                 padding: EdgeInsets.symmetric(horizontal: 30),
               ),
               const SizedBox(height: 10),
-              SettingsCard(
+              OtherPageCard(
                 child: Column(
                   children: [
                     QlVisible(

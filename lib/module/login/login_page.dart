@@ -263,7 +263,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       isCyber
                           ? CyberColors.titleWhite
                           : ref.watch(themeProvider).themeColor.title2Color(),
-                  fontFamily: isCyber ? CyberColors.monoFont : null,
                 ),
               ),
             ),
@@ -333,7 +332,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ? const TextStyle(
               fontSize: 14,
               color: CyberColors.cyan,
-              fontFamily: CyberColors.monoFont,
             )
             : TextStyle(
               fontSize: 14,
@@ -349,7 +347,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ? const TextStyle(
                 fontSize: 14,
                 color: CyberColors.titleWhite,
-                fontFamily: CyberColors.monoFont,
               )
               : TextStyle(
                 fontSize: 16,
@@ -431,7 +428,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             style: TextStyle(
               color: isCyber ? CyberColors.descColor : const Color(0xff555555),
               fontSize: 14,
-              fontFamily: isCyber ? CyberColors.monoFont : null,
             ),
           ),
           const SizedBox(width: 10),
@@ -496,7 +492,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             color: Colors.white,
                             fontWeight:
                                 isCyber ? FontWeight.bold : FontWeight.normal,
-                            fontFamily: isCyber ? CyberColors.monoFont : null,
                           ),
                         ),
                 onPressed: () async {
@@ -562,7 +557,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ? CyberColors.descColor
                             : const Color(0xff555555),
                     fontSize: 14,
-                    fontFamily: isCyber ? CyberColors.monoFont : null,
                   ),
                 ),
               ],
@@ -632,7 +626,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     .read(themeProvider)
                                     .themeColor
                                     .titleColor(),
-                        fontFamily: isCyber ? CyberColors.monoFont : null,
                       ),
                     ),
                   ),
@@ -711,8 +704,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontFamily:
-                                        isCyber ? CyberColors.monoFont : null,
                                     color:
                                         isCyber
                                             ? CyberColors.titleWhite
