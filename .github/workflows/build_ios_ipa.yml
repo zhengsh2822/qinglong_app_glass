@@ -16,6 +16,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          # 钉到与本地一致的版本，避免稳定版 API 变更(TabBarTheme→TabBarThemeData)导致编译失败
+          version: '3.29.3'
           channel: stable
           cache: true
 
