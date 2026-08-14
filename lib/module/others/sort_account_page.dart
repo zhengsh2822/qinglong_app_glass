@@ -113,7 +113,12 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
               list
                   .map(
                     (e) => Container(
-                      key: ValueKey(e.host),
+                      // ReorderableListView 强制要求卡片 key 唯一：多个账号登录同一
+                      // host（同样登录账号）或存在未登录账号时，host 可能重复，
+                      // 用 ValueKey(e.host) 会导致 key 重复 → 卡片只显示一部分、
+                      // 长按自动下移/跳动、拖动不稳。改用 ObjectKey(e) 以对象引用
+                      // 唯一性为 key（重排时对象引用不变，key 保持稳定）。
+                      key: ObjectKey(e),
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 6,
