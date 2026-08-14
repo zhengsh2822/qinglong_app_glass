@@ -16,6 +16,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/settings_widgets.dart';
+import 'package:qinglong_app/base/ui/other_page_card.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/others/file_directory_page.dart';
 import 'package:qinglong_app/module/others/other_page.dart';
@@ -56,7 +57,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                 padding: EdgeInsets.symmetric(horizontal: 15),
               ),
               const SizedBox(height: 5),
-              SettingsCard(
+              OtherPageCard(
                 margin: EdgeInsets.zero,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -91,7 +92,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                 padding: EdgeInsets.symmetric(horizontal: 15),
               ),
               const SizedBox(height: 5),
-              SettingsCard(
+              OtherPageCard(
                 margin: EdgeInsets.zero,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -173,7 +174,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                 padding: const EdgeInsets.symmetric(horizontal: 15),
               ),
               const SizedBox(height: 5),
-              SettingsCard(
+              OtherPageCard(
                 margin: EdgeInsets.zero,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -266,7 +267,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                 padding: EdgeInsets.symmetric(horizontal: 15),
               ),
               const SizedBox(height: 5),
-              SettingsCard(
+              OtherPageCard(
                 margin: EdgeInsets.zero,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -352,7 +353,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                 padding: EdgeInsets.symmetric(horizontal: 15),
               ),
               const SizedBox(height: 5),
-              SettingsCard(
+              OtherPageCard(
                 margin: EdgeInsets.zero,
                 child: SettingsTapRow(
                   title: "备份文件删除频率",

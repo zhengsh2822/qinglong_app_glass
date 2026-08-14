@@ -251,7 +251,8 @@ class AppKeyItemCell extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
+                color:
+                    ref.watch(themeProvider).themeColor.titleColor(),
               ),
             ),
             const SizedBox(height: 10),

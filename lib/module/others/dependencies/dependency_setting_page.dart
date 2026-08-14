@@ -233,13 +233,13 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: isCyber ? CyberColors.bg : AppleColors.bgSecondary,
-          title: Text('保存失败', style: TextStyle(color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary)),
+          title: Text('保存失败', style: TextStyle(color: ref.read(themeProvider).themeColor.titleColor())),
           content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
               child: SelectableText(
                 detail,
-                style: TextStyle(color: isCyber ? CyberColors.descColor : AppleColors.textSecondary, fontSize: 12),
+                style: TextStyle(color: ref.read(themeProvider).themeColor.descColor(), fontSize: 12),
               ),
             ),
           ),
@@ -260,8 +260,8 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
 
     // 根据主题模式动态选择颜色
-    final Color titleColor = isCyber ? CyberColors.titleWhite : AppleColors.textPrimary;
-    final Color subtitleColor = isCyber ? CyberColors.descColor : AppleColors.textSecondary;
+    final Color titleColor = ref.read(themeProvider).themeColor.titleColor();
+    final Color subtitleColor = ref.read(themeProvider).themeColor.descColor();
     final Color accentColor = isCyber ? CyberColors.cyan : AppleColors.accent;
 
     Widget body;

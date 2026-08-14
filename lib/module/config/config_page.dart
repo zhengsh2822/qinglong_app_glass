@@ -209,7 +209,7 @@ class ConfigCell extends ConsumerWidget {
               style: TextStyle(
                 overflow: TextOverflow.ellipsis,
                 color:
-                    isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
+                ref.watch(themeProvider).themeColor.titleColor(),
                 fontSize: 17,
                 fontWeight: isCyber ? null : FontWeight.w600,
               ),

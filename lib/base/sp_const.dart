@@ -23,6 +23,12 @@ const String spLocalBackUpFileExperiedTime = "spLocalBackUpFileExperiedTime";
 const String spThemeStyle = "spThemeStyle";
 const String spThemeFollowSystem = "spThemeFollowSystem";
 const String spTextScaleFactor = "spTextScaleFactor";
+// 赛博模式自定义字体颜色（与主题版独立，两主题颜色互斥）
+const String spCyberPrimaryTextColor = "spCyberPrimaryTextColor";
+const String spCyberSecondaryTextColor = "spCyberSecondaryTextColor";
+// 非赛博模式（主题版）自定义字体颜色
+const String spThemePrimaryTextColor = "spThemePrimaryTextColor";
+const String spThemeSecondaryTextColor = "spThemeSecondaryTextColor";
 const String spLogAutoJump2Bottom = "spLogAutoJump2Bottom";
 const String spAndroidKeyboardError = "spAndroidKeyboardError";
 const String spSingleInstance = "spSingleInstance";

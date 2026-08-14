@@ -77,7 +77,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
-                        color: CyberColors.descColor,
+                        color: ref.read(themeProvider).themeColor.descColor(),
                       ),
                     ),
                   ),
@@ -110,7 +110,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
+              color: ref.read(themeProvider).themeColor.titleColor(),
             ),
           ),
           const SizedBox(height: 4),
@@ -118,14 +118,14 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             '将青龙面板数据打包为 .tgz 压缩包，保存到本地',
             style: TextStyle(
                 fontSize: 12,
-                color: isCyber ? CyberColors.descColor : AppleColors.textSecondary),
+                color: ref.read(themeProvider).themeColor.descColor()),
           ),
           const SizedBox(height: 14),
           Text(
             '备份内容（默认包含数据库和上传文件）',
             style: TextStyle(
                 fontSize: 13,
-                color: isCyber ? CyberColors.descColor : AppleColors.textSecondary),
+                color: ref.read(themeProvider).themeColor.descColor()),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -185,7 +185,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
+              color: ref.read(themeProvider).themeColor.titleColor(),
             ),
           ),
           const SizedBox(height: 4),
@@ -193,7 +193,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             '选择本地 .tgz 备份文件上传恢复，恢复后会自动重载系统',
             style: TextStyle(
                 fontSize: 12,
-                color: isCyber ? CyberColors.descColor : AppleColors.textSecondary),
+                color: ref.read(themeProvider).themeColor.descColor()),
           ),
           const SizedBox(height: 14),
           SizedBox(
@@ -429,9 +429,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: (isCyber
-                                ? CyberColors.descColor
-                                : AppleColors.textSecondary)
+                        color: ref
+                            .read(themeProvider)
+                            .themeColor
+                            .descColor()
                             .withOpacity(0.5),
                         borderRadius: BorderRadius.circular(2),
                       ),
@@ -445,9 +446,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w600,
-                            color: isCyber
-                                ? CyberColors.titleWhite
-                                : AppleColors.textPrimary,
+                            color: ref
+                                .read(themeProvider)
+                                .themeColor
+                                .titleColor(),
                           ),
                         ),
                       ),
@@ -461,18 +463,20 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       title: Text(
                         '从最近备份选择',
                         style: TextStyle(
-                          color: isCyber
-                              ? CyberColors.titleWhite
-                              : AppleColors.textPrimary,
+                          color: ref
+                              .read(themeProvider)
+                              .themeColor
+                              .titleColor(),
                         ),
                       ),
                       subtitle: Text(
                         '扫描应用备份目录的 .tgz 文件',
                         style: TextStyle(
                           fontSize: 12,
-                          color: isCyber
-                              ? CyberColors.descColor
-                              : AppleColors.textSecondary,
+                          color: ref
+                              .read(themeProvider)
+                              .themeColor
+                              .descColor(),
                         ),
                       ),
                       onTap: () => Navigator.pop(context, 'recent'),
@@ -486,18 +490,20 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       title: Text(
                         '从文件管理器选择',
                         style: TextStyle(
-                          color: isCyber
-                              ? CyberColors.titleWhite
-                              : AppleColors.textPrimary,
+                          color: ref
+                              .read(themeProvider)
+                              .themeColor
+                              .titleColor(),
                         ),
                       ),
                       subtitle: Text(
                         '调用系统文件管理器选任意 .tgz 文件',
                         style: TextStyle(
                           fontSize: 12,
-                          color: isCyber
-                              ? CyberColors.descColor
-                              : AppleColors.textSecondary,
+                          color: ref
+                              .read(themeProvider)
+                              .themeColor
+                              .descColor(),
                         ),
                       ),
                       onTap: () => Navigator.pop(context, 'manager'),
@@ -545,9 +551,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: (isCyber
-                                ? CyberColors.descColor
-                                : AppleColors.textSecondary)
+                        color: ref
+                            .read(themeProvider)
+                            .themeColor
+                            .descColor()
                             .withOpacity(0.5),
                         borderRadius: BorderRadius.circular(2),
                       ),
@@ -569,9 +576,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w600,
-                            color: isCyber
-                                ? CyberColors.titleWhite
-                                : AppleColors.textPrimary,
+                            color: ref
+                                .read(themeProvider)
+                                .themeColor
+                                .titleColor(),
                           ),
                         ),
                       ],
@@ -589,9 +597,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                         savePath,
                         style: TextStyle(
                           fontSize: 12,
-                          color: isCyber
-                              ? CyberColors.descColor
-                              : AppleColors.textSecondary,
+                          color: ref
+                              .read(themeProvider)
+                              .themeColor
+                              .descColor(),
                           height: 1.4,
                         ),
                       ),
@@ -641,9 +650,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           '完成',
                           style: TextStyle(
                             fontSize: 15,
-                            color: isCyber
-                                ? CyberColors.descColor
-                                : AppleColors.textSecondary,
+                            color: ref
+                                .read(themeProvider)
+                                .themeColor
+                                .descColor(),
                           ),
                         ),
                       ),
@@ -686,9 +696,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: (isCyber
-                              ? CyberColors.descColor
-                              : AppleColors.textSecondary)
+                      color: ref
+                          .read(themeProvider)
+                          .themeColor
+                          .descColor()
                           .withOpacity(0.5),
                       borderRadius: BorderRadius.circular(2),
                     ),
@@ -703,9 +714,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w600,
-                            color: isCyber
-                                ? CyberColors.titleWhite
-                                : AppleColors.textPrimary,
+                            color: ref
+                                .read(themeProvider)
+                                .themeColor
+                                .titleColor(),
                           ),
                         ),
                         const Spacer(),
@@ -714,9 +726,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           child: Icon(
                             CupertinoIcons.xmark,
                             size: 22,
-                            color: isCyber
-                                ? CyberColors.descColor
-                                : AppleColors.textSecondary,
+                            color: ref
+                                .read(themeProvider)
+                                .themeColor
+                                .descColor(),
                           ),
                         ),
                       ],
@@ -767,9 +780,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                         style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w500,
-                                          color: isCyber
-                                              ? CyberColors.titleWhite
-                                              : AppleColors.textPrimary,
+                                          color: ref
+                                              .read(themeProvider)
+                                              .themeColor
+                                              .titleColor(),
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -777,9 +791,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                         '$sizeStr · $time',
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: isCyber
-                                              ? CyberColors.descColor
-                                              : AppleColors.textSecondary,
+                                          color: ref
+                                              .read(themeProvider)
+                                              .themeColor
+                                              .descColor(),
                                         ),
                                       ),
                                     ],
@@ -788,9 +803,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                 Icon(
                                   CupertinoIcons.right_chevron,
                                   size: 16,
-                                  color: isCyber
-                                      ? CyberColors.descColor
-                                      : AppleColors.textSecondary,
+                                  color: ref
+                                      .read(themeProvider)
+                                      .themeColor
+                                      .descColor(),
                                 ),
                               ],
                             ),

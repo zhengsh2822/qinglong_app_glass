@@ -33,7 +33,6 @@ import 'package:path/path.dart' as ints;
 import '../../main.dart';
 import '../appkey/appkey_page.dart';
 import '../home/system_bean.dart';
-import '../poet_page.dart';
 import '../push_setting_page.dart';
 import '../scan_page.dart';
 import '../task/task_page.dart';
@@ -253,14 +252,9 @@ class OtherPageState extends ConsumerState<OtherPage>
                                   () => GestureDetector(
                                     behavior: HitTestBehavior.opaque,
                                     onTap: () {
-                                      if (poetData.isEmpty) return;
-                                      Navigator.of(context).push(
-                                        CupertinoPageRoute(
-                                          builder:
-                                              (context) =>
-                                                  PoetPage(data: poetData),
-                                        ),
-                                      );
+                                      // 与官方青龙一致：点击诗句随机更换一句新诗
+                                      // 不再跳转 PoetPage（其 data 取值逻辑有误会抛异常）
+                                      loadPoet();
                                     },
                                     child: Text(
                                       desc.value,
@@ -392,9 +386,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                         fontWeight: FontWeight.w600,
                         fontSize: isCyber ? 16 : 17,
                         color:
-                            isCyber
-                                ? CyberColors.titleWhite
-                                : AppleColors.textPrimary,
+                            ref.watch(themeProvider).themeColor.titleColor(),
                       ),
                     ),
                     const Spacer(),
@@ -417,9 +409,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                         fontWeight: FontWeight.w600,
                         fontSize: isCyber ? 16 : 17,
                         color:
-                            isCyber
-                                ? CyberColors.titleWhite
-                                : AppleColors.textPrimary,
+                            ref.watch(themeProvider).themeColor.titleColor(),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -493,9 +483,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                         fontWeight: FontWeight.w600,
                         fontSize: isCyber ? 16 : 17,
                         color:
-                            isCyber
-                                ? CyberColors.titleWhite
-                                : AppleColors.textPrimary,
+                            ref.watch(themeProvider).themeColor.titleColor(),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -565,9 +553,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                         fontWeight: FontWeight.w600,
                         fontSize: isCyber ? 16 : 17,
                         color:
-                            isCyber
-                                ? CyberColors.titleWhite
-                                : AppleColors.textPrimary,
+                            ref.watch(themeProvider).themeColor.titleColor(),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -797,7 +783,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: fontSize,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                   color: theme.themeColor.titleColor(),
                 ),
               ),

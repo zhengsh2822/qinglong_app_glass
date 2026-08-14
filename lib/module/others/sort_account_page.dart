@@ -168,11 +168,17 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
         model.host ?? "",
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: ref.watch(themeProvider).themeColor.titleColor(),
+        ),
       ),
       subtitle: Text(
         model.alias ?? "",
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: ref.watch(themeProvider).themeColor.descColor(),
+        ),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 15),
       minVerticalPadding: 10,

@@ -259,10 +259,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color:
-                      isCyber
-                          ? CyberColors.titleWhite
-                          : ref.watch(themeProvider).themeColor.title2Color(),
+                  color: ref.watch(themeProvider).themeColor.titleColor(),
                 ),
               ),
             ),
@@ -342,16 +339,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       controller: controller,
       obscureText: obscureText,
       inputFormatters: inputFormatters,
-      style:
-          isCyber
-              ? const TextStyle(
-                fontSize: 14,
-                color: CyberColors.titleWhite,
-              )
-              : TextStyle(
-                fontSize: 16,
-                color: ref.watch(themeProvider).themeColor.title2Color(),
-              ),
+      style: TextStyle(
+        fontSize: 16,
+        color: ref.watch(themeProvider).themeColor.titleColor(),
+      ),
       decoration:
           isCyber
               ? CyberInputDecoration.standard.copyWith(hintText: hint)
@@ -426,7 +417,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           Text(
             "记住密码",
             style: TextStyle(
-              color: isCyber ? CyberColors.descColor : const Color(0xff555555),
+              color: ref.watch(themeProvider).themeColor.descColor(),
               fontSize: 14,
             ),
           ),
@@ -552,10 +543,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 Text(
                   "历史账号",
                   style: TextStyle(
-                    color:
-                        isCyber
-                            ? CyberColors.descColor
-                            : const Color(0xff555555),
+                    color: ref
+                        .read(themeProvider)
+                        .themeColor
+                        .descColor(),
                     fontSize: 14,
                   ),
                 ),
@@ -650,7 +641,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   /// 历史账号卡片（圆角 18 + 统一卡片设计）
   Widget _buildHistoryAccountCard(UserInfoBean bean, bool isCyber) {
-    final isDark = ref.read(themeProvider).themeMode == modeDark;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
@@ -704,13 +694,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color:
-                                        isCyber
-                                            ? CyberColors.titleWhite
-                                            : ref
-                                                .read(themeProvider)
-                                                .themeColor
-                                                .titleColor(),
+                                    color: ref
+                                        .read(themeProvider)
+                                        .themeColor
+                                        .titleColor(),
                                     fontSize: 15,
                                   ),
                                 ),
@@ -719,12 +706,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               Icon(
                                 CupertinoIcons.pencil,
                                 size: 12,
-                                color:
-                                    isCyber
-                                        ? CyberColors.descColor
-                                        : (isDark
-                                            ? Colors.white54
-                                            : Colors.black45),
+                                color: ref
+                                    .read(themeProvider)
+                                    .themeColor
+                                    .descColor(),
                               ),
                             ],
                           ),
@@ -737,13 +722,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color:
-                                isCyber
-                                    ? CyberColors.descColor
-                                    : ref
-                                        .read(themeProvider)
-                                        .themeColor
-                                        .descColor(),
+                            color: ref
+                                .read(themeProvider)
+                                .themeColor
+                                .descColor(),
                             fontSize: 13,
                           ),
                         ),
@@ -764,10 +746,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       child: Icon(
                         CupertinoIcons.clear_thick,
                         size: 18,
-                        color:
-                            isCyber
-                                ? CyberColors.descColor
-                                : (isDark ? Colors.white54 : Colors.black45),
+                        color: ref
+                            .read(themeProvider)
+                            .themeColor
+                            .descColor(),
                       ),
                     ),
                   ),

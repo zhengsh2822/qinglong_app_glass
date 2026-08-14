@@ -576,13 +576,10 @@ class TaskItemCell extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     overflow: TextOverflow.ellipsis,
-                                    color:
-                                        isCyber
-                                            ? CyberColors.titleWhite
-                                            : ref
-                                                .watch(themeProvider)
-                                                .themeColor
-                                                .titleColor(),
+                                    color: ref
+                                        .watch(themeProvider)
+                                        .themeColor
+                                        .titleColor(),
                                     fontSize: 16,
                                   ),
                                 ),
@@ -612,13 +609,10 @@ class TaskItemCell extends StatelessWidget {
                       maxLines: 1,
                       style: TextStyle(
                         overflow: TextOverflow.ellipsis,
-                        color:
-                            isCyber
-                                ? CyberColors.cyan.withValues(alpha: 0.7)
-                                : ref
-                                    .watch(themeProvider)
-                                    .themeColor
-                                    .descColor(),
+                        color: ref
+                            .watch(themeProvider)
+                            .themeColor
+                            .descColor(),
                         fontSize: 12,
                       ),
                     ),
@@ -632,13 +626,10 @@ class TaskItemCell extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         overflow: TextOverflow.ellipsis,
-                        color:
-                            isCyber
-                                ? CyberColors.descColor
-                                : ref
-                                    .watch(themeProvider)
-                                    .themeColor
-                                    .descColor(),
+                        color: ref
+                            .watch(themeProvider)
+                            .themeColor
+                            .descColor(),
                         fontSize: 12,
                       ),
                     ),
