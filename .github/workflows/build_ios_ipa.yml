@@ -39,3 +39,28 @@ jobs:
           name: qinglong_app_ios_unsigned
           path: qinglong_app_ios_unsigned.ipa
           if-no-files-found: error
+
+      - name: Build for iOS Simulator
+        run: flutter build ios --simulator
+
+      - name: Run app on iOS Simulator and take screenshots
+        run: |
+          DEVICE=$(xcrun simctl list devices available | awk -F'[()]' '/iPhone/{print $1; exit}' | sed 's/[[:space:]]*$//')
+          echo "Using simulator: $DEVICE"
+          xcrun simctl boot "$DEVICE" 2>/dev/null || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" build/ios/iphonesimulator/Runner.app
+          xcrun simctl launch "$DEVICE" com.qlapp.qinglongApp
+          sleep 20
+          xcrun simctl io "$DEVICE" screenshot simulator_screen_1.png
+          sleep 5
+          xcrun simctl io "$DEVICE" screenshot simulator_screen_2.png
+
+      - name: Upload simulator screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios_simulator_screenshots
+          path: |
+            simulator_screen_1.png
+            simulator_screen_2.png
+          if-no-files-found: error
