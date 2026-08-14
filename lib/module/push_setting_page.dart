@@ -14,6 +14,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/other_page_card.dart';
 import 'package:qinglong_app/base/ui/settings_widgets.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -82,7 +83,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                         // 通知方式选择 — 点击后向下展开弹窗卡片
                         GestureDetector(
                           onTap: () => _showPushSelector(context),
-                          child: SettingsCard(
+                          child: OtherPageCard(
                             margin: EdgeInsets.zero,
                             padding: const EdgeInsets.symmetric(
                               vertical: 14,

@@ -23,6 +23,39 @@ int modeCyber = 3;
 // 主色 - 青色 (#00cccc) - Apple UI Design SKILL 配色
 Color _primaryColor = const Color(0xFF00CCCC);
 
+/// 非赛博（主题版）主字体默认色
+const Color kThemePrimaryTextDefault = Color(0xFF1F1F1F);
+/// 非赛博（主题版）次字体默认色
+const Color kThemeSecondaryTextDefault = Color(0xFFA2A2A2);
+/// 赛博主字体默认色
+const Color kCyberPrimaryTextDefault = Color(0xFFF0F0F0);
+/// 赛博次字体默认色
+const Color kCyberSecondaryTextDefault = Color(0xFF8D8D8D);
+
+/// 自定义主字体颜色（赛博模式），未设置（-1）时回退到默认值
+Color _customCyberPrimaryOf(Color fallback) {
+  final custom = SpUtil.getInt(spCyberPrimaryTextColor, defValue: -1);
+  return custom >= 0 ? Color(custom) : fallback;
+}
+
+/// 自定义次字体颜色（赛博模式），未设置（-1）时回退到默认值
+Color _customCyberSecondaryOf(Color fallback) {
+  final custom = SpUtil.getInt(spCyberSecondaryTextColor, defValue: -1);
+  return custom >= 0 ? Color(custom) : fallback;
+}
+
+/// 自定义主字体颜色（非赛博/主题版），未设置（-1）时回退到默认值
+Color _customThemePrimaryOf(Color fallback) {
+  final custom = SpUtil.getInt(spThemePrimaryTextColor, defValue: -1);
+  return custom >= 0 ? Color(custom) : fallback;
+}
+
+/// 自定义次字体颜色（非赛博/主题版），未设置（-1）时回退到默认值
+Color _customThemeSecondaryOf(Color fallback) {
+  final custom = SpUtil.getInt(spThemeSecondaryTextColor, defValue: -1);
+  return custom >= 0 ? Color(custom) : fallback;
+}
+
 class ThemeViewModel extends ChangeNotifier {
   late ThemeData currentTheme;
 
@@ -31,6 +64,84 @@ class ThemeViewModel extends ChangeNotifier {
   Color primaryColor = _primaryColor;
 
   ThemeColors themeColor = LightThemeColors();
+
+  // 兼容旧引用：主文字色 / 次要文字色
+  // 支持用户自定义颜色（字体设置页面设置），未设置（-1）时用默认主题色
+  // 赛博/非赛博独立存储，按当前主题返回对应的自定义颜色
+  bool get _isCyberNow => themeMode == modeCyber;
+
+  Color get customPrimaryTextColor {
+    final custom = SpUtil.getInt(
+          _isCyberNow ? spCyberPrimaryTextColor : spThemePrimaryTextColor,
+          defValue: -1,
+        );
+    return custom >= 0 ? Color(custom) : themeColor.titleColor();
+  }
+  Color get customSecondaryTextColor {
+    final custom = SpUtil.getInt(
+          _isCyberNow ? spCyberSecondaryTextColor : spThemeSecondaryTextColor,
+          defValue: -1,
+        );
+    return custom >= 0 ? Color(custom) : themeColor.descColor();
+  }
+
+  /// 当前自定义主字体色（未设置为 null）
+  Color? get primaryTextColor =>
+      _readCustom(_isCyberNow ? spCyberPrimaryTextColor : spThemePrimaryTextColor);
+  /// 当前自定义次字体色（未设置为 null）
+  Color? get secondaryTextColor =>
+      _readCustom(_isCyberNow ? spCyberSecondaryTextColor : spThemeSecondaryTextColor);
+
+  // —— 赛博模式颜色（供字体设置页独立读写）——
+  Color? get cyberPrimaryTextColor =>
+      _readCustom(spCyberPrimaryTextColor);
+  Color? get cyberSecondaryTextColor =>
+      _readCustom(spCyberSecondaryTextColor);
+  void setCyberPrimaryTextColor(Color? color) {
+    SpUtil.putInt(spCyberPrimaryTextColor, color?.value ?? -1);
+    notifyListeners();
+  }
+  void setCyberSecondaryTextColor(Color? color) {
+    SpUtil.putInt(spCyberSecondaryTextColor, color?.value ?? -1);
+    notifyListeners();
+  }
+
+  // —— 非赛博（主题版）颜色（供字体设置页独立读写）——
+  Color? get themePrimaryTextColor =>
+      _readCustom(spThemePrimaryTextColor);
+  Color? get themeSecondaryTextColor =>
+      _readCustom(spThemeSecondaryTextColor);
+  void setThemePrimaryTextColor(Color? color) {
+    SpUtil.putInt(spThemePrimaryTextColor, color?.value ?? -1);
+    notifyListeners();
+  }
+  void setThemeSecondaryTextColor(Color? color) {
+    SpUtil.putInt(spThemeSecondaryTextColor, color?.value ?? -1);
+    notifyListeners();
+  }
+
+  Color? _readCustom(String key) {
+    final custom = SpUtil.getInt(key, defValue: -1);
+    return custom >= 0 ? Color(custom) : null;
+  }
+
+  /// 设置当前主题对应的主字体颜色（null 表示恢复默认），notifyListeners 让全局 rebuild
+  void setCustomPrimaryTextColor(Color? color) {
+    if (_isCyberNow) {
+      setCyberPrimaryTextColor(color);
+    } else {
+      setThemePrimaryTextColor(color);
+    }
+  }
+
+  /// 设置当前主题对应的次字体颜色（null 表示恢复默认），notifyListeners 让全局 rebuild
+  void setCustomSecondaryTextColor(Color? color) {
+    if (_isCyberNow) {
+      setCyberSecondaryTextColor(color);
+    } else {
+      setThemeSecondaryTextColor(color);
+    }
+  }
 
   ThemeViewModel() {
     if (SpUtil.getBool(spThemeFollowSystem, defValue: false)) {
@@ -649,7 +760,7 @@ abstract class ThemeColors {
 
 class LightThemeColors extends ThemeColors {
   @override
-  Color titleColor() => AppleColors.textPrimary;
+  Color titleColor() => _customThemePrimaryOf(kThemePrimaryTextDefault);
 
   @override
   Color pinColor() => AppleColors.bgPrimary;
@@ -658,7 +769,7 @@ class LightThemeColors extends ThemeColors {
   Map<String, TextStyle> codeEditorTheme() => qinglongLightTheme;
 
   @override
-  Color descColor() => const Color(0xFF666666);
+  Color descColor() => _customThemeSecondaryOf(kThemeSecondaryTextDefault);
 
   @override
   Color settingBgColor() => AppleColors.bgPrimary;
@@ -685,7 +796,7 @@ class LightThemeColors extends ThemeColors {
   Color title2Color() => AppleColors.textPrimary;
 
   @override
-  Color hintColor() => AppleColors.textTertiary;
+  Color hintColor() => _customThemeSecondaryOf(AppleColors.textTertiary);
 
   @override
   Color bg2Color() => AppleColors.bgSecondary;
@@ -708,7 +819,7 @@ class LightThemeColors extends ThemeColors {
 
 class WhiteThemeColors extends ThemeColors {
   @override
-  Color titleColor() => AppleColors.textPrimary;
+  Color titleColor() => _customThemePrimaryOf(kThemePrimaryTextDefault);
 
   @override
   Color codeBgColor() => AppleColors.bgPrimary;
@@ -726,7 +837,7 @@ class WhiteThemeColors extends ThemeColors {
   Map<String, TextStyle> codeEditorTheme() => qinglongLightTheme;
 
   @override
-  Color descColor() => const Color(0xFF666666);
+  Color descColor() => _customThemeSecondaryOf(kThemeSecondaryTextDefault);
 
   @override
   Color pinedAndWhite() => Colors.white;
@@ -756,7 +867,7 @@ class WhiteThemeColors extends ThemeColors {
   Color title2Color() => AppleColors.textPrimary;
 
   @override
-  Color hintColor() => AppleColors.textTertiary;
+  Color hintColor() => _customThemeSecondaryOf(AppleColors.textTertiary);
 
   @override
   Color bg2Color() => AppleColors.bgSecondary;
@@ -768,7 +879,7 @@ class WhiteThemeColors extends ThemeColors {
 class DartThemeColors extends ThemeColors {
   @override
   Color hintColor() {
-    return const Color(0xffBBBBBB);
+    return _customThemeSecondaryOf(const Color(0xffBBBBBB));
   }
 
   @override
@@ -793,7 +904,7 @@ class DartThemeColors extends ThemeColors {
 
   @override
   Color titleColor() {
-    return Colors.white;
+    return _customThemePrimaryOf(Colors.white);
   }
 
   @override
@@ -808,7 +919,7 @@ class DartThemeColors extends ThemeColors {
 
   @override
   Color descColor() {
-    return const Color(0xFF666666);
+    return _customThemeSecondaryOf(const Color(0xFF666666));
   }
 
   @override
@@ -865,16 +976,16 @@ class DartThemeColors extends ThemeColors {
 /// 赛博终端配色
 class CyberThemeColors extends ThemeColors {
   @override
-  Color titleColor() => CyberColors.titleWhite;
+  Color titleColor() => _customCyberPrimaryOf(kCyberPrimaryTextDefault);
 
   @override
   Color title2Color() => CyberColors.titleWhite;
 
   @override
-  Color descColor() => CyberColors.descColor;
+  Color descColor() => _customCyberSecondaryOf(kCyberSecondaryTextDefault);
 
   @override
-  Color hintColor() => CyberColors.descColor;
+  Color hintColor() => _customCyberSecondaryOf(kCyberSecondaryTextDefault);
 
   @override
   Color settingBgColor() => CyberColors.bg;

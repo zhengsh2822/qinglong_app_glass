@@ -1067,6 +1067,7 @@ class TitleWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     return RichText(
+      textScaler: MediaQuery.textScalerOf(context),
       text: TextSpan(
         text: !required ? "" : "* ",
         style: const TextStyle(

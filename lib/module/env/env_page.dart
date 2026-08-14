@@ -671,6 +671,7 @@ class EnvItemCell extends StatelessWidget {
                               child: Text(
                                 "${getIndexByIndex(context, index)}",
                                 style: TextStyle(
+                                  fontFamily: 'MiSans',
                                   color:
                                       isCyber
                                           ? ref
@@ -687,17 +688,20 @@ class EnvItemCell extends StatelessWidget {
                               child: RichText(
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
+                                textScaler: MediaQuery.textScalerOf(context),
                                 text: TextSpan(
                                   text: bean.name ?? "",
                                   style: TextStyle(
+                                    fontFamily: 'MiSans',
                                     overflow: TextOverflow.ellipsis,
                                     color:
-                                        isCyber
-                                            ? CyberColors.titleWhite
-                                            : AppleColors.textPrimary,
+                                        ref
+                                            .watch(themeProvider)
+                                            .themeColor
+                                            .titleColor(),
                                     fontSize: isCyber ? 16 : 17,
                                     fontWeight:
-                                        isCyber ? null : FontWeight.w600,
+                                        isCyber ? FontWeight.w500 : FontWeight.w600,
                                   ),
                                   children: <TextSpan>[
                                     TextSpan(
@@ -707,14 +711,13 @@ class EnvItemCell extends StatelessWidget {
                                               ? ""
                                               : "(${bean.remarks})",
                                       style: TextStyle(
+                                        fontFamily: 'MiSans',
                                         overflow: TextOverflow.ellipsis,
                                         color:
-                                            isCyber
-                                                ? ref
-                                                    .watch(themeProvider)
-                                                    .themeColor
-                                                    .descColor()
-                                                : AppleColors.textSecondary,
+                                            ref
+                                                .watch(themeProvider)
+                                                .themeColor
+                                                .descColor(),
                                         fontSize: isCyber ? 14 : 13,
                                       ),
                                     ),
@@ -746,14 +749,13 @@ class EnvItemCell extends StatelessWidget {
                                 : Utils.formatTime2(bean.updatedAt),
                             maxLines: 1,
                             style: TextStyle(
+                              fontFamily: 'MiSans',
                               overflow: TextOverflow.ellipsis,
                               color:
-                                  isCyber
-                                      ? ref
-                                          .watch(themeProvider)
-                                          .themeColor
-                                          .descColor()
-                                      : AppleColors.textSecondary,
+                                  ref
+                                      .watch(themeProvider)
+                                      .themeColor
+                                      .descColor(),
                               fontSize: isCyber ? 12 : 13,
                             ),
                           ),
@@ -768,14 +770,13 @@ class EnvItemCell extends StatelessWidget {
                       bean.value ?? "",
                       maxLines: 1,
                       style: TextStyle(
+                        fontFamily: 'MiSans',
                         overflow: TextOverflow.ellipsis,
                         color:
-                            isCyber
-                                ? CyberColors.descColor
-                                : ref
-                                    .watch(themeProvider)
-                                    .themeColor
-                                    .descColor(),
+                            ref
+                                .watch(themeProvider)
+                                .themeColor
+                                .descColor(),
                         fontSize: 12,
                       ),
                     ),

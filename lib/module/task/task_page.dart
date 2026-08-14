@@ -1367,9 +1367,10 @@ class TaskItemCell extends StatelessWidget {
                                 style: TextStyle(
                                   overflow: TextOverflow.ellipsis,
                                   color:
-                                      isCyber
-                                          ? CyberColors.titleWhite
-                                          : AppleColors.textPrimary,
+                                      ref
+                                          .watch(themeProvider)
+                                          .themeColor
+                                          .titleColor(),
                                   fontSize: 17,
                                   fontWeight: isCyber ? null : FontWeight.w600,
                                 ),
@@ -1401,11 +1402,10 @@ class TaskItemCell extends StatelessWidget {
                         style: TextStyle(
                           overflow: TextOverflow.ellipsis,
                           color:
-                              isCyber
-                                  ? CyberColors.descColor
-                                  : AppleColors.textPrimary.withValues(
-                                    alpha: 0.65,
-                                  ),
+                              ref
+                                  .watch(themeProvider)
+                                  .themeColor
+                                  .descColor(),
                           fontSize: isCyber ? 12 : 13,
                         ),
                       ),
@@ -1421,9 +1421,10 @@ class TaskItemCell extends StatelessWidget {
                     style: TextStyle(
                       overflow: TextOverflow.ellipsis,
                       color:
-                          isCyber
-                              ? CyberColors.cyan.withValues(alpha: 0.7)
-                              : AppleColors.textPrimary.withValues(alpha: 0.65),
+                          ref
+                              .watch(themeProvider)
+                              .themeColor
+                              .descColor(),
                       fontSize: isCyber ? 14 : 13,
                     ),
                   ),
@@ -1438,9 +1439,10 @@ class TaskItemCell extends StatelessWidget {
                     style: TextStyle(
                       overflow: TextOverflow.ellipsis,
                       color:
-                          isCyber
-                              ? CyberColors.descColor
-                              : AppleColors.textPrimary.withValues(alpha: 0.65),
+                          ref
+                              .watch(themeProvider)
+                              .themeColor
+                              .descColor(),
                       fontSize: isCyber ? 14 : 13,
                     ),
                   ),

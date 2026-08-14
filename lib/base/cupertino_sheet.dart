@@ -32,8 +32,8 @@ class CupertinoSheer extends ConsumerWidget {
             child: Center(
               child: Text(
                 title,
-                style: const TextStyle(
-                  color: CyberColors.titleWhite,
+                style: TextStyle(
+                  color: ref.watch(themeProvider).themeColor.titleColor(),
                   fontSize: 16,
                 ),
               ),

@@ -282,10 +282,10 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color:
-                        isCyber
-                            ? CyberColors.titleWhite
-                            : ref.watch(themeProvider).themeColor.titleColor(),
+                    color: ref
+                        .watch(themeProvider)
+                        .themeColor
+                        .titleColor(),
                     fontSize: 15,
                   ),
                 ),
@@ -295,10 +295,10 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color:
-                        isCyber
-                            ? CyberColors.descColor
-                            : ref.watch(themeProvider).themeColor.descColor(),
+                    color: ref
+                        .watch(themeProvider)
+                        .themeColor
+                        .descColor(),
                     fontSize: 13,
                   ),
                 ),

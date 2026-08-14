@@ -208,7 +208,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
           _errorMsg ?? '加载失败',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: isCyber ? CyberColors.descColor : AppleColors.textSecondary,
+            color: ref.watch(themeProvider).themeColor.descColor(),
             fontSize: 14,
           ),
         ),
@@ -294,10 +294,10 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                   '青龙版本',
                   style: TextStyle(
                     fontSize: 13,
-                    color:
-                        isCyber
-                            ? CyberColors.descColor
-                            : AppleColors.textSecondary,
+                    color: ref
+                            .watch(themeProvider)
+                            .themeColor
+                            .descColor(),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -307,9 +307,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                     fontSize: isCyber ? 20 : 17,
                     fontWeight: FontWeight.w600,
                     color:
-                        isCyber
-                            ? CyberColors.titleWhite
-                            : AppleColors.textPrimary,
+                        ref.watch(themeProvider).themeColor.titleColor(),
                   ),
                 ),
               ],
@@ -354,7 +352,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                 isCyber,
                 '已禁用',
                 '$disabled',
-                CyberColors.descColor,
+                ref.watch(themeProvider).themeColor.descColor(),
               ),
             ),
           ],
@@ -425,7 +423,11 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
           height: 160,
           child: CustomPaint(
             size: Size.infinite,
-            painter: _TrendChartPainter(data: _trend, isCyber: isCyber),
+            painter: _TrendChartPainter(
+              data: _trend,
+              isCyber: isCyber,
+              descColor: ref.watch(themeProvider).themeColor.descColor(),
+            ),
           ),
         ),
       ],
@@ -568,7 +570,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
             style: TextStyle(
               fontSize: isCyber ? 12 : 13,
               color:
-                  isCyber ? CyberColors.descColor : AppleColors.textSecondary,
+                  ref.watch(themeProvider).themeColor.descColor(),
             ),
           ),
           const SizedBox(height: 8),
@@ -587,7 +589,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
             style: TextStyle(
               fontSize: isCyber ? 12 : 13,
               color:
-                  isCyber ? CyberColors.descColor : AppleColors.textSecondary,
+                  ref.watch(themeProvider).themeColor.descColor(),
             ),
           ),
           const SizedBox(height: 8),
@@ -616,9 +618,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                       style: TextStyle(
                         fontSize: 13,
                         color:
-                            isCyber
-                                ? CyberColors.titleWhite
-                                : AppleColors.textPrimary,
+                            ref.watch(themeProvider).themeColor.titleColor(),
                       ),
                     ),
                   ),
@@ -627,10 +627,10 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                     lastRun,
                     style: TextStyle(
                       fontSize: isCyber ? 12 : 13,
-                      color:
-                          isCyber
-                              ? CyberColors.descColor
-                              : AppleColors.textSecondary,
+                      color: ref
+                              .watch(themeProvider)
+                              .themeColor
+                              .descColor(),
                     ),
                   ),
                 ],
@@ -664,7 +664,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               style: TextStyle(
                 fontSize: 13,
                 color:
-                    isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
+                    ref.watch(themeProvider).themeColor.titleColor(),
               ),
             ),
           ),
@@ -674,7 +674,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               style: TextStyle(
                 fontSize: 11,
                 color:
-                    isCyber ? CyberColors.descColor : AppleColors.textSecondary,
+                    ref.watch(themeProvider).themeColor.descColor(),
               ),
             ),
             const SizedBox(width: 8),
@@ -684,7 +684,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
             style: TextStyle(
               fontSize: isCyber ? 12 : 13,
               color:
-                  isCyber ? CyberColors.descColor : AppleColors.textSecondary,
+                  ref.watch(themeProvider).themeColor.descColor(),
             ),
           ),
         ],
@@ -771,18 +771,17 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               '系统负载',
               style: TextStyle(
                 fontSize: isCyber ? 12 : 13,
-                color: isCyber
-                    ? CyberColors.descColor
-                    : AppleColors.textSecondary,
+                color: ref
+                    .watch(themeProvider)
+                    .themeColor
+                    .descColor(),
               ),
             ),
             Text(
               '基准: ${cpus}核',
               style: TextStyle(
                 fontSize: isCyber ? 11 : 11,
-                color: isCyber
-                    ? CyberColors.descColor
-                    : AppleColors.textTertiary,
+                color: ref.watch(themeProvider).themeColor.descColor(),
               ),
             ),
           ],
@@ -813,18 +812,17 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                       labels[i],
                       style: TextStyle(
                         fontSize: isCyber ? 12 : 12,
-                        color: isCyber
-                            ? CyberColors.descColor
-                            : AppleColors.textSecondary,
+                        color: ref
+                            .watch(themeProvider)
+                            .themeColor
+                            .descColor(),
                       ),
                     ),
                     Text(
                       '${values[i].toStringAsFixed(2)}  ${percentDisplay.toStringAsFixed(0)}%',
                       style: TextStyle(
                         fontSize: isCyber ? 12 : 12,
-                        color: isCyber
-                            ? CyberColors.titleWhite
-                            : AppleColors.textPrimary,
+                        color: ref.watch(themeProvider).themeColor.titleColor(),
                       ),
                     ),
                   ],
@@ -865,7 +863,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               style: TextStyle(
                 fontSize: isCyber ? 11 : 12,
                 color:
-                    isCyber ? CyberColors.descColor : AppleColors.textSecondary,
+                    ref.watch(themeProvider).themeColor.descColor(),
                 fontWeight: FontWeight.w500,
               ),
               textAlign: i == 0 ? TextAlign.start : TextAlign.center,
@@ -886,7 +884,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
     final textColor =
         highlight
             ? (isCyber ? CyberColors.cyan : AppleColors.accent)
-            : (isCyber ? CyberColors.titleWhite : AppleColors.textPrimary);
+            : ref.watch(themeProvider).themeColor.titleColor();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -919,7 +917,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
           label,
           style: TextStyle(
             fontSize: isCyber ? 12 : 13,
-            color: isCyber ? CyberColors.descColor : AppleColors.textSecondary,
+            color: ref.watch(themeProvider).themeColor.descColor(),
           ),
         ),
         const SizedBox(height: 4),
@@ -954,7 +952,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               style: TextStyle(
                 fontSize: isCyber ? 12 : 13,
                 color:
-                    isCyber ? CyberColors.descColor : AppleColors.textSecondary,
+                    ref.watch(themeProvider).themeColor.descColor(),
               ),
             ),
             Text(
@@ -962,7 +960,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               style: TextStyle(
                 fontSize: isCyber ? 12 : 13,
                 color:
-                    isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
+                    ref.watch(themeProvider).themeColor.titleColor(),
               ),
             ),
           ],
@@ -993,14 +991,14 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
             style: TextStyle(
               fontSize: 13,
               color:
-                  isCyber ? CyberColors.descColor : AppleColors.textSecondary,
+                  ref.watch(themeProvider).themeColor.descColor(),
             ),
           ),
           Text(
             value,
             style: TextStyle(
               fontSize: 13,
-              color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
+              color: ref.watch(themeProvider).themeColor.titleColor(),
             ),
           ),
         ],
@@ -1034,9 +1032,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                   fontSize: isCyber ? 15 : 17,
                   fontWeight: FontWeight.w600,
                   color:
-                      isCyber
-                          ? CyberColors.titleWhite
-                          : AppleColors.textPrimary,
+                      ref.watch(themeProvider).themeColor.titleColor(),
                 ),
               ),
             ],
@@ -1116,8 +1112,13 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
 class _TrendChartPainter extends CustomPainter {
   final List<Map<String, dynamic>> data;
   final bool isCyber;
+  final Color descColor;
 
-  _TrendChartPainter({required this.data, required this.isCyber});
+  _TrendChartPainter({
+    required this.data,
+    required this.isCyber,
+    required this.descColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1126,12 +1127,8 @@ class _TrendChartPainter extends CustomPainter {
     final color = isCyber ? CyberColors.cyan : AppleColors.accent;
     final successColor = isCyber ? CyberColors.neonGreen : AppColors.success;
     final failColor = isCyber ? CyberColors.neonRed : AppColors.danger;
-    final gridColor = (isCyber
-            ? CyberColors.descColor
-            : AppleColors.textSecondary)
-        .withOpacity(0.15);
-    final textColor =
-        isCyber ? CyberColors.descColor : AppleColors.textSecondary;
+    final gridColor = descColor.withOpacity(0.15);
+    final textColor = descColor;
 
     // 解析 total 数据
     final values = <double>[];

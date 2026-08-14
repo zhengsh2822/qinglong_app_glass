@@ -151,7 +151,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
                   ),
                 style: TextStyle(
                   fontSize: 14,
-                  color: ref.watch(themeProvider).themeColor.title2Color(),
+                  color: ref.watch(themeProvider).themeColor.titleColor(),
                 ),
                 decoration: const InputDecoration(
                   isDense: true,
@@ -177,6 +177,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
         Visibility(
           visible: !widget.onlyShowName,
           child: RichText(
+            textScaler: MediaQuery.textScalerOf(context),
             text: TextSpan(
               text: "上传脚本",
               style: TextStyle(
