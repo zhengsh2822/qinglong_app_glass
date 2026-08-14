@@ -45,16 +45,16 @@ jobs:
 
       - name: Run app on iOS Simulator and take screenshots
         run: |
-          DEVICE=$(xcrun simctl list devices available | awk -F'[()]' '/iPhone/{print $1; exit}' | sed 's/[[:space:]]*$//')
-          echo "Using simulator: $DEVICE"
-          xcrun simctl boot "$DEVICE" 2>/dev/null || true
-          xcrun simctl bootstatus "$DEVICE" -b
-          xcrun simctl install "$DEVICE" build/ios/iphonesimulator/Runner.app
-          xcrun simctl launch "$DEVICE" com.qlapp.qinglongApp
+          UDID=$(xcrun simctl list devices available | awk -F'[()]' '/iPhone/{print $2; exit}' | tr -d ' ')
+          echo "Using simulator UDID: $UDID"
+          xcrun simctl boot "$UDID" 2>/dev/null || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" build/ios/iphonesimulator/Runner.app
+          xcrun simctl launch "$UDID" com.qlapp.qinglongApp
           sleep 20
-          xcrun simctl io "$DEVICE" screenshot simulator_screen_1.png
+          xcrun simctl io "$UDID" screenshot simulator_screen_1.png
           sleep 5
-          xcrun simctl io "$DEVICE" screenshot simulator_screen_2.png
+          xcrun simctl io "$UDID" screenshot simulator_screen_2.png
 
       - name: Upload simulator screenshots
         uses: actions/upload-artifact@v4
