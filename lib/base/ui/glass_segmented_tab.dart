@@ -40,8 +40,10 @@ class _GlassSegmentedTabState extends ConsumerState<GlassSegmentedTab> {
     final Color bgColor = theme.themeColor.segmentedUnCheckBg();
     final Color thumbColor = isCyber ? CyberColors.cyan : theme.primaryColor;
     final Color selectedTextColor = isCyber ? CyberColors.bg : Colors.white;
+    // 顶部 Tab 未选中文字色：赛博模式固定 #808080（不跟随用户自定义字体色），
+    // 非赛博模式跟随主题色（保持与 AppBar/正文一致）
     final Color unselectedTextColor =
-        isCyber ? CyberColors.descColor : theme.themeColor.title2Color();
+        isCyber ? CyberColors.hintGray : theme.themeColor.title2Color();
 
     return SizedBox(
       height: 55,

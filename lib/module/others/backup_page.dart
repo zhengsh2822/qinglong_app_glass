@@ -150,9 +150,13 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             }).toList(),
           ),
           const SizedBox(height: 16),
+          // 开始备份：按钮宽度对齐卡片内容（即对齐到卡片 padding 16px 的内边界）
+          // 等价于"屏宽 - 卡片margin(16) * 2 - 卡片padding(16) * 2"，
+          // 直接用 SizedBox(width: double.infinity) 即可（外层 OtherPageCard 已自带 margin + padding）
           SizedBox(
             width: double.infinity,
             child: OtherPageCard(
+              margin: EdgeInsets.zero,
               padding: const EdgeInsets.symmetric(vertical: 14),
               onTap: _processing ? null : _doBackup,
               child: Center(
@@ -196,9 +200,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 color: ref.read(themeProvider).themeColor.descColor()),
           ),
           const SizedBox(height: 14),
+          // 选择文件恢复：按钮宽度对齐卡片内容（与"开始备份"按钮同款）
           SizedBox(
             width: double.infinity,
             child: OtherPageCard(
+              margin: EdgeInsets.zero,
               padding: const EdgeInsets.symmetric(vertical: 14),
               onTap: _processing ? null : _doRestore,
               child: Center(

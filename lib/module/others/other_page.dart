@@ -235,13 +235,13 @@ class OtherPageState extends ConsumerState<OtherPage>
                                         ).alias!,
                                     maxLines: 1,
                                     style: TextStyle(
-                                      color:
-                                          isCyber
-                                              ? CyberColors.titleWhite
-                                              : ref
-                                                  .watch(themeProvider)
-                                                  .themeColor
-                                                  .titleColor(),
+                                      // 服务器名称/账号别名：跟随自定义字体颜色设置
+                                      // 赛博模式走 _customCyberPrimaryOf（spCyberPrimary），
+                                      // 非赛博模式走 _customThemePrimaryOf（spThemePrimary）
+                                      color: ref
+                                          .watch(themeProvider)
+                                          .themeColor
+                                          .titleColor(),
                                       fontSize: 18,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -259,10 +259,11 @@ class OtherPageState extends ConsumerState<OtherPage>
                                     child: Text(
                                       desc.value,
                                       style: TextStyle(
-                                        color:
-                                            isCyber
-                                                ? CyberColors.descColor
-                                                : AppleColors.textSecondary,
+                                        // 随机语句：跟随次字体色（赛博/非赛博都走 descColor）
+                                        color: ref
+                                            .watch(themeProvider)
+                                            .themeColor
+                                            .descColor(),
                                         fontSize: isCyber ? 12 : 13,
                                       ),
                                     ),

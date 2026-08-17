@@ -10,6 +10,7 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/selector_sheet.dart';
 import 'package:qinglong_app/base/ui/tree/models/script_data.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/others/scripts/script_code_detail_page.dart';
@@ -116,59 +117,36 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
         ),
         isLoading
             ? const Center(child: LoadingWidget())
-            : DropdownButtonFormField<String>(
-                elevation: 0,
-                isExpanded: true,
-                items: paths
-                    .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width - 100,
-                            child: Text(
-                              e ?? "",
-                              maxLines: 2,
-                            ),
-                          ),
-                        ))
-                    .toList()
-                  ..insert(
-                    0,
-                    DropdownMenuItem(
+            // 改用弹窗选择器（参考 push_setting_page 的"选择通知方式"）
+            // 替代原生的 DropdownButtonFormField，更符合 iOS / 赛博风格
+            : SelectorFieldCard(
+                hintText: "请选择脚本目录",
+                currentValue: scriptPath,
+                emptyHint: "根目录",
+                onTap: () async {
+                  final options = <SelectorOption<String>>[
+                    const SelectorOption<String>(
                       value: "",
-                      child: SizedBox(
-                        width: MediaQuery.of(context).size.width - 100,
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10,
-                          ),
-                          child: Text(
-                            "根目录",
-                            maxLines: 2,
+                      label: "根目录",
+                    ),
+                    ...paths.where((e) => e != null).map(
+                          (e) => SelectorOption<String>(
+                            value: e!,
+                            label: e,
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                style: TextStyle(
-                  fontSize: 14,
-                  color: ref.watch(themeProvider).themeColor.titleColor(),
-                ),
-                decoration: const InputDecoration(
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 10,
-                  ),
-                ),
-                icon: const Icon(
-                  CupertinoIcons.chevron_up_chevron_down,
-                  size: 16,
-                ),
-                value: scriptPath,
-                onChanged: (value) {
-                  scriptPath = value ?? "";
-                  widget.nameCallBack(fileName);
-                  setState(() {});
+                  ];
+                  await showSelectorSheet<String>(
+                    context: context,
+                    title: "选择脚本目录",
+                    options: options,
+                    selectedValue: scriptPath,
+                    onSelected: (value) {
+                      scriptPath = value;
+                      widget.nameCallBack(fileName);
+                      setState(() {});
+                    },
+                  );
                 },
               ),
         const SizedBox(
