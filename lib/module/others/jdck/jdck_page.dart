@@ -1686,8 +1686,9 @@ class _JdckPageState extends ConsumerState<JdckPage> {
         backgroundColor: Colors.transparent,
         foregroundColor:
             isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
+        // 标题：赛博模式固定纯白（非赛博模式默认黑字）
         titleTextStyle: TextStyle(
-          color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
+          color: isCyber ? Colors.white : AppleColors.textPrimary,
           fontSize: 17,
           fontWeight: FontWeight.w600,
         ),

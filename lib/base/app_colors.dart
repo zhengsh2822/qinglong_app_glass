@@ -34,6 +34,10 @@ class CyberColors {
   /// 待机灰
   static const Color idleGray = Color(0xFF4A4A5E);
 
+  /// 导航未选中 + 输入框提示固定灰色（不跟随用户自定义字体色）
+  /// 规范：#808080（中性灰），与系统级 iOS 占位符色接近
+  static const Color hintGray = Color(0xFF808080);
+
   /// 网格线颜色
   static const Color gridLine = Color(0x14FFFFFF);
 

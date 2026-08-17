@@ -640,8 +640,11 @@ class ThemeViewModel extends ChangeNotifier {
       appBarTheme: const AppBarTheme(
         elevation: 0,
         backgroundColor: Colors.transparent,
+        // 赛博模式顶部大标题：固定纯白（不跟随用户自定义字体色）
+        // 三个模式（赛博/浅色/深色）的 title 颜色各自独立，
+        // 赛博是深色底，标题必须保持高对比度白色，避免跟随字体色变浅
         titleTextStyle: TextStyle(
-          color: CyberColors.titleWhite,
+          color: Colors.white,
           fontSize: 17,
           fontWeight: FontWeight.bold,
         ),
@@ -651,13 +654,13 @@ class ThemeViewModel extends ChangeNotifier {
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         selectedItemColor: CyberColors.cyan,
-        unselectedItemColor: CyberColors.idleGray,
+        unselectedItemColor: CyberColors.hintGray,
         backgroundColor: CyberColors.bg.withValues(alpha: 0.7),
         elevation: 0,
       ),
-      hintColor: CyberColors.descColor,
+      hintColor: CyberColors.hintGray,
       inputDecorationTheme: InputDecorationTheme(
-        hintStyle: const TextStyle(fontSize: 14, color: CyberColors.descColor),
+        hintStyle: const TextStyle(fontSize: 14, color: CyberColors.hintGray),
         labelStyle: const TextStyle(color: CyberColors.cyan, fontSize: 14),
         isDense: true,
         // 圆柱形输入框：水平 padding 加大，圆角24（胶囊形）
@@ -686,7 +689,7 @@ class ThemeViewModel extends ChangeNotifier {
         labelStyle: TextStyle(fontSize: 14),
         unselectedLabelStyle: TextStyle(fontSize: 14),
         labelColor: CyberColors.cyan,
-        unselectedLabelColor: CyberColors.idleGray,
+        unselectedLabelColor: CyberColors.hintGray,
       ),
       colorScheme: const ColorScheme.dark(
         secondary: CyberColors.cyan,

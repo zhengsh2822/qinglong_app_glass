@@ -49,7 +49,7 @@ class _SearchCellState extends ConsumerState<SearchCell> {
     final Color textColor =
         isCyber ? CyberColors.titleWhite : AppleColors.textPrimary;
     final Color hintColor =
-        isCyber ? CyberColors.descColor : AppleColors.textHint;
+        isCyber ? CyberColors.hintGray : AppleColors.textHint;
     final Color iconColor = isCyber ? CyberColors.cyan : AppleColors.textHint;
 
     // 毛玻璃关闭时使用完全不透明背景

@@ -99,6 +99,11 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
         child: ReorderableListView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
+          // 长按拖动时：保持卡片原始样式（选中状态 = 未选中状态）
+          // 用户需求：不要出现浮起方块/阴影/缩放，圆角卡片以外的背景全透明。
+          // 因此 proxyDecorator 直接返回 child 原样，不做任何包装，
+          // 这样 ReorderableListView 默认的浮起 Material 阴影不会叠加。
+          proxyDecorator: (child, index, animation) => child,
           onReorder: (int oldIndex, int newIndex) {
             setState(() {
               //交换数据
@@ -112,51 +117,54 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
           children:
               list
                   .map(
-                    (e) => Container(
+                    (e) => ReorderableDelayedDragStartListener(
                       // ReorderableListView 强制要求卡片 key 唯一：多个账号登录同一
                       // host（同样登录账号）或存在未登录账号时，host 可能重复，
                       // 用 ValueKey(e.host) 会导致 key 重复 → 卡片只显示一部分、
                       // 长按自动下移/跳动、拖动不稳。改用 ObjectKey(e) 以对象引用
                       // 唯一性为 key（重排时对象引用不变，key 保持稳定）。
                       key: ObjectKey(e),
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            isCyber
-                                ? CyberColors.cardBg
-                                : ref
-                                    .watch(themeProvider)
-                                    .themeColor
-                                    .settingBordorColor(),
-                        borderRadius: BorderRadius.circular(18),
-                        border:
-                            isCyber
-                                ? Border.all(
-                                  color: CyberColors.borderGlow,
-                                  width: 1,
-                                )
-                                : Border.all(
-                                  color: AppleColors.cardBorder,
-                                  width: 0.5,
-                                ),
-                        boxShadow:
-                            isCyber
-                                ? null
-                                : const [
-                                  BoxShadow(
-                                    color: Color(0x0F000000),
-                                    blurRadius: 12,
-                                    offset: Offset(0, 4),
+                      index: list.indexOf(e),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              isCyber
+                                  ? CyberColors.cardBg
+                                  : ref
+                                      .watch(themeProvider)
+                                      .themeColor
+                                      .settingBordorColor(),
+                          borderRadius: BorderRadius.circular(18),
+                          border:
+                              isCyber
+                                  ? Border.all(
+                                    color: CyberColors.borderGlow,
+                                    width: 1,
+                                  )
+                                  : Border.all(
+                                    color: AppleColors.cardBorder,
+                                    width: 0.5,
                                   ),
-                                ],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(18),
-                        child: buildCell(e),
+                          boxShadow:
+                              isCyber
+                                  ? null
+                                  : const [
+                                    BoxShadow(
+                                      color: Color(0x0F000000),
+                                      blurRadius: 12,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(18),
+                          child: buildCell(e),
+                        ),
                       ),
                     ),
                   )

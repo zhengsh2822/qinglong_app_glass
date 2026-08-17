@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -11,10 +10,10 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
-import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
+import 'package:qinglong_app/base/ui/selector_sheet.dart';
 import 'package:qinglong_app/base/ui/settings_widgets.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -76,7 +75,11 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                           "通知设置",
                           style: TextStyle(
                             fontSize: 14,
-                            color: isCyber ? CyberColors.titleWhite : null,
+                            // 小节标题跟随主字体色（非顶部 AppBar 大标题）
+                            color: ref
+                                .watch(themeProvider)
+                                .themeColor
+                                .titleColor(),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -98,13 +101,12 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                                         : "请选择",
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color:
-                                          isCyber
-                                              ? CyberColors.titleWhite
-                                              : ref
-                                                  .watch(themeProvider)
-                                                  .themeColor
-                                                  .title2Color(),
+                                      // 通知方案文案跟随自定义字体颜色
+                                      // 赛博走 _customCyberPrimaryOf，非赛博走 _customThemePrimaryOf
+                                      color: ref
+                                          .watch(themeProvider)
+                                          .themeColor
+                                          .titleColor(),
                                     ),
                                   ),
                                 ),
@@ -185,169 +187,31 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
   }
 
   void _showPushSelector(BuildContext context) {
-    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    final bool blurEnabled = ref.read(blurEffectProvider);
-    showCupertinoModalPopup<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: OptionalBlur(
-              sigma: 20,
-              child: Container(
-                decoration: BoxDecoration(
-                  color:
-                      isCyber
-                          ? Colors.black.withValues(alpha: blurEnabled ? 0.5 : 1.0)
-                          : Colors.white.withValues(alpha: blurEnabled ? 0.85 : 1.0),
-                  borderRadius: BorderRadius.circular(18),
-                  border:
-                      isCyber
-                          ? Border.all(
-                            color: CyberColors.cyan.withValues(alpha: 0.3),
-                            width: 1,
-                          )
-                          : Border.all(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            width: 0.5,
-                            style: BorderStyle.solid,
-                          ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 24,
-                      offset: const Offset(0, -4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(top: 8, bottom: 4),
-                      decoration: BoxDecoration(
-                        color:
-                            isCyber
-                                ? CyberColors.cyan.withValues(alpha: 0.4)
-                                : Colors.black.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 16,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "选择通知方式",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color:
-                                  isCyber
-                                      ? CyberColors.cyan
-                                      : AppleColors.textPrimary,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => Navigator.of(ctx).pop(),
-                            child: Icon(
-                              CupertinoIcons.xmark_circle_fill,
-                              size: 22,
-                              color:
-                                  isCyber
-                                      ? CyberColors.titleWhite.withValues(
-                                        alpha: 0.5,
-                                      )
-                                      : Colors.black.withValues(alpha: 0.3),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Divider(
-                      height: 0.5,
-                      color:
-                          isCyber
-                              ? CyberColors.cyan.withValues(alpha: 0.2)
-                              : Colors.black.withValues(alpha: 0.1),
-                    ),
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.55,
-                      ),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        itemCount: list.length,
-                        itemBuilder: (context, index) {
-                          final bean = list[index];
-                          final selected = current?.key == bean.key;
-                          return GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () {
-                              setState(() {
-                                current = bean;
-                              });
-                              Navigator.of(ctx).pop();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 14,
-                                horizontal: 16,
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      getNameByKey(bean.name),
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color:
-                                            isCyber
-                                                ? (selected
-                                                    ? CyberColors.cyan
-                                                    : CyberColors.titleWhite)
-                                                : (selected
-                                                    ? AppleColors.accent
-                                                    : AppleColors.textPrimary),
-                                        fontWeight:
-                                            selected
-                                                ? FontWeight.w600
-                                                : FontWeight.w400,
-                                      ),
-                                    ),
-                                  ),
-                                  if (selected)
-                                    Icon(
-                                      CupertinoIcons.checkmark_alt,
-                                      size: 18,
-                                      color:
-                                          isCyber
-                                              ? CyberColors.cyan
-                                              : AppleColors.accent,
-                                    ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+    // 改用通用弹窗选择器组件，避免与 upload_script_widget 重复实现
+    // 见 lib/base/ui/selector_sheet.dart
+    final options = list
+        .map(
+          (bean) => SelectorOption<String>(
+            value: bean.key,
+            label: getNameByKey(bean.name),
+            subtitle: bean.children.isEmpty
+                ? "已关闭通知"
+                : "${bean.children.length} 项配置",
           ),
-        );
+        )
+        .toList();
+    showSelectorSheet<String>(
+      context: context,
+      title: "选择通知方式",
+      options: options,
+      selectedValue: current?.key,
+      onSelected: (key) {
+        final index = list.indexWhere((e) => e.key == key);
+        if (index >= 0) {
+          setState(() {
+            current = list[index];
+          });
+        }
       },
     );
   }
