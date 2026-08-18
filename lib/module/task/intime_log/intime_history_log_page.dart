@@ -13,6 +13,7 @@ import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 import '../../../base/cupertino_sheet.dart';
+import '../../../base/ui/log_text_view.dart';
 import '../../../main.dart';
 import '../../home/system_bean.dart';
 
@@ -100,23 +101,12 @@ class _InTimeHistoryLogPageState extends State<InTimeHistoryLogPage>
           (content == null)
               ? const Center(child: LoadingWidget())
               : CupertinoScrollbar(
-                child: SingleChildScrollView(
-                  primary: true,
-                  padding: EdgeInsets.only(
-                    left: 15,
-                    right: 15,
-                    bottom: MediaQuery.of(context).viewPadding.bottom + 20,
-                  ),
-                  // SelectableText 支持长按选择复制日志内容
-                  child: SelectableText(
-                    content!,
-                    selectionControls: cupertinoTextSelectionControls,
-                    style: const TextStyle(fontSize: 12),
-                    cursorColor: Theme.of(context).primaryColor,
-                    enableInteractiveSelection: true,
+                  child: LogTextView(
+                    content: content,
+                    accountIndex:
+                        SingleAccountPageState.of(context)?.index ?? 0,
                   ),
                 ),
-              ),
     );
   }
 

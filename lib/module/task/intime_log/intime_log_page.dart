@@ -19,6 +19,7 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 import '../../../base/commit_button.dart';
 import '../../../base/http/api.dart';
 import '../../../base/theme.dart';
+import '../../../base/ui/log_text_view.dart';
 
 class InTimeLogPage extends ConsumerStatefulWidget {
   final String cronId;
@@ -174,22 +175,13 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
               (content == null)
                   ? const Center(child: LoadingWidget())
                   : CupertinoScrollbar(
-                    child: SingleChildScrollView(
-                      controller: controller,
-                      padding: EdgeInsets.only(
-                        left: 15,
-                        right: 15,
-                        bottom: MediaQuery.of(context).viewPadding.bottom + 20,
-                      ),
-                      child: SelectableText(
-                        (content == null || content!.isEmpty)
-                            ? "暂无日志"
-                            : content!,
-                        selectionControls: cupertinoTextSelectionControls,
-                        style: const TextStyle(fontSize: 12),
+                      child: LogTextView(
+                        content: content,
+                        accountIndex:
+                            SingleAccountPageState.of(context)?.index ?? 0,
+                        scrollController: controller,
                       ),
                     ),
-                  ),
         );
       },
     );

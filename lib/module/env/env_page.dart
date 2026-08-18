@@ -35,7 +35,11 @@ class EnvPage extends ConsumerStatefulWidget {
 }
 
 class EnvPageState extends ConsumerState<EnvPage>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  // PageView 底部 tab 场景保活：切走不销毁，保留滚动位置与页内状态
+  @override
+  bool get wantKeepAlive => true;
+
   String currentState = EnvViewModel.allStr;
   TextEditingController searchText = TextEditingController();
   Timer? _searchDebounce;
@@ -148,6 +152,7 @@ class EnvPageState extends ConsumerState<EnvPage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // keepAlive 保活（AutomaticKeepAliveClientMixin）
     final _ = ref.watch(themeProvider);
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     return GestureDetector(
@@ -1148,6 +1153,10 @@ class _EnvRecordListViewState extends ConsumerState<EnvRecordListView>
         top: kToolbarHeight,
       ),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      // 长按拖动时：保持卡片原始样式（选中状态 = 未选中状态）
+      // 用户需求：不要出现浮起方块/阴影/缩放，圆角卡片以外的背景全透明。
+      // proxyDecorator 直接返回 child 原样，避免 ReorderableListView 默认浮起 Material 阴影。
+      proxyDecorator: (child, index, animation) => child,
       onReorder: (int oldIndex, int newIndex) {
         if (widget.searchText.isNotEmpty) {
           "请先清空搜索关键词".toast();

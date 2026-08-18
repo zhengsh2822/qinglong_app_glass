@@ -46,7 +46,11 @@ class OtherPage extends ConsumerStatefulWidget {
 }
 
 class OtherPageState extends ConsumerState<OtherPage>
-    with LazyLoadState<OtherPage> {
+    with LazyLoadState<OtherPage>, AutomaticKeepAliveClientMixin {
+  // PageView 底部 tab 场景保活：切走不销毁，保留滚动位置与页内状态
+  @override
+  bool get wantKeepAlive => true;
+
   var toggleValue = false;
   String? userIcon;
   String userName = "青龙客户端";
@@ -123,6 +127,7 @@ class OtherPageState extends ConsumerState<OtherPage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // keepAlive 保活（AutomaticKeepAliveClientMixin）
     final _ = ref.watch(themeProvider);
     final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
     Widget body = RefreshIndicator(

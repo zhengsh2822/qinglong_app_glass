@@ -345,6 +345,8 @@ Future<bool?> showCyberConfirmDialog(
     child: ConstrainedBox(
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width * 0.8,
+        // 限制最大高度，内容超出时滚动查看，避免长内容（如大量依赖名）撑满屏幕顶掉按钮
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
       ),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -362,13 +364,17 @@ Future<bool?> showCyberConfirmDialog(
               ),
             ),
             const SizedBox(height: 12),
-            Text(
-              content,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: CyberColors.titleWhite,
-                fontSize: 14,
-                height: 1.5,
+            Flexible(
+              child: SingleChildScrollView(
+                child: Text(
+                  content,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: CyberColors.titleWhite,
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 24),

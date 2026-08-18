@@ -38,6 +38,11 @@ class HomePage extends ConsumerStatefulWidget {
 class HomePageState extends ConsumerState<HomePage> {
   List<IndexBean> titles = [];
 
+  // 底部 tab 页面控制器：与顶部 TabBar 同机制（PageView + animateToPage）
+  // NeverScrollableScrollPhysics 禁手势，仅由底部 tab 点击驱动平滑滑动
+  // 惰性初始化：initialPage 需读 provider，需等 build 有 context 后创建
+  PageController? _pageController;
+
   @override
   void initState() {
     initTitles();
@@ -227,6 +232,7 @@ class HomePageState extends ConsumerState<HomePage> {
 
   @override
   void dispose() {
+    _pageController?.dispose();
     MultiAccountPageState.clearAction();
     super.dispose();
   }
@@ -239,6 +245,28 @@ class HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final int homeIndex = ref.watch<int>(
+      SingleAccountPageState.ofHomeIndexProvider(context)(getProviderName(context)),
+    );
+    // 惰性创建 PageController（首次 build 时 provider 才可读）
+    final PageController pageController =
+        _pageController ??= PageController(initialPage: homeIndex);
+    // provider 为唯一数据源：底部 tab 点击/外部跳转改 index，统一驱动平滑滑动
+    ref.listen<int>(
+      SingleAccountPageState.ofHomeIndexProvider(context)(getProviderName(context)),
+      (previous, next) {
+        if (!pageController.hasClients) return;
+        if (pageController.page?.round() != next) {
+          // 与顶部 tab（GlassSegmentedTab）一致：300ms + easeOutCubic
+          // easeOutCubic 起步快、收尾缓，切换更跟手
+          pageController.animateToPage(
+            next,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      },
+    );
     return PopScope(
       canPop: true,
       child: Material(
@@ -248,17 +276,35 @@ class HomePageState extends ConsumerState<HomePage> {
             RepaintBoundary(
               child: Scaffold(
                 extendBody: true,
-                body: IndexedStack(
-                  index: ref.watch<int>(
-                    SingleAccountPageState.ofHomeIndexProvider(context)(
-                      getProviderName(context),
-                    ),
-                  ),
+                // 与顶部 TabBar 同机制：PageView 轨道式整页滑动切换
+                // 页面保活见各页面 AutomaticKeepAliveClientMixin（滚动位置不丢）
+                //
+                // 功耗优化：TickerMode 包裹非当前 tab，切走后自动暂停该页
+                // 全部动画 ticker（AnimationController/Slidable 弹簧等），
+                // 静止时零动画重绘；TickerMode 不影响 paint，滑动切入时正常显示
+                body: PageView(
+                  controller: _pageController,
+                  physics: const NeverScrollableScrollPhysics(),
                   children: [
-                    TaskPage(key: taskKey, loading: !getSystemBeanSuccess),
-                    EnvPage(key: envKey),
-                    const ConfigPage(),
-                    OtherPage(key: meKey),
+                    TickerMode(
+                      enabled: homeIndex == 0,
+                      child: TaskPage(
+                        key: taskKey,
+                        loading: !getSystemBeanSuccess,
+                      ),
+                    ),
+                    TickerMode(
+                      enabled: homeIndex == 1,
+                      child: EnvPage(key: envKey),
+                    ),
+                    TickerMode(
+                      enabled: homeIndex == 2,
+                      child: const ConfigPage(),
+                    ),
+                    TickerMode(
+                      enabled: homeIndex == 3,
+                      child: OtherPage(key: meKey),
+                    ),
                   ],
                 ),
                 bottomNavigationBar: _buildBottomNavigationBar(context),
@@ -327,34 +373,40 @@ class HomePageState extends ConsumerState<HomePage> {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: radius,
-        boxShadow:
-            isCyber
-                ? null
-                : const [
-                  BoxShadow(
-                    color: Color(0x15000000),
-                    blurRadius: 15,
-                    offset: Offset(0, -3),
-                  ),
-                ],
+        // 注意：阴影不能放在这里，外层 ClipRRect 会把超出圆角区域的
+        // boxShadow 裁掉导致阴影丢失（修复：阴影移到最外层容器绘制）
       ),
       height: kBottomNavigationBarHeight + MediaQuery.of(context).padding.bottom,
       width: MediaQuery.of(context).size.width,
       child: _buildBottomNav(context),
     );
 
-    if (!blurEnabled) {
-      // 毛玻璃关闭：纯色背景（不透明度 1.0），GPU 零模糊
-      return ClipRRect(borderRadius: radius, child: navContent);
-    }
+    Widget clippedNav =
+        blurEnabled
+            ? ClipRRect(
+              // 毛玻璃开启：BackdropFilter 高斯模糊
+              borderRadius: radius,
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: navContent,
+              ),
+            )
+            // 毛玻璃关闭：纯色背景（不透明度 1.0），GPU 零模糊
+            : ClipRRect(borderRadius: radius, child: navContent);
 
-    // 毛玻璃开启：BackdropFilter 高斯模糊
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: navContent,
-      ),
+    // 阴影放最外层（不经过 ClipRRect 裁剪），保证导航栏与内容页面区分明显
+    // 赛博：深黑阴影；非赛博：柔和浅阴影
+    final List<BoxShadow> navShadow =
+        isCyber
+            ? const [
+              BoxShadow(color: Color(0x66000000), blurRadius: 15, offset: Offset(0, -3)),
+            ]
+            : const [
+              BoxShadow(color: Color(0x15000000), blurRadius: 15, offset: Offset(0, -3)),
+            ];
+    return Container(
+      decoration: BoxDecoration(borderRadius: radius, boxShadow: navShadow),
+      child: clippedNav,
     );
   }
 

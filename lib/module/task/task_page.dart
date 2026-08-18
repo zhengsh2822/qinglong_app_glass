@@ -48,7 +48,12 @@ class TaskPage extends ConsumerStatefulWidget {
 }
 
 class TaskPageState extends ConsumerState<TaskPage>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
+    with TickerProviderStateMixin, WidgetsBindingObserver,
+        AutomaticKeepAliveClientMixin {
+  // PageView 底部 tab 场景保活：切走不销毁，保留滚动位置与页内状态
+  @override
+  bool get wantKeepAlive => true;
+
   TextEditingController searchText = TextEditingController();
   Timer? _searchDebounce;
 
@@ -186,6 +191,7 @@ class TaskPageState extends ConsumerState<TaskPage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // keepAlive 保活（AutomaticKeepAliveClientMixin）
     final _ = ref.watch(themeProvider);
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     if (widget.onlyShowPullRepo) {
@@ -1111,13 +1117,17 @@ class TaskItemCell extends StatelessWidget {
       );
     }
 
+    final bool isPinnedT = bean.isPinned == 1;
+    final Color cardBorderColor =
+        isPinnedT
+            ? ref.watch(themeProvider).primaryColor
+            : AppleColors.cardBorder;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
       decoration: BoxDecoration(
-        color:
-            (bean.isPinned == 1
-                ? ref.watch(themeProvider).themeColor.pinColor()
-                : AppleColors.bgSecondary),
+        color: (isPinnedT
+            ? ref.watch(themeProvider).themeColor.pinColor()
+            : AppleColors.bgSecondary),
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
         boxShadow: const [
           BoxShadow(
@@ -1126,7 +1136,7 @@ class TaskItemCell extends StatelessWidget {
             offset: Offset(0, 4),
           ),
         ],
-        border: Border.all(color: AppleColors.cardBorder),
+        border: Border.all(color: cardBorderColor, width: isPinnedT ? 1.5 : 1),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
