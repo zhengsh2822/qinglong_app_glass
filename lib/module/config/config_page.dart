@@ -27,7 +27,12 @@ class ConfigPage extends ConsumerStatefulWidget {
 }
 
 class ConfigPageState extends ConsumerState<ConfigPage>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver,
+        AutomaticKeepAliveClientMixin {
+  // PageView 底部 tab 场景保活：切走不销毁，保留页内状态
+  @override
+  bool get wantKeepAlive => true;
+
   BuildContext? childContext;
   String? configContent;
   bool gotoConfigDetailed = false;
@@ -76,6 +81,7 @@ class ConfigPageState extends ConsumerState<ConfigPage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // keepAlive 保活（AutomaticKeepAliveClientMixin）
     final _ = ref.watch(themeProvider);
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     return Scaffold(
