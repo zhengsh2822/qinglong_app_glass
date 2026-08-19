@@ -23,7 +23,8 @@ import 'package:share_plus/share_plus.dart';
 /// - PUT /api/system/data/import - 上传 .tgz 恢复
 /// - PUT /api/system/reload - 恢复后重载生效
 ///
-/// 备份内容可勾选：config / scripts / deps / log（默认包含 db + upload）
+/// 备份内容可勾选（对齐青龙官方导出数据 API 的 type 枚举，共 10 项）：
+/// base / config / scripts / log / deps / syslog / dep_cache / raw / repo / ssh.d
 class BackupPage extends ConsumerStatefulWidget {
   const BackupPage({super.key});
 
@@ -32,14 +33,23 @@ class BackupPage extends ConsumerStatefulWidget {
 }
 
 class _BackupPageState extends ConsumerState<BackupPage> {
-  // 备份内容选项
+  // 备份内容选项（对齐青龙官方导出数据 API 的 type 枚举，共 10 项）
   final Map<String, String> _backupOptions = {
+    'base': '基础数据',
     'config': '配置文件',
-    'scripts': '脚本',
-    'deps': '依赖',
-    'log': '日志',
+    'scripts': '脚本文件',
+    'log': '日志文件',
+    'deps': '依赖文件',
+    'syslog': '系统日志',
+    'dep_cache': '依赖缓存',
+    'raw': '远程脚本缓存',
+    'repo': '远程仓库缓存',
+    'ssh.d': 'SSH 文件缓存',
   };
-  final Set<String> _selected = {'config', 'scripts'};
+  // 基础数据固定包含，不可取消（对齐网页版）
+  static const String _baseKey = 'base';
+
+  final Set<String> _selected = {'base', 'config', 'scripts'};
 
   bool _processing = false;
   String _statusText = '';
@@ -122,7 +132,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           ),
           const SizedBox(height: 14),
           Text(
-            '备份内容（默认包含数据库和上传文件）',
+            '备份内容（基础数据固定包含，不可取消）',
             style: TextStyle(
                 fontSize: 13,
                 color: ref.read(themeProvider).themeColor.descColor()),
@@ -132,20 +142,24 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             spacing: 8,
             runSpacing: 8,
             children: _backupOptions.entries.map((entry) {
-              final selected = _selected.contains(entry.key);
+              final isBase = entry.key == _baseKey;
+              // 基础数据固定选中不可取消（对齐网页版），其余可勾选
+              final selected = isBase || _selected.contains(entry.key);
               return SelectableChip(
                 label: entry.value,
                 selected: selected,
                 disabled: _processing,
-                onToggle: (value) {
-                  setState(() {
-                    if (value) {
-                      _selected.add(entry.key);
-                    } else {
-                      _selected.remove(entry.key);
-                    }
-                  });
-                },
+                onToggle: isBase
+                    ? null
+                    : (value) {
+                        setState(() {
+                          if (value) {
+                            _selected.add(entry.key);
+                          } else {
+                            _selected.remove(entry.key);
+                          }
+                        });
+                      },
               );
             }).toList(),
           ),

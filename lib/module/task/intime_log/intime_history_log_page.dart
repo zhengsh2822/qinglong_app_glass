@@ -76,6 +76,7 @@ class _InTimeHistoryLogPageState extends State<InTimeHistoryLogPage>
                 addDivider(),
                 CupertinoSheer(
                   title: "删除",
+                  danger: true,
                   onTap: () {
                     HapticFeedback.mediumImpact();
                     deleteFold(widget.title, widget.path);

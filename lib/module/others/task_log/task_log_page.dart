@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
@@ -11,9 +10,9 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
+import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
-import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/module/others/task_log/task_log_bean.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_history_log_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -72,14 +71,6 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
     }
   }
 
-  Widget searchCell(WidgetRef context) {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      child: SearchCell(controller: searchText),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
@@ -89,7 +80,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
         FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
-        // 赛博模式下设为透明，让 CyberBackground 的渐变背景透出
+        // 赛博模式下设为透明，让 CyberBackground 的渐变背景透出；苹果模式用主题默认背景
         backgroundColor: isCyber ? Colors.transparent : null,
         floatingActionButton: Visibility(
           visible: buttonshow,
@@ -112,22 +103,22 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
         body:
             list.isEmpty
                 ? const Center(child: LoadingWidget())
-                : Column(
-                  children: [
-                    searchCell(ref),
-                    Expanded(
-                      child: SlidableAutoCloseBehavior(
-                        child: ListView.builder(
-                          padding: EdgeInsets.only(
-                            bottom:
-                                MediaQuery.of(context).viewPadding.bottom + 50,
-                          ),
-                          controller: controller,
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          keyboardDismissBehavior:
-                              ScrollViewKeyboardDismissBehavior.onDrag,
-                          itemBuilder: (context, index) {
-                            TaskLogBean item = list[index];
+                : FloatingSearchBarArea(
+                    controller: searchText,
+                    listView: SlidableAutoCloseBehavior(
+                      child: ListView.builder(
+                        // 顶部间距 64 = 搜索框区域(10+44) + 间距10，放在列表内部（滚动时被内容填充，无背景色块）
+                        padding: EdgeInsets.only(
+                          top: 64,
+                          bottom:
+                              MediaQuery.of(context).viewPadding.bottom + 50,
+                        ),
+                        controller: controller,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        itemBuilder: (context, index) {
+                          TaskLogBean item = list[index];
 
                             if (searchText.text.isNotEmpty &&
                                 !(item.name?.contains(searchText.text) ??
@@ -653,8 +644,6 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                         ),
                       ),
                     ),
-                  ],
-                ),
       ),
     );
     return isCyber ? CyberBackground(child: scaffold) : scaffold;

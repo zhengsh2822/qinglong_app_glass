@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/module/home/system_bean.dart';
@@ -1044,31 +1045,16 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
-  // 基础卡片容器
+  // 基础卡片容器（高光内发光样式，统一走 CapsuleGlowCard）
   Widget _buildCard({required bool isCyber, required Widget child}) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      clipBehavior: isCyber ? Clip.antiAlias : Clip.none,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        color: isCyber ? CyberColors.cardBg : AppleColors.bgSecondary,
-        border:
-            isCyber
-                ? Border.all(color: CyberColors.borderGlow, width: 1)
-                : Border.all(color: AppleColors.cardBorder),
-        boxShadow:
-            isCyber
-                ? null
-                : const [
-                  BoxShadow(
-                    color: AppleColors.cardShadow,
-                    blurRadius: 12,
-                    offset: Offset(0, 4),
-                  ),
-                ],
+      child: CapsuleGlowCard(
+        isCyber: isCyber,
+        isPinned: false,
+        padding: const EdgeInsets.all(16),
+        child: child,
       ),
-      padding: const EdgeInsets.all(16),
-      child: child,
     );
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/commit_button.dart';
 import 'package:qinglong_app/base/cupertino_sheet.dart';
+import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
@@ -184,14 +185,18 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
   }
 
   Widget addWidget(BuildContext context) {
+    final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
+    final Color accent = isCyber
+        ? CyberColors.cyan
+        : ref.watch(themeProvider).primaryColor;
+    final Color iconColor = isCyber
+        ? CyberColors.titleWhite
+        : ref.watch(themeProvider).themeColor.titleColor();
     return Container(
-      margin: const EdgeInsets.only(
-        top: 10,
-      ),
-      child: CupertinoButton(
-        color: Colors.transparent,
-        padding: EdgeInsets.zero,
-        onPressed: () async {
+      margin: const EdgeInsets.only(top: 10),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
           showMoreOperate(
             context,
             [
@@ -212,18 +217,33 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
           );
         },
         child: Container(
-          width: 70,
-          height: 70,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
           decoration: BoxDecoration(
-            color: ref.watch(themeProvider).themeColor.pinColor(),
-            borderRadius: BorderRadius.circular(5),
+            color: accent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: accent.withValues(alpha: 0.45), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withValues(alpha: 0.2),
+                blurRadius: 6,
+                spreadRadius: 0.3,
+              ),
+            ],
           ),
-          child: Center(
-            child: Icon(
-              CupertinoIcons.add,
-              size: 35,
-              color: ref.watch(themeProvider).themeColor.descColor(),
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(CupertinoIcons.add, size: 18, color: accent),
+              const SizedBox(width: 4),
+              Text(
+                "上传",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: iconColor,
+                ),
+              ),
+            ],
           ),
         ),
       ),

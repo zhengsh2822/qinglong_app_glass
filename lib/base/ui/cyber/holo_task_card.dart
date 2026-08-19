@@ -212,7 +212,7 @@ class _HoloTaskCardState extends State<HoloTaskCard>
                     isPinned
                         ? CyberColors.cyan.withValues(alpha: 0.6)
                         : CyberColors.borderGlow,
-                width: isPinned ? 1.5 : 1,
+                width: isPinned ? 1.25 : 1,
               ),
               boxShadow:
                   isRunning

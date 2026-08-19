@@ -10,6 +10,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/log_scroll_button.dart';
 import 'package:qinglong_app/base/ui/pauseable_timer_mixin.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
@@ -96,19 +97,13 @@ class _InTimeSubscribeLogPageState extends State<InTimeSubscribeLogPage>
     return Builder(
       builder: (context) {
         return Scaffold(
-          floatingActionButton: FloatingActionButton(
-            mini: true,
-            onPressed: () {
+          floatingActionButton: LogScrollButton(
+            active: alwaysAuthScroll,
+            onTap: () {
               setState(() {
                 alwaysAuthScroll = !alwaysAuthScroll;
               });
             },
-            elevation: 2,
-            child: Icon(
-              alwaysAuthScroll
-                  ? CupertinoIcons.pause_circle
-                  : CupertinoIcons.play_circle,
-            ),
           ),
           appBar: QlAppBar(
             canBack: true,
