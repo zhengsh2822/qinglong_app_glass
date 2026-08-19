@@ -1,7 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/http/http.dart';
+import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/module/appkey/appkey_viewmodel.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
@@ -27,6 +30,7 @@ class AddAppKeyPage extends ConsumerStatefulWidget {
 
 class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _customScopeController = TextEditingController();
 
   /// 全部可选权限（与青龙面板 scopes 对应）
   static const List<String> _allPermissions = [
@@ -36,10 +40,14 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
     '脚本管理',
     '任务日志',
     '依赖管理',
+    '订阅管理',
     '系统信息',
   ];
 
   List<String> selectedPermissions = ["定时任务"];
+
+  /// 自定义 scope key（青龙新增权限时手动输入，无需等 App 更新）
+  final List<String> _customScopes = [];
 
   @override
   void initState() {
@@ -47,8 +55,15 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
       _nameController.text = widget.bean["name"] ?? "";
 
       selectedPermissions.clear();
-      selectedPermissions
-          .addAll(AppKeyViewModel.getScopeNames(widget.bean["scopes"]));
+      // 预设权限→中文名，青龙新增的自定义 key→原样返回
+      final names = AppKeyViewModel.getScopeNames(widget.bean["scopes"]);
+      for (final n in names) {
+        if (_allPermissions.contains(n)) {
+          selectedPermissions.add(n);
+        } else if (n.isNotEmpty) {
+          _customScopes.add(n);
+        }
+      }
     }
 
     super.initState();
@@ -57,11 +72,35 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
   @override
   void dispose() {
     _nameController.dispose();
+    _customScopeController.dispose();
     super.dispose();
+  }
+
+  /// 添加自定义 scope key
+  void _addCustomScope() {
+    final text = _customScopeController.text.trim();
+    if (text.isEmpty) return;
+    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(text)) {
+      "scope key 只能包含字母、数字、下划线".toast();
+      return;
+    }
+    setState(() {
+      if (!_customScopes.contains(text)) {
+        _customScopes.add(text);
+      }
+    });
+    _customScopeController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = ref.watch(themeProvider);
+    final bool isCyber = theme.themeMode == modeCyber;
+    final Color accentColor =
+        isCyber ? CyberColors.cyan : AppleColors.accent;
+    final Color titleColor =
+        isCyber ? CyberColors.titleWhite : AppleColors.textPrimary;
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: QlAppBar(
@@ -151,6 +190,100 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
                       );
                     }).toList(),
                   ),
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  const TitleWidget(
+                    "自定义权限",
+                    required: false,
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  // 青龙新增权限时手动输入 scope key，无需等 App 更新
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _customScopeController,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _addCustomScope(),
+                          decoration: const InputDecoration(
+                            hintText: "青龙新增的 scope key，如 subscriptions",
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: _addCustomScope,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: accentColor.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          child: Text(
+                            "添加",
+                            style: TextStyle(fontSize: 13, color: accentColor),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_customScopes.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _customScopes.map((s) {
+                        // 可删除的自定义 scope 标签（点击删除）
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() => _customScopes.remove(s));
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.only(
+                              left: 10,
+                              right: 6,
+                              top: 4,
+                              bottom: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: accentColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: accentColor.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  s,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: titleColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  CupertinoIcons.xmark_circle_fill,
+                                  size: 14,
+                                  color: accentColor,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -166,7 +299,7 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
       return;
     }
 
-    if (selectedPermissions.isEmpty) {
+    if (selectedPermissions.isEmpty && _customScopes.isEmpty) {
       "请选择权限".toast();
       return;
     }
@@ -175,9 +308,15 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
 
     HttpResponse<NullResponse> response;
 
+    // 预设权限（中文名→key）+ 自定义 scope key（青龙新增权限直接输入）
+    List<String> scopes = [
+      ...AppKeyViewModel.getScopeKeys(selectedPermissions),
+      ..._customScopes,
+    ];
+
     Map<String, dynamic> data = {
       "name": _nameController.getTextOrDefault(),
-      "scopes": AppKeyViewModel.getScopeKeys(selectedPermissions),
+      "scopes": scopes,
     };
     if (widget.bean.containsKey("_id") || widget.bean.containsKey("id")) {
       if (widget.bean.containsKey("_id")) {

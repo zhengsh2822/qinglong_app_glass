@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/empty_widget.dart';
 import 'package:qinglong_app/main.dart';
@@ -242,54 +243,21 @@ class ConfigCell extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
+            CapsuleGlowCard(
+              isCyber: isCyber,
+              isPinned: false,
               margin: EdgeInsets.symmetric(
-                horizontal: isCyber ? 12 : AppleColors.spaceMd,
+                horizontal: AppleColors.spaceMd,
                 vertical: 6,
               ),
-              decoration:
-                  isCyber
-                      ? null
-                      : BoxDecoration(
-                        color: AppleColors.bgSecondary,
-                        borderRadius: BorderRadius.circular(
-                          AppleColors.radiusCard,
-                        ),
-                        border: Border.all(color: AppleColors.cardBorder),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: AppleColors.cardShadow,
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-                child:
-                    isCyber
-                        ? Container(
-                          decoration: BoxDecoration(
-                            color: CyberColors.cardBg,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: CyberColors.borderGlow,
-                              width: 1,
-                            ),
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(18),
-                            child: configContent,
-                          ),
-                        )
-                        : Material(
-                          color: Colors.transparent,
-                          child: configContent,
-                        ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: configContent,
+                ),
               ),
             ),
-            isCyber ? const SizedBox.shrink() : const SizedBox.shrink(),
           ],
         ),
       ),

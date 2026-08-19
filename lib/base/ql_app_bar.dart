@@ -93,6 +93,8 @@ class QlAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 : LinearGradient(
                   colors: ref.watch(themeProvider).themeColor.appBarBg(),
                 ),
+        // 非赛博（苹果白）模式：顶部导航加 1px 纯白边框，与卡片高光语言一致
+        border: isWhite ? Border.all(color: Colors.white, width: 1) : null,
       ),
       child: appBar,
     );

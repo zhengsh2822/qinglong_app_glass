@@ -129,6 +129,7 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
       addDivider(),
       CupertinoSheer(
         title: "删除",
+        danger: true,
         onTap: () async {
           HapticFeedback.mediumImpact();
           final bool cyber = ref.read(themeProvider).themeMode == modeCyber;

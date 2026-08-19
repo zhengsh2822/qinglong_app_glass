@@ -41,12 +41,17 @@ class CyberSlidable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Slidable(
-      key: slidableKey,
-      enabled: enabled,
-      startActionPane: _buildPane(context, startActions),
-      endActionPane: _buildPane(context, endActions),
-      child: child,
+    // 关键：用 ClipRRect 把 Slidable 整体裁剪到圆角内，
+    // 避免左右滑出的 ActionPane 按钮"飘"到卡片外（与非赛博的 ClipRRect 行为一致）。
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: Slidable(
+        key: slidableKey,
+        enabled: enabled,
+        startActionPane: _buildPane(context, startActions),
+        endActionPane: _buildPane(context, endActions),
+        child: child,
+      ),
     );
   }
 

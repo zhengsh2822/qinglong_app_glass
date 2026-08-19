@@ -10,9 +10,9 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
+import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
-import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/tree/models/script_data.dart';
 import 'package:qinglong_app/module/others/scripts/folder_add_page.dart';
 import 'package:qinglong_app/module/others/scripts/script_upload_page.dart';
@@ -89,7 +89,7 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
         FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
-        // 赛博模式下背景设为透明，让 CyberBackground 的渐变透出
+        // 赛博模式下背景设为透明，让 CyberBackground 的渐变透出；苹果模式用主题默认背景
         backgroundColor: isCyber ? Colors.transparent : null,
         floatingActionButton: Visibility(
           visible: buttonshow,
@@ -155,113 +155,103 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
         body:
             list.isEmpty
                 ? const Center(child: LoadingWidget())
-                : Column(
-                  children: [
-                    searchCell(ref),
-                    Expanded(
-                      child: RefreshIndicator(
-                        color: Theme.of(context).primaryColor,
-                        onRefresh: () async {
-                          await loadData();
-                          return Future.value();
+                : FloatingSearchBarArea(
+                    controller: searchText,
+                    listView: RefreshIndicator(
+                      color: Theme.of(context).primaryColor,
+                      onRefresh: () async {
+                        await loadData();
+                        return Future.value();
+                      },
+                      child: TreeView(
+                        // 顶部间距 64 = 搜索框区域(10+44) + 间距10，放在列表内部（滚动时被内容填充，无背景色块）
+                        padding: const EdgeInsets.only(top: 64),
+                        controller: _treeViewController,
+                        onExpansionChanged: (key, state) {
+                          ScriptData? node = _treeViewController.getNode(key);
+                          if (node != null) {
+                            List<ScriptData> updated = _treeViewController
+                                .updateNode(
+                                  key,
+                                  node.copyWith(expanded: !node.expanded),
+                                );
+                            setState(() {
+                              _treeViewController = _treeViewController
+                                  .copyWith(children: updated);
+                            });
+                          }
                         },
-                        child: TreeView(
-                          controller: _treeViewController,
-                          onExpansionChanged: (key, state) {
-                            ScriptData? node = _treeViewController.getNode(key);
-                            if (node != null) {
-                              List<ScriptData> updated = _treeViewController
-                                  .updateNode(
-                                    key,
-                                    node.copyWith(expanded: !node.expanded),
-                                  );
-                              setState(() {
-                                _treeViewController = _treeViewController
-                                    .copyWith(children: updated);
+                        onDeleteSelfClick: (ScriptData data) {
+                          showCupertinoDialog(
+                            useRootNavigator: false,
+                            context: context,
+                            builder:
+                                (context1) => CupertinoAlertDialog(
+                                      title: const Text("确认删除"),
+                                      content: const Text("确认删除吗"),
+                                      actions: [
+                                        CupertinoDialogAction(
+                                          child: const Text(
+                                            "取消",
+                                            style: TextStyle(
+                                              color: Color(0xff999999),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        CupertinoDialogAction(
+                                          child: Text(
+                                            "确定",
+                                            style: TextStyle(
+                                              color:
+                                                  ref
+                                                      .watch(themeProvider)
+                                                      .primaryColor,
+                                            ),
+                                          ),
+                                          onPressed: () async {
+                                            Navigator.of(context1).pop();
+                                            deleteFold(data);
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                          );
+                        },
+                        onNodeTap: (key) {
+                          ScriptData? selectedNode = _treeViewController
+                              .getNode(key);
+                          String? path = selectedNode?.parent;
+                          if (path == null || path.isEmpty) {
+                            // For root-level files, extract path from key (e.g., "repo/file.js" -> "repo")
+                            String nodeKey = selectedNode?.key ?? "";
+                            int lastSlash = nodeKey.lastIndexOf('/');
+                            if (lastSlash > 0) {
+                              path = nodeKey.substring(0, lastSlash);
+                            }
+                          }
+                          Navigator.of(context)
+                              .pushNamed(
+                                Routes.routeScriptDetail,
+                                arguments: {
+                                  "title": selectedNode?.title,
+                                  "path": path,
+                                },
+                              )
+                              .then((value) {
+                                if (value != null && value == true) {
+                                  loadData();
+                                }
                               });
-                            }
-                          },
-                          onDeleteSelfClick: (ScriptData data) {
-                            showCupertinoDialog(
-                              useRootNavigator: false,
-                              context: context,
-                              builder:
-                                  (context1) => CupertinoAlertDialog(
-                                    title: const Text("确认删除"),
-                                    content: const Text("确认删除吗"),
-                                    actions: [
-                                      CupertinoDialogAction(
-                                        child: const Text(
-                                          "取消",
-                                          style: TextStyle(
-                                            color: Color(0xff999999),
-                                          ),
-                                        ),
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                      ),
-                                      CupertinoDialogAction(
-                                        child: Text(
-                                          "确定",
-                                          style: TextStyle(
-                                            color:
-                                                ref
-                                                    .watch(themeProvider)
-                                                    .primaryColor,
-                                          ),
-                                        ),
-                                        onPressed: () async {
-                                          Navigator.of(context1).pop();
-                                          deleteFold(data);
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                            );
-                          },
-                          onNodeTap: (key) {
-                            ScriptData? selectedNode = _treeViewController
-                                .getNode(key);
-                            String? path = selectedNode?.parent;
-                            if (path == null || path.isEmpty) {
-                              // For root-level files, extract path from key (e.g., "repo/file.js" -> "repo")
-                              String nodeKey = selectedNode?.key ?? "";
-                              int lastSlash = nodeKey.lastIndexOf('/');
-                              if (lastSlash > 0) {
-                                path = nodeKey.substring(0, lastSlash);
-                              }
-                            }
-                            Navigator.of(context)
-                                .pushNamed(
-                                  Routes.routeScriptDetail,
-                                  arguments: {
-                                    "title": selectedNode?.title,
-                                    "path": path,
-                                  },
-                                )
-                                .then((value) {
-                                  if (value != null && value == true) {
-                                    loadData();
-                                  }
-                                });
-                          },
-                        ),
+                        },
                       ),
                     ),
-                  ],
-                ),
+                  ),
       ),
     );
     return isCyber ? CyberBackground(child: scaffold) : scaffold;
-  }
-
-  Widget searchCell(WidgetRef context) {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      child: SearchCell(controller: searchText),
-    );
   }
 
   Future<void> loadData() async {

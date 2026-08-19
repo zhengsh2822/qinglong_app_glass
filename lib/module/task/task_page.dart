@@ -14,6 +14,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
@@ -28,9 +29,7 @@ import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
-import '../../base/ui/enable_widget.dart';
 import '../../base/ui/notify.dart';
-import '../../base/ui/running_widget.dart';
 import '../../main.dart';
 
 class TaskPage extends ConsumerStatefulWidget {
@@ -1024,10 +1023,12 @@ class TaskItemCell extends StatelessWidget {
     // 右滑2个按钮（startActions）：运行停止/日志
     if (isCyber) {
       // 复用 CyberSlidable 组件（与 appkey_page/change_account_page 一致），
-      // 它的 CustomSlidableAction 用 Material elevation 渲染赛博按钮光晕，
-      // 配合主卡片 BackdropFilter 形成"光折射到主卡片"效果
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12),
+      // 它的 CustomSlidableAction 用 Material elevation 渲染赛博按钮光晕
+      return CapsuleGlowCard(
+        isCyber: true,
+        isPinned: bean.isPinned == 1,
+        newPinnedStyle: true,
+        margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
         child: CyberSlidable(
           slidableKey: ValueKey(bean.sId),
           enabled: !editMode,
@@ -1118,28 +1119,14 @@ class TaskItemCell extends StatelessWidget {
     }
 
     final bool isPinnedT = bean.isPinned == 1;
-    final Color cardBorderColor =
-        isPinnedT
-            ? ref.watch(themeProvider).primaryColor
-            : AppleColors.cardBorder;
-    return Container(
+    return CapsuleGlowCard(
+      isCyber: false,
+      isPinned: isPinnedT,
+      newPinnedStyle: true,
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      decoration: BoxDecoration(
-        color: (isPinnedT
-            ? ref.watch(themeProvider).themeColor.pinColor()
-            : AppleColors.bgSecondary),
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        boxShadow: const [
-          BoxShadow(
-            color: AppleColors.cardShadow,
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: cardBorderColor, width: isPinnedT ? 1.5 : 1),
-      ),
+      borderRadius: const BorderRadius.all(Radius.circular(18)),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
+        borderRadius: BorderRadius.circular(18),
         child: Slidable(
           enabled: !editMode,
           key: ValueKey(bean.sId),
@@ -1256,62 +1243,55 @@ class TaskItemCell extends StatelessWidget {
     );
   }
 
-  /// 构建卡片主体内容（不含外层 margin/decoration，由调用方提供）
+  /// 构建卡片主体内容（不含外层 margin/decoration，由 CapsuleGlowCard 提供）
   Widget _buildCardChild(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child:
-          isCyber
-              ? Container(
-                decoration: BoxDecoration(
-                  color: CyberColors.cardBg,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color:
-                        bean.isPinned == 1
-                            ? CyberColors.cyan.withValues(alpha: 0.6)
-                            : CyberColors.borderGlow,
-                    width: 1,
-                  ),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(18),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(18),
-                    onTap: () {
-                      if (editMode) {
-                        checkedCallback(bean.sId ?? "");
-                      } else {
-                        Navigator.of(
-                          context,
-                        ).pushNamed(Routes.routeTaskDetail, arguments: bean);
-                      }
-                    },
-                    child: _buildCardContent(context),
-                  ),
-                ),
-              )
-              : Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    if (editMode) {
-                      checkedCallback(bean.sId ?? "");
-                    } else {
-                      Navigator.of(
-                        context,
-                      ).pushNamed(Routes.routeTaskDetail, arguments: bean);
-                    }
-                  },
-                  child: _buildCardContent(context),
-                ),
-              ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          if (editMode) {
+            checkedCallback(bean.sId ?? "");
+          } else {
+            Navigator.of(
+              context,
+            ).pushNamed(Routes.routeTaskDetail, arguments: bean);
+          }
+        },
+        child: _buildCardContent(context),
+      ),
     );
   }
 
-  /// 构建卡片内容（任务名称、运行状态、定时规则、命令）
+  /// 构建卡片内容（任务名称、状态胶囊、定时规则、命令 + 运行按钮）
   Widget _buildCardContent(BuildContext context) {
+    final bool dark = isCyber;
+    final bool isPinnedT = bean.isPinned == 1;
+    final bool isDisabled = (bean.isDisabled ?? 0) == 1;
+    final bool isRunning = !isDisabled && (bean.status ?? 1) == 0;
+    final Color sc = _stateColor(isRunning, isDisabled);
+    final Color accent = isCyber
+        ? CyberColors.cyan
+        : ref.watch(themeProvider).primaryColor;
+
+    // 禁用卡片：整体灰显
+    final Color nameColor = isDisabled
+        ? (dark ? const Color(0xFF5A5A6E) : const Color(0xFFB0B0B8))
+        : (dark ? CyberColors.titleWhite : const Color(0xFF1A1A1A));
+    final Color timeColor =
+        dark ? const Color(0xFF4A4A5E) : const Color(0xFF9A9AA0);
+    final Color cronColor = isDisabled
+        ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFB0B0B8))
+        : accent.withValues(alpha: 0.9);
+    final Color commandColor = isDisabled
+        ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFC4C4CC))
+        : (dark ? const Color(0xFF8888AA) : const Color(0xFF8A8A8E));
+
+    final String timeText =
+        (bean.lastExecutionTime == null || bean.lastExecutionTime == 0)
+            ? "-"
+            : Utils.formatMessageTime(bean.lastExecutionTime!);
+
     return Row(
       children: [
         AnimatedSize(
@@ -1340,121 +1320,142 @@ class TaskItemCell extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: Container(
-            color: Colors.transparent,
+          child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: isCyber ? 15 : AppleColors.spaceMd,
-              vertical: 8,
+              vertical: 13,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.start,
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          ConstrainedBox(
-                            constraints: BoxConstraints.loose(
-                              Size.fromWidth(
-                                MediaQuery.of(context).size.width *
-                                    (((bean.isDisabled ?? 0) == 1)
-                                        ? 0.45
-                                        : 0.55),
-                              ),
+                // 左侧状态竖条
+                Container(
+                  width: 3,
+                  height: 42,
+                  margin: const EdgeInsets.only(right: 12, top: 2),
+                  decoration: BoxDecoration(
+                    color: sc,
+                    borderRadius: BorderRadius.circular(2),
+                    boxShadow: isRunning
+                        ? [
+                            BoxShadow(
+                              color: sc.withValues(alpha: 0.6),
+                              blurRadius: 6,
                             ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: Text(
-                                bean.name ?? "",
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  overflow: TextOverflow.ellipsis,
-                                  color:
-                                      ref
-                                          .watch(themeProvider)
-                                          .themeColor
-                                          .titleColor(),
-                                  fontSize: 17,
-                                  fontWeight: isCyber ? null : FontWeight.w600,
-                                ),
+                          ]
+                        : [],
+                  ),
+                ),
+                // 中间内容
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 名称行：置顶图钉 + 名称 + 时间 + 状态点
+                      Row(
+                        children: [
+                          if (isPinnedT) ...[
+                            Icon(Icons.push_pin, size: 14, color: accent),
+                            const SizedBox(width: 4),
+                          ],
+                          Expanded(
+                            child: Text(
+                              bean.name ?? "",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: dark ? CyberColors.monoFont : null,
+                                color: nameColor,
                               ),
                             ),
                           ),
-                          SizedBox(width: bean.status == 0 ? 7 : 0),
-                          bean.status == 0
-                              ? const RunningWidget()
-                              : const SizedBox.shrink(),
-                          const SizedBox(width: 7),
-                          bean.isDisabled == 1
-                              ? const StatusWidget(
-                                title: "已禁用",
-                                color: AppColors.danger,
-                              )
-                              : const SizedBox.shrink(),
+                          const SizedBox(width: 8),
+                          Text(
+                            timeText,
+                            style: TextStyle(fontSize: 11, color: timeColor),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: sc,
+                              shape: BoxShape.circle,
+                              boxShadow: isRunning
+                                  ? [
+                                      BoxShadow(
+                                        color: sc.withValues(alpha: 0.7),
+                                        blurRadius: 5,
+                                      ),
+                                    ]
+                                  : [],
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                    Material(
-                      color: Colors.transparent,
-                      child: Text(
-                        (bean.lastExecutionTime == null ||
-                                bean.lastExecutionTime == 0)
-                            ? "-"
-                            : Utils.formatMessageTime(bean.lastExecutionTime!),
-                        maxLines: 1,
-                        style: TextStyle(
-                          overflow: TextOverflow.ellipsis,
-                          color:
-                              ref
-                                  .watch(themeProvider)
-                                  .themeColor
-                                  .descColor(),
-                          fontSize: isCyber ? 12 : 13,
-                        ),
+                      const SizedBox(height: 5),
+                      // 状态行：状态胶囊标签 + 定时规则
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: sc.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: sc.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            child: Text(
+                              _stateText(isRunning, isDisabled),
+                              style: TextStyle(fontSize: 11, color: sc),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              bean.schedule ?? "",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontFamily: CyberColors.monoFont,
+                                color: cronColor,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Material(
-                  color: Colors.transparent,
-                  child: Text(
-                    bean.schedule ?? "",
-                    maxLines: 1,
-                    style: TextStyle(
-                      overflow: TextOverflow.ellipsis,
-                      color:
-                          ref
-                              .watch(themeProvider)
-                              .themeColor
-                              .descColor(),
-                      fontSize: isCyber ? 14 : 13,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Material(
-                  color: Colors.transparent,
-                  child: Text(
-                    bean.command ?? "",
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      overflow: TextOverflow.ellipsis,
-                      color:
-                          ref
-                              .watch(themeProvider)
-                              .themeColor
-                              .descColor(),
-                      fontSize: isCyber ? 14 : 13,
-                    ),
+                      const SizedBox(height: 3),
+                      // 命令行：右侧嵌运行/停止按钮（与命令文案同行对齐，不撑大卡片）
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              bean.command ?? "",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: commandColor,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildRunButton(
+                            context,
+                            isRunning: isRunning,
+                            isDisabled: isDisabled,
+                            accent: accent,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -1462,6 +1463,90 @@ class TaskItemCell extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  /// 卡片状态色：运行中=主色 / 待机=灰 / 禁用=红（赛博 neonRed，苹果 iOS 红）
+  Color _stateColor(bool isRunning, bool isDisabled) {
+    final Color accent = isCyber
+        ? CyberColors.cyan
+        : ref.watch(themeProvider).primaryColor;
+    if (isDisabled) {
+      return isCyber ? CyberColors.neonRed : const Color(0xFFFF3B30);
+    }
+    if (isRunning) return accent;
+    return isCyber ? CyberColors.idleGray : const Color(0xFFB0B0B8);
+  }
+
+  /// 状态文案：运行中 / 待机 / 已禁用
+  String _stateText(bool isRunning, bool isDisabled) {
+    if (isDisabled) return '已禁用';
+    if (isRunning) return '运行中';
+    return '待机';
+  }
+
+  /// 运行/停止胶囊按钮（卡片右下，与命令文案同行对齐）
+  ///  - 运行中：红色"停止"
+  ///  - 待机：主色"运行"
+  ///  - 已禁用/编辑模式：灰色（不可点击）
+  Widget _buildRunButton(
+    BuildContext context, {
+    required bool isRunning,
+    required bool isDisabled,
+    required Color accent,
+  }) {
+    final bool dark = isCyber;
+    final bool inactive = isDisabled || editMode;
+    final Color c = inactive
+        ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFB0B0B8))
+        : (isRunning ? const Color(0xFFFF3D00) : accent);
+    final IconData icon = isRunning ? Icons.stop : Icons.play_arrow;
+    final String label = isRunning ? '停止' : '运行';
+
+    return GestureDetector(
+      onTap: inactive
+          ? null
+          : () {
+              if (isRunning) {
+                stopCron(context, ref);
+              } else {
+                startCron(
+                  context,
+                  ref,
+                  SpUtil.getBool(spAutoShowLog, defValue: true),
+                );
+              }
+            },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: c.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: c.withValues(alpha: 0.45), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: c.withValues(alpha: 0.2),
+              blurRadius: 6,
+              spreadRadius: 0.3,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: c),
+            const SizedBox(width: 3),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: c,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

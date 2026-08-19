@@ -13,6 +13,7 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
+import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
@@ -808,9 +809,11 @@ class EnvItemCell extends StatelessWidget {
       ),
     );
     if (isCyber) {
-      // 赛博模式：用 CyberSlidable（Material elevation 光晕 + BackdropFilter 折射）
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12),
+      // 赛博模式：用 CyberSlidable（Material elevation 光晕）
+      return CapsuleGlowCard(
+        isCyber: true,
+        isPinned: false,
+        margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
         child: CyberSlidable(
           slidableKey: ValueKey(bean.sId),
           enabled: !editMode,
@@ -862,20 +865,10 @@ class EnvItemCell extends StatelessWidget {
       );
     }
 
-    return Container(
+    return CapsuleGlowCard(
+      isCyber: false,
+      isPinned: false,
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      decoration: BoxDecoration(
-        color: AppleColors.bgSecondary,
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        boxShadow: const [
-          BoxShadow(
-            color: AppleColors.cardShadow,
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: AppleColors.cardBorder),
-      ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
         child: Slidable(
@@ -947,21 +940,7 @@ class EnvItemCell extends StatelessWidget {
   ) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-      child:
-          isCyber
-              ? Container(
-                decoration: BoxDecoration(
-                  color: CyberColors.cardBg,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: CyberColors.borderGlow, width: 1),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(18),
-                  child: cardContent,
-                ),
-              )
-              : Material(color: Colors.transparent, child: cardContent),
+      child: Material(color: Colors.transparent, child: cardContent),
     );
   }
 

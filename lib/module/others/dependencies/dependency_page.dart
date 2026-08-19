@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
+import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
@@ -872,24 +873,17 @@ class DependencyCell extends ConsumerWidget {
       ),
     );
 
-    Widget cardChild = isCyber
-        ? Container(
-            decoration: BoxDecoration(
-              color: CyberColors.cardBg,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: CyberColors.borderGlow, width: 1),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(18),
-              child: cardContent,
-            ),
-          )
-        : cardContent;
+    Widget cardChild = Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(18),
+      child: cardContent,
+    );
 
     if (isCyber) {
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 15),
+      return CapsuleGlowCard(
+        isCyber: true,
+        isPinned: false,
+        margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
         child: CyberSlidable(
           slidableKey: ValueKey(bean.mustId),
           enabled: !editMode,
@@ -924,20 +918,10 @@ class DependencyCell extends ConsumerWidget {
       );
     }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 15),
-      decoration: BoxDecoration(
-        color: AppleColors.bgSecondary,
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        boxShadow: const [
-          BoxShadow(
-            color: AppleColors.cardShadow,
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: AppleColors.cardBorder),
-      ),
+    return CapsuleGlowCard(
+      isCyber: false,
+      isPinned: false,
+      margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
         child: Slidable(

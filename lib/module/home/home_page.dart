@@ -11,7 +11,7 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/bottom_nav_bar.dart';
+import 'package:qinglong_app/base/ui/liquid_glass_nav_bar.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/main.dart';
@@ -267,6 +267,13 @@ class HomePageState extends ConsumerState<HomePage> {
         }
       },
     );
+    // 底部导航"我的"按钮几何（与 _buildBottomNav 的胶囊侧边距 16 +
+    // LiquidGlassNavBar.padding=4 保持一致），用于长按"我的"弹窗对齐悬浮"我的"位置
+    final double screenW = MediaQuery.of(context).size.width;
+    const double navSide = 16.0;
+    const double navInnerPad = 4.0;
+    final double navItemW = (screenW - navSide * 2 - navInnerPad * 2) / 4;
+    final double meCenter = navSide + navInnerPad + 3.5 * navItemW;
     return PopScope(
       canPop: true,
       child: Material(
@@ -323,6 +330,7 @@ class HomePageState extends ConsumerState<HomePage> {
               ),
             ),
             Positioned(
+              bottom: MediaQuery.of(context).viewPadding.bottom,
               child: Visibility(
                 visible: showMask,
                 child: Column(
@@ -330,15 +338,17 @@ class HomePageState extends ConsumerState<HomePage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      margin: const EdgeInsets.only(right: 10),
-                      child: _buildOtherAccounts(),
+                      // 右缘对齐"我的"按钮右缘，弹窗锚定在悬浮"我的"上
+                      margin: EdgeInsets.only(
+                        right: screenW - meCenter - navItemW / 2,
+                      ),
                       width: MediaQuery.of(context).size.width / 2,
+                      child: _buildOtherAccounts(),
                     ),
-                    _buildOtherWidget(),
+                    _buildOtherWidget(meCenter: meCenter),
                   ],
                 ),
               ),
-              bottom: MediaQuery.of(context).viewPadding.bottom,
             ),
           ],
         ),
@@ -346,103 +356,84 @@ class HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  /// 构建底部导航栏容器（统一赛博/Apple两种主题，受毛玻璃开关控制）
+  /// 构建底部导航栏容器（悬浮大胶囊，无整块背景色块）
   ///
-  /// GPU 优化：毛玻璃开关关闭时退化为纯色背景，零模糊开销；
-  /// 开启时保留 BackdropFilter 高斯模糊质感。
+  /// 悬浮胶囊直接浮在页面内容之上：去掉整块色块背景与毛玻璃结构，
+  /// 大胶囊自带深色悬浮投影（由 LiquidGlassNavBar.barShadow 提供）。
   Widget _buildBottomNavigationBar(BuildContext context) {
-    final isCyber = ref.watch(themeProvider).themeMode == modeCyber;
-    final bool blurEnabled = ref.watch(blurEffectProvider);
-    const radius = BorderRadius.only(
-      topLeft: Radius.circular(20),
-      topRight: Radius.circular(20),
-    );
-
-    final Color bgColor =
-        isCyber
-            ? (ref
-                    .watch(themeProvider)
-                    .currentTheme
-                    .bottomNavigationBarTheme
-                    .backgroundColor
-                    ?.withOpacity(blurEnabled ? 0.65 : 1.0) ??
-                Colors.black.withValues(alpha: blurEnabled ? 0.65 : 1.0))
-            : AppleColors.bgPrimary.withValues(alpha: blurEnabled ? 0.75 : 1.0);
-
-    final navContent = Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: radius,
-        // 注意：阴影不能放在这里，外层 ClipRRect 会把超出圆角区域的
-        // boxShadow 裁掉导致阴影丢失（修复：阴影移到最外层容器绘制）
-      ),
-      height: kBottomNavigationBarHeight + MediaQuery.of(context).padding.bottom,
-      width: MediaQuery.of(context).size.width,
-      child: _buildBottomNav(context),
-    );
-
-    Widget clippedNav =
-        blurEnabled
-            ? ClipRRect(
-              // 毛玻璃开启：BackdropFilter 高斯模糊
-              borderRadius: radius,
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: navContent,
-              ),
-            )
-            // 毛玻璃关闭：纯色背景（不透明度 1.0），GPU 零模糊
-            : ClipRRect(borderRadius: radius, child: navContent);
-
-    // 阴影放最外层（不经过 ClipRRect 裁剪），保证导航栏与内容页面区分明显
-    // 赛博：深黑阴影；非赛博：柔和浅阴影
-    final List<BoxShadow> navShadow =
-        isCyber
-            ? const [
-              BoxShadow(color: Color(0x66000000), blurRadius: 15, offset: Offset(0, -3)),
-            ]
-            : const [
-              BoxShadow(color: Color(0x15000000), blurRadius: 15, offset: Offset(0, -3)),
-            ];
+    // 高度 = 悬浮胶囊(75) + 上边距(14) + 下边距(2) + 底部安全区
     return Container(
-      decoration: BoxDecoration(borderRadius: radius, boxShadow: navShadow),
-      child: clippedNav,
+      height: 91.0 + MediaQuery.of(context).padding.bottom,
+      width: MediaQuery.of(context).size.width,
+      color: Colors.transparent,
+      child: _buildBottomNav(context),
     );
   }
 
   /// 构建底部导航栏内容
   Widget _buildBottomNav(BuildContext context) {
     final isCyber = ref.watch(themeProvider).themeMode == modeCyber;
-    return BottomNavigationBar2(
-      backgroundColor: Colors.transparent,
-      selectedItemColor: isCyber ? null : ref.watch(themeProvider).primaryColor,
-      unselectedItemColor: isCyber ? null : AppleColors.textSecondary,
+    final theme = ref.watch(themeProvider);
+    final bool blurEnabled = ref.watch(blurEffectProvider);
+    final homeIndex = ref.watch<int>(
+      SingleAccountPageState.ofHomeIndexProvider(context)(
+        getProviderName(context),
+      ),
+    );
+
+    // 液态玻璃导航条：赛博/苹果 两套视觉参数（与 demo 确认效果一致）
+    final activeColor = isCyber ? CyberColors.cyan : theme.primaryColor;
+    final inactiveColor = isCyber
+        ? CyberColors.hintGray
+        : AppleColors.textSecondary;
+
+    // 大胶囊：毛玻璃开启 = 半透明玻璃色 + BackdropFilter；关闭 = 纯色
+    // 悬浮投影：胶囊自带深色投影（无需外层色块）
+    final Color barColor = isCyber
+        ? CyberColors.cardBg
+        : AppleColors.bgSecondary;
+    final List<BoxShadow> barShadow =
+        isCyber
+            ? const [
+              BoxShadow(color: Color(0x80000000), blurRadius: 24, offset: Offset(0, 10)),
+              BoxShadow(color: Color(0x40000000), blurRadius: 8, offset: Offset(0, 4)),
+            ]
+            : const [
+              BoxShadow(color: Color(0x26000000), blurRadius: 24, offset: Offset(0, 10)),
+              BoxShadow(color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 4)),
+            ];
+
+    // 悬浮布局：胶囊水平左右留 16，上 14 下 2（较之前整体下移 10px，降低悬浮高度）
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        14,
+        16,
+        2 + MediaQuery.of(context).padding.bottom,
+      ),
+      child: LiquidGlassNavBar(
       items:
           titles
-              .map(
-                (e) => BottomNavigationBarItem(
-                  icon: Image.asset(
-                    e.icon,
-                    fit: BoxFit.cover,
-                    width: 20,
-                    height: 20,
-                  ),
-                  activeIcon: Image.asset(
-                    e.checkedIcon,
-                    fit: BoxFit.cover,
-                    width: 20,
-                    height: 20,
-                  ),
+              .asMap()
+              .entries
+              .map((entry) {
+                // 底部导航图标与 demo 一致（Material Icons，随 active 着色）
+                const icons = [
+                  (Icons.schedule_outlined, Icons.schedule),
+                  (Icons.settings_ethernet_outlined, Icons.settings_ethernet),
+                  (Icons.description_outlined, Icons.description),
+                  (Icons.person_outline, Icons.person),
+                ];
+                final e = entry.value;
+                return LiquidNavItem(
                   label: e.title,
-                ),
-              )
+                  icon: icons[entry.key].$1,
+                  activeIcon: icons[entry.key].$2,
+                );
+              })
               .toList(),
-      currentIndex: ref.watch<int>(
-        SingleAccountPageState.ofHomeIndexProvider(context)(
-          getProviderName(context),
-        ),
-      ),
-      onTap: (index) async {
+      initialIndex: homeIndex,
+      onSelected: (index) async {
         final currentIdx = ref.read<int>(
           SingleAccountPageState.ofHomeIndexProvider(context)(
             getProviderName(context),
@@ -469,12 +460,6 @@ class HomePageState extends ConsumerState<HomePage> {
               .state = index;
         }
       },
-      elevation: 0,
-      selectedFontSize: 12,
-      unselectedFontSize: 12,
-      type: BottomNavigationBarType.fixed,
-      showSelectedLabels: true,
-      showUnselectedLabels: true,
       onLongTap: (index) async {
         if (index == 3) {
           HapticFeedback.mediumImpact();
@@ -483,6 +468,33 @@ class HomePageState extends ConsumerState<HomePage> {
           });
         }
       },
+      activeColor: activeColor,
+      inactiveColor: inactiveColor,
+      padding: 4,
+      labelSize: 11,
+      // 大胶囊：毛玻璃（跟随开关）+ 深色悬浮投影
+      barColor: barColor,
+      barGlass: blurEnabled,
+      barGlassColor: isCyber
+          ? CyberColors.cardBg.withValues(alpha: 0.7)
+          : AppleColors.bgSecondary.withValues(alpha: 0.75),
+      barShadow: barShadow,
+      barBorder: isCyber
+          ? Border.all(
+              color: CyberColors.cyan.withValues(alpha: 0.2),
+              width: 1.5,
+            )
+          : null,
+      // 小胶囊：赛博全透明滑块（保留内发光）；苹果风格保持原样（渐变+顶部高光）
+      sliderColor: isCyber
+          ? Colors.transparent
+          : const Color(0xFFE5E5E5),
+      sliderBorder: isCyber
+          ? Border.all(color: const Color(0xFF404040), width: 1)
+          : Border.all(color: Colors.white70, width: 1),
+      sliderTopGlow: isCyber ? null : Colors.white.withValues(alpha: 0.9),
+      sliderBottomGlow: isCyber ? const Color(0x22CCCCCC) : null,
+      ),
     );
   }
 
@@ -518,33 +530,26 @@ class HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildOtherWidget() {
+  Widget _buildOtherWidget({double? meCenter}) {
     if (!showMask) return const SizedBox.shrink();
+    final double w = MediaQuery.of(context).size.width;
+    final double cx = meCenter ?? w / 2;
     return SizedBox(
-      width: MediaQuery.of(context).size.width,
+      width: w,
       height: kBottomNavigationBarHeight,
-      child: Row(
+      child: Stack(
         children: [
-          const Spacer(),
-          const Spacer(),
-          const Spacer(),
-          Expanded(
+          // "我的"指针：改用与底部导航一致的新图标，水平居中于悬浮"我的"按钮
+          Positioned(
+            left: cx - 20,
+            width: 40,
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [
-                ColorFiltered(
-                  colorFilter: const ColorFilter.mode(
-                    Colors.white,
-                    BlendMode.srcIn,
-                  ),
-                  child: Image.asset(
-                    "assets/images/icon_other.png",
-                    fit: BoxFit.cover,
-                    width: 20,
-                    height: 20,
-                  ),
-                ),
-                const Text(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: const [
+                Icon(Icons.person, size: 20, color: Colors.white),
+                SizedBox(height: 2),
+                Text(
                   "我的",
                   style: TextStyle(fontSize: 12, color: Colors.white),
                 ),

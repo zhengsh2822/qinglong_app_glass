@@ -1,72 +1,85 @@
-import 'dart:ui';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/blur_effect.dart';
+import 'package:qinglong_app/base/ui/glow_sheet.dart';
 
 const double _sheetBarrierDim = 0.65;
 
+/// 底部操作弹层操作项
+///
+/// 新设计：文案水平居中（危险项红色系）；
+/// [showDivider] 由弹层传入控制项之间分隔线（最后一项不显示）。
 class CupertinoSheer extends ConsumerWidget {
   final String title;
   final GestureTapCallback onTap;
 
-  const CupertinoSheer({Key? key, required this.title, required this.onTap})
-    : super(key: key);
+  /// 危险项（删除等）：文字红色系
+  final bool danger;
+
+  /// 是否在项下方显示分隔线（弹层内部自动控制）
+  final bool showDivider;
+
+  const CupertinoSheer({
+    Key? key,
+    required this.title,
+    required this.onTap,
+    this.danger = false,
+    this.showDivider = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context, ref) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    if (isCyber) {
-      return Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.of(context).pop();
-            onTap();
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            child: Center(
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: ref.watch(themeProvider).themeColor.titleColor(),
-                  fontSize: 16,
+    final Color accent =
+        isCyber ? CyberColors.cyan : ref.watch(themeProvider).primaryColor;
+    final Color textColor =
+        isCyber ? CyberColors.titleWhite : const Color(0xFF1A1A1A);
+    final Color dividerColor =
+        isCyber ? const Color(0x22FFFFFF) : const Color(0xFFE5E5EA);
+    final Color actionColor =
+        danger
+            ? (isCyber ? CyberColors.neonRed : const Color(0xFFFF3B30))
+            : accent;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              Navigator.of(context).pop();
+              onTap();
+            },
+            child: SizedBox(
+              height: 58,
+              width: double.infinity,
+              child: Center(
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: danger ? actionColor : textColor,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      );
-    }
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          Navigator.of(context).pop();
-          onTap();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          color: Colors.transparent,
-          child: Center(
-            child: Text(
-              title,
-              style: TextStyle(
-                color: ref.watch(themeProvider).themeColor.titleColor(),
-                fontSize: 16,
-              ),
-            ),
-          ),
-        ),
-      ),
+        // 分隔线只出现在项之间，最后一项下方不显示；左右对称居中
+        if (showDivider)
+          Divider(height: 0.5, indent: 60, endIndent: 60, color: dividerColor),
+      ],
     );
   }
 }
 
+/// 分隔线（兼容旧调用：新弹层会自动在操作项之间加对称分隔线，此函数产物会被弹层过滤）
 Widget addDivider() {
   return Consumer(
     builder: (context, ref, _) {
@@ -97,151 +110,100 @@ void showMoreOperate(BuildContext context, List<Widget> list) {
 }
 
 void _showAppleMoreOperate(BuildContext context, List<Widget> list) {
-  showCupertinoModalPopup<void>(
+  // 用 showModalBottomSheet（enableDrag 支持顶部横条上下拖动关闭/改变弹窗）
+  showModalBottomSheet<void>(
     context: context,
-    barrierDismissible: true,
+    backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: _sheetBarrierDim),
+    isScrollControlled: true,
+    enableDrag: true,
     builder: (ctx) {
-      return _AppleActionSheet(list: list);
+      return _buildSheet(ctx, list, isCyber: false);
     },
   );
-}
-
-class _AppleActionSheet extends StatelessWidget {
-  final List<Widget> list;
-
-  const _AppleActionSheet({required this.list});
-
-  @override
-  Widget build(BuildContext context) {
-    final bool blurEnabled =
-        ProviderScope.containerOf(context).read(blurEffectProvider);
-    final double bgAlpha = blurEnabled ? 0.75 : 1.0;
-    final sheetContent = Container(
-      decoration: BoxDecoration(
-        color: AppleColors.bgPrimary.withValues(alpha: bgAlpha),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.black.withValues(alpha: 0.08),
-          width: 0.5,
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 8),
-          ...list,
-          Container(
-            width: double.infinity,
-            height: 0.5,
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            color: Colors.black.withValues(alpha: 0.1),
-          ),
-          CupertinoSheer(title: "取消", onTap: () {}),
-          const SizedBox(height: 4),
-        ],
-      ),
-    );
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      child: SafeArea(
-        top: false,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child:
-                blurEnabled
-                    ? BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: 20,
-                        sigmaY: 20,
-                      ),
-                      child: sheetContent,
-                    )
-                    : sheetContent,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 void _showCyberMoreOperate(BuildContext context, List<Widget> list) {
-  showCupertinoModalPopup<void>(
+  // 用 showModalBottomSheet（enableDrag 支持顶部横条上下拖动关闭/改变弹窗）
+  showModalBottomSheet<void>(
     context: context,
-    barrierDismissible: true,
+    backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: _sheetBarrierDim),
+    isScrollControlled: true,
+    enableDrag: true,
     builder: (ctx) {
-      return _CyberActionSheet(list: list);
+      return _buildSheet(ctx, list, isCyber: true);
     },
   );
 }
 
-class _CyberActionSheet extends StatelessWidget {
-  final List<Widget> list;
+/// 构建底部弹层：主列表 + 独立取消胶囊
+Widget _buildSheet(
+  BuildContext context,
+  List<Widget> list, {
+  required bool isCyber,
+}) {
+  // 过滤出操作项（兼容旧 addDivider() 调用，弹层自动在项之间加对称分隔线）
+  final List<CupertinoSheer> items = list.whereType<CupertinoSheer>().toList();
+  final Color textColor =
+      isCyber ? CyberColors.titleWhite : const Color(0xFF1A1A1A);
+  final Color dividerColor =
+      isCyber ? const Color(0x22FFFFFF) : const Color(0xFFE5E5EA);
 
-  const _CyberActionSheet({required this.list});
-
-  @override
-  Widget build(BuildContext context) {
-    final bool blurEnabled =
-        ProviderScope.containerOf(context).read(blurEffectProvider);
-    final double bgAlpha = blurEnabled ? 0.3 : 1.0;
-    final sheetContent = Container(
-      decoration: BoxDecoration(
-        color: CyberColors.bg.withValues(alpha: bgAlpha),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: CyberColors.cyan.withValues(alpha: 0.2),
-          width: 0.5,
-        ),
-      ),
+  return SafeArea(
+    top: false,
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 8),
-          ...list,
-          Container(
-            width: double.infinity,
-            height: 0.5,
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            color: CyberColors.borderGlow.withValues(alpha: 0.25),
+          // 主列表
+          GlowSheetContainer(
+            isCyber: isCyber,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DragHandle(isCyber: isCyber),
+                Divider(height: 0.5, color: dividerColor),
+                ...items.asMap().entries.map((entry) {
+                  final int index = entry.key;
+                  final CupertinoSheer item = entry.value;
+                  return CupertinoSheer(
+                    title: item.title,
+                    onTap: item.onTap,
+                    danger: item.danger,
+                    showDivider: index != items.length - 1,
+                  );
+                }),
+              ],
+            ),
           ),
-          CupertinoSheer(title: "取消", onTap: () {}),
-          const SizedBox(height: 4),
+          const SizedBox(height: 10),
+          // 取消按钮（独立胶囊，与列表分离）
+          GlowSheetContainer(
+            isCyber: isCyber,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: () => Navigator.of(context).pop(),
+                child: Container(
+                  height: 50,
+                  alignment: Alignment.center,
+                  child: Text(
+                    '取消',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
-    );
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      child: SafeArea(
-        top: false,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child:
-              blurEnabled
-                  ? BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: 25,
-                      sigmaY: 25,
-                    ),
-                    child: sheetContent,
-                  )
-                  : sheetContent,
-        ),
-      ),
-    );
-  }
+    ),
+  );
 }

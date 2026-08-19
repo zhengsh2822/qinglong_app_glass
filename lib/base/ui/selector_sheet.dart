@@ -1,25 +1,22 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/blur_effect.dart';
+import 'package:qinglong_app/base/ui/glow_sheet.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
 
 /// 通用弹窗选择器（参考 push_setting_page 的"选择通知方式"）
 ///
 /// 用于替代原生 DropdownButtonFormField 等"下来下拉"控件，
-/// 弹出一个 iOS 风格的圆角弹窗（赛博模式为霓虹边框，非赛博模式为白底圆角）。
+/// 弹出一个高光内发光风格的圆角弹窗（赛博模式为青色发光边框，非赛博模式为纯色高光卡片）。
 ///
-/// 设计规范（与 push_setting_page 保持一致）：
+/// 设计规范（对齐项目高光内发光设计语言）：
 /// - 顶部 40x4 圆角拖拽条
 /// - 标题栏 + 右上角关闭按钮
-/// - 选项列表最大高度 = 屏幕高 * 0.55，超出可滚动
-/// - 选中项：文字加粗 + 主色高亮 + 右侧对勾
-/// - 弹窗外边距 12，顶部 0
-/// - 弹窗圆角 18
+/// - 选项列表最大高度 = 屏幕高 * 0.5，超出可滚动
+/// - 选中项：主色圆点标记 + 文字加粗高亮 + 右侧对勾 + 行背景微色
+/// - 分隔线左右对称居中，只在选项之间显示
 ///
 /// 已被以下场景使用：
 /// - push_setting_page：选择通知方式
@@ -49,10 +46,9 @@ Future<void> showSelectorSheet<T>({
   required T? selectedValue,
   required ValueChanged<T> onSelected,
 }) async {
-  // 同步读取主题/毛玻璃状态（在弹窗弹出前一次性读取，避免异步内 ref 失效）
+  // 同步读取主题状态（在弹窗弹出前一次性读取，避免异步内 ref 失效）
   final ProviderContainer container = ProviderScope.containerOf(context);
   final bool isCyber = container.read(themeProvider).themeMode == modeCyber;
-  final bool blurEnabled = container.read(blurEffectProvider);
   // 弹窗列表项文案：选中态 = 主题色（保持）；未选中态 = 跟随自定义字体色
   //   - 主标题（label）→ 主字体色 titleColor
   //   - 副标题（subtitle）→ 次字体色 descColor
@@ -64,69 +60,43 @@ Future<void> showSelectorSheet<T>({
       .read(themeProvider)
       .themeColor
       .descColor();
+  final Color accent = isCyber
+      ? CyberColors.cyan
+      : container.read(themeProvider).primaryColor;
+  final Color dividerColor =
+      isCyber ? const Color(0x22FFFFFF) : const Color(0xFFE5E5EA);
 
-  await showCupertinoModalPopup<void>(
+  await showModalBottomSheet<void>(
     context: context,
+    backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.5),
+    isScrollControlled: true,
+    enableDrag: true,
     builder: (ctx) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: OptionalBlur(
-            sigma: 20,
-            child: Container(
-              decoration: BoxDecoration(
-                color: isCyber
-                    ? Colors.black.withValues(alpha: blurEnabled ? 0.5 : 1.0)
-                    : Colors.white.withValues(
-                        alpha: blurEnabled ? 0.85 : 1.0,
-                      ),
-                borderRadius: BorderRadius.circular(18),
-                border: isCyber
-                    ? Border.all(
-                        color: CyberColors.cyan.withValues(alpha: 0.3),
-                        width: 1,
-                      )
-                    : Border.all(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        width: 0.5,
-                        style: BorderStyle.solid,
-                      ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 24,
-                    offset: const Offset(0, -4),
+      return SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          child: GlowSheetContainer(
+            isCyber: isCyber,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DragHandle(isCyber: isCyber),
+                // 标题栏
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
                   ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 顶部拖拽条
-                  Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(top: 8, bottom: 4),
-                    decoration: BoxDecoration(
-                      color: isCyber
-                          ? CyberColors.cyan.withValues(alpha: 0.4)
-                          : Colors.black.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  // 标题栏
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 12,
-                      horizontal: 16,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
                           title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -135,110 +105,168 @@ Future<void> showSelectorSheet<T>({
                                 : AppleColors.textPrimary,
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () => Navigator.of(ctx).pop(),
-                          child: Icon(
-                            CupertinoIcons.xmark_circle_fill,
-                            size: 22,
-                            color: isCyber
-                                ? CyberColors.titleWhite.withValues(alpha: 0.5)
-                                : Colors.black.withValues(alpha: 0.3),
-                          ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.of(ctx).pop(),
+                        child: Icon(
+                          CupertinoIcons.xmark_circle_fill,
+                          size: 22,
+                          color: isCyber
+                              ? CyberColors.titleWhite.withValues(alpha: 0.5)
+                              : Colors.black.withValues(alpha: 0.3),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Divider(
-                    height: 0.5,
-                    color: isCyber
-                        ? CyberColors.cyan.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.1),
+                ),
+                Divider(height: 0.5, color: dividerColor),
+                // 选项列表（最大高度 50% 屏幕高）
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.5,
                   ),
-                  // 选项列表（最大高度 55% 屏幕高）
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight:
-                          MediaQuery.of(context).size.height * 0.55,
-                    ),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      itemCount: options.length,
-                      itemBuilder: (context, index) {
-                        final option = options[index];
-                        final selected = option.value == selectedValue;
-                        return GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            Navigator.of(ctx).pop();
-                            onSelected(option.value);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 16,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        option.label,
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          // 选中 = 主题色（cyber cyan / accent，保持不变）
-                                          // 未选中 = 跟随主字体色
-                                          color: selected
-                                              ? (isCyber
-                                                    ? CyberColors.cyan
-                                                    : AppleColors.accent)
-                                              : mainTextColor,
-                                          fontWeight: selected
-                                              ? FontWeight.w600
-                                              : FontWeight.w400,
-                                        ),
-                                      ),
-                                      if (option.subtitle != null) ...[
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          option.subtitle!,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            // 副标题 = 次字体色（跟随）
-                                            color: subTextColor,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                                if (selected)
-                                  Icon(
-                                    CupertinoIcons.checkmark_alt,
-                                    size: 18,
-                                    color: isCyber
-                                        ? CyberColors.cyan
-                                        : AppleColors.accent,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final option = options[index];
+                      final selected = option.value == selectedValue;
+                      return _SelectorRow(
+                        option: option,
+                        selected: selected,
+                        isCyber: isCyber,
+                        mainTextColor: mainTextColor,
+                        subTextColor: subTextColor,
+                        dividerColor: dividerColor,
+                        accent: accent,
+                        showDivider: index != options.length - 1,
+                        onTap: () {
+                          Navigator.of(ctx).pop();
+                          onSelected(option.value);
+                        },
+                      );
+                    },
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
       );
     },
   );
+}
+
+class _SelectorRow<T> extends StatelessWidget {
+  final SelectorOption<T> option;
+  final bool selected;
+  final bool isCyber;
+  final Color mainTextColor;
+  final Color subTextColor;
+  final Color dividerColor;
+  final Color accent;
+  final bool showDivider;
+  final VoidCallback onTap;
+
+  const _SelectorRow({
+    required this.option,
+    required this.selected,
+    required this.isCyber,
+    required this.mainTextColor,
+    required this.subTextColor,
+    required this.dividerColor,
+    required this.accent,
+    required this.showDivider,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Material(
+          color: selected ? accent.withValues(alpha: 0.08) : Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              child: Row(
+                children: [
+                  // 选中标记圆点
+                  Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: selected ? accent : Colors.transparent,
+                      border: Border.all(
+                        color: selected
+                            ? accent
+                            : (isCyber
+                                  ? Colors.white.withValues(alpha: 0.25)
+                                  : Colors.black.withValues(alpha: 0.25)),
+                        width: selected ? 0 : 1.5,
+                      ),
+                    ),
+                    child: selected
+                        ? Icon(
+                            CupertinoIcons.checkmark_alt,
+                            size: 12,
+                            color: Colors.white,
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          option.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            color: selected ? accent : mainTextColor,
+                          ),
+                        ),
+                        if (option.subtitle != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            option.subtitle!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: subTextColor,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (selected)
+                    Icon(CupertinoIcons.checkmark_alt, size: 18, color: accent),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // 分隔线左右对称居中，只在选项之间显示
+        if (showDivider)
+          Divider(height: 0.5, indent: 46, endIndent: 46, color: dividerColor),
+      ],
+    );
+  }
 }
 
 /// 弹窗选择器触发卡片（参考 push_setting_page "选择通知方式"）

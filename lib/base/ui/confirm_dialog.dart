@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
+import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 const double _dialogBlurSigma = 25.0;
@@ -178,12 +179,58 @@ Widget _buildDialogPage({
   required _DialogTheme theme,
   required Animation<double> animation,
   VoidCallback? onBarrierTap,
+  bool useGlow = false,
+  bool isCyber = false,
 }) {
   final curved = CurvedAnimation(
     parent: animation,
     curve: Curves.easeOutCubic,
     reverseCurve: Curves.easeInCubic,
   );
+  // 高光内发光卡片模式（日志设置等弹窗对齐新设计语言）
+  if (useGlow) {
+    return AnimatedBuilder(
+      animation: curved,
+      builder: (context, _) {
+        final t = curved.value;
+        return Material(
+          color: Colors.transparent,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: onBarrierTap,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    color: Colors.black.withValues(alpha: _dialogBarrierDim * t),
+                  ),
+                ),
+              ),
+              Center(
+                child: Opacity(
+                  opacity: t,
+                  child: Transform.scale(
+                    scale: 0.94 + 0.06 * t,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 380),
+                        child: CapsuleGlowCard(
+                          isCyber: isCyber,
+                          isPinned: false,
+                          child: child,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
   // 读取毛玻璃开关（动画期间不变化，避免每帧重读）
   final bool blurEnabled =
       ProviderScope.containerOf(context).read(blurEffectProvider);
@@ -505,6 +552,8 @@ Future<int?> showFrequencyDialog(
         context: context,
         animation: animation,
         theme: theme,
+        useGlow: true,
+        isCyber: isCyber,
         onBarrierTap: () => Navigator.of(context).pop(),
         child: _FrequencyDialogContent(
           title: title,

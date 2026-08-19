@@ -10,12 +10,13 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/enable_widget.dart';
+import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
 import 'package:qinglong_app/base/ui/running_widget.dart';
-import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_subscribe_log_page.dart';
@@ -90,7 +91,7 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
     final _ = ref.watch(themeProvider);
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     Widget scaffold = Scaffold(
-      // 赛博模式下设为透明，让 CyberBackground 的渐变背景透出
+      // 赛博模式下设为透明，让 CyberBackground 的渐变背景透出；苹果模式用主题默认背景
       backgroundColor: isCyber ? Colors.transparent : null,
       floatingActionButton: Visibility(
         visible: buttonshow,
@@ -160,77 +161,63 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
     WidgetRef ref,
   ) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    return Column(
-      children: [
-        searchCell(ref),
-        Expanded(
-          child: RefreshIndicator(
-            color: Theme.of(context).primaryColor,
-            onRefresh: () async {
-              return model.loadData(context, false);
-            },
-            child: IconTheme(
-              data: const IconThemeData(size: 25),
-              child: SlidableAutoCloseBehavior(
-                key: ValueKey('subscribe_slidable_${_slidableResetKey}'),
-                child: ListView.separated(
-                  padding: const EdgeInsets.only(bottom: 80),
-                  controller: controller,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  itemBuilder: (context, index) {
-                    Map<String, dynamic> item = list[index];
-                    if (searchText.text.isEmpty ||
-                        (item["name"]?.toLowerCase().contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
-                            false) ||
-                        (item["url"]?.toLowerCase().contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
-                            false)) {
-                      return TaskItemCell(item, ref);
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  },
-                  itemCount: list.length,
-                  separatorBuilder: (BuildContext context, int index) {
-                    Map<String, dynamic> item = list[index];
-                    if (searchText.text.isEmpty ||
-                        (item["name"]?.toLowerCase().contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
-                            false) ||
-                        (item["url"]?.toLowerCase().contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
-                            false)) {
-                      // 赛博模式：用 SizedBox 间距替代 Divider
-                      if (isCyber) return const SizedBox(height: 12);
-                      // Apple主题：卡片间距12px，无分割线
-                      return const SizedBox(height: 12);
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  },
-                ),
-              ),
+    return FloatingSearchBarArea(
+      controller: searchText,
+      listView: RefreshIndicator(
+        color: Theme.of(context).primaryColor,
+        onRefresh: () async {
+          return model.loadData(context, false);
+        },
+        child: IconTheme(
+          data: const IconThemeData(size: 25),
+          child: SlidableAutoCloseBehavior(
+            key: ValueKey('subscribe_slidable_${_slidableResetKey}'),
+            child: ListView.separated(
+              // 顶部间距 64 = 搜索框区域(10+44) + 间距10，放在列表内部（滚动时被内容填充，无背景色块）
+              padding: const EdgeInsets.only(top: 64, bottom: 80),
+              controller: controller,
+              physics: const AlwaysScrollableScrollPhysics(),
+              keyboardDismissBehavior:
+                  ScrollViewKeyboardDismissBehavior.onDrag,
+              itemBuilder: (context, index) {
+                Map<String, dynamic> item = list[index];
+                if (searchText.text.isEmpty ||
+                    (item["name"]?.toLowerCase().contains(
+                          searchText.text.toLowerCase(),
+                        ) ??
+                        false) ||
+                    (item["url"]?.toLowerCase().contains(
+                          searchText.text.toLowerCase(),
+                        ) ??
+                        false)) {
+                  return TaskItemCell(item, ref);
+                } else {
+                  return const SizedBox.shrink();
+                }
+              },
+              itemCount: list.length,
+              separatorBuilder: (BuildContext context, int index) {
+                Map<String, dynamic> item = list[index];
+                if (searchText.text.isEmpty ||
+                    (item["name"]?.toLowerCase().contains(
+                          searchText.text.toLowerCase(),
+                        ) ??
+                        false) ||
+                    (item["url"]?.toLowerCase().contains(
+                          searchText.text.toLowerCase(),
+                        ) ??
+                        false)) {
+                  // 赛博模式：用 SizedBox 间距替代 Divider
+                  if (isCyber) return const SizedBox(height: 12);
+                  // Apple主题：卡片间距12px，无分割线
+                  return const SizedBox(height: 12);
+                } else {
+                  return const SizedBox.shrink();
+                }
+              },
             ),
           ),
         ),
-      ],
-    );
-  }
-
-  Widget searchCell(WidgetRef context) {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.only(left: 15, right: 15),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: SearchCell(controller: searchText),
       ),
     );
   }
@@ -281,8 +268,10 @@ class TaskItemCell extends StatelessWidget {
   /// 赛博模式：Slidable + 赛博颜色（与非赛博模式结构一致）
   Widget _buildCyber(BuildContext context) {
     final bool isCyber = true; // build() 已判断为赛博模式
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
+    return CapsuleGlowCard(
+      isCyber: true,
+      isPinned: false,
+      margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
         child: Slidable(
@@ -398,20 +387,10 @@ class TaskItemCell extends StatelessWidget {
   /// 非赛博模式：保留原 Slidable 实现
   Widget _buildNormal(BuildContext context) {
     final bool isCyber = false; // build() 已判断为非赛博模式
-    return Container(
+    return CapsuleGlowCard(
+      isCyber: false,
+      isPinned: false,
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      decoration: BoxDecoration(
-        color: AppleColors.bgSecondary,
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        boxShadow: const [
-          BoxShadow(
-            color: AppleColors.cardShadow,
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: AppleColors.cardBorder),
-      ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
         child: Slidable(
@@ -537,17 +516,6 @@ class TaskItemCell extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           child: Container(
             width: MediaQuery.of(context).size.width,
-            decoration:
-                isCyber
-                    ? BoxDecoration(
-                      color: CyberColors.cardBg,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: CyberColors.borderGlow,
-                        width: 1,
-                      ),
-                    )
-                    : null,
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
             child: Column(
                 mainAxisSize: MainAxisSize.min,

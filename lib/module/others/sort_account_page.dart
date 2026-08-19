@@ -8,6 +8,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
@@ -125,40 +126,12 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
                       // 唯一性为 key（重排时对象引用不变，key 保持稳定）。
                       key: ObjectKey(e),
                       index: list.indexOf(e),
-                      child: Container(
+                      child: CapsuleGlowCard(
+                        isCyber: isCyber,
+                        isPinned: false,
                         margin: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              isCyber
-                                  ? CyberColors.cardBg
-                                  : ref
-                                      .watch(themeProvider)
-                                      .themeColor
-                                      .settingBordorColor(),
-                          borderRadius: BorderRadius.circular(18),
-                          border:
-                              isCyber
-                                  ? Border.all(
-                                    color: CyberColors.borderGlow,
-                                    width: 1,
-                                  )
-                                  : Border.all(
-                                    color: AppleColors.cardBorder,
-                                    width: 0.5,
-                                  ),
-                          boxShadow:
-                              isCyber
-                                  ? null
-                                  : const [
-                                    BoxShadow(
-                                      color: Color(0x0F000000),
-                                      blurRadius: 12,
-                                      offset: Offset(0, 4),
-                                    ),
-                                  ],
                         ),
                         child: Material(
                           color: Colors.transparent,

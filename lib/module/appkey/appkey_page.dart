@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/base_state_widget.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
@@ -13,8 +12,8 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
+import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
-import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/tag_chip.dart';
 import 'package:qinglong_app/module/appkey/appkey_detail_page.dart';
 import 'package:qinglong_app/module/appkey/appkey_viewmodel.dart';
@@ -77,7 +76,7 @@ class _AppKeyPageState extends ConsumerState<AppKeyPage> {
     final _ = ref.watch(themeProvider);
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     Widget scaffold = Scaffold(
-      // 赛博模式下设为透明，让 CyberBackground 的渐变背景透出
+      // 赛博模式下设为透明，让 CyberBackground 的渐变背景透出；苹果模式用主题默认背景
       backgroundColor: isCyber ? Colors.transparent : null,
       floatingActionButton: Visibility(
         visible: buttonshow,
@@ -142,65 +141,51 @@ class _AppKeyPageState extends ConsumerState<AppKeyPage> {
     List<Map<String, dynamic>> list,
     WidgetRef ref,
   ) {
-    return Column(
-      children: [
-        searchCell(ref),
-        Expanded(
-          child: RefreshIndicator(
-            color: Theme.of(context).primaryColor,
-            onRefresh: () async {
-              return model.loadData(context, false);
-            },
-            child: IconTheme(
-              data: const IconThemeData(size: 25),
-              child: SlidableAutoCloseBehavior(
-                child: ListView.separated(
-                  padding: const EdgeInsets.only(top: 4, bottom: 80),
-                  controller: controller,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  itemBuilder: (context, index) {
-                    Map<String, dynamic> item = list[index];
-                    if (searchText.text.isEmpty ||
-                        (item["name"]?.toLowerCase().contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
-                            false)) {
-                      return AppKeyItemCell(item, ref);
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  },
-                  itemCount: list.length,
-                  separatorBuilder: (BuildContext context, int index) {
-                    Map<String, dynamic> item = list[index];
-                    if (searchText.text.isEmpty ||
-                        (item["name"]?.toLowerCase().contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
-                            false)) {
-                      return const SizedBox(height: 12);
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  },
-                ),
-              ),
+    return FloatingSearchBarArea(
+      controller: searchText,
+      listView: RefreshIndicator(
+        color: Theme.of(context).primaryColor,
+        onRefresh: () async {
+          return model.loadData(context, false);
+        },
+        child: IconTheme(
+          data: const IconThemeData(size: 25),
+          child: SlidableAutoCloseBehavior(
+            child: ListView.separated(
+              // 顶部间距 64 = 搜索框区域(10+44) + 间距10，放在列表内部（滚动时被内容填充，无背景色块）
+              padding: const EdgeInsets.only(top: 64, bottom: 80),
+              controller: controller,
+              physics: const AlwaysScrollableScrollPhysics(),
+              keyboardDismissBehavior:
+                  ScrollViewKeyboardDismissBehavior.onDrag,
+              itemBuilder: (context, index) {
+                Map<String, dynamic> item = list[index];
+                if (searchText.text.isEmpty ||
+                    (item["name"]?.toLowerCase().contains(
+                          searchText.text.toLowerCase(),
+                        ) ??
+                        false)) {
+                  return AppKeyItemCell(item, ref);
+                } else {
+                  return const SizedBox.shrink();
+                }
+              },
+              itemCount: list.length,
+              separatorBuilder: (BuildContext context, int index) {
+                Map<String, dynamic> item = list[index];
+                if (searchText.text.isEmpty ||
+                    (item["name"]?.toLowerCase().contains(
+                          searchText.text.toLowerCase(),
+                        ) ??
+                        false)) {
+                  return const SizedBox(height: 12);
+                } else {
+                  return const SizedBox.shrink();
+                }
+              },
             ),
           ),
         ),
-      ],
-    );
-  }
-
-  Widget searchCell(WidgetRef context) {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.only(left: 15, right: 15),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: SearchCell(controller: searchText),
       ),
     );
   }
@@ -319,85 +304,82 @@ class AppKeyItemCell extends StatelessWidget {
         child: cardChild,
       );
     }
-    return ColoredBox(
-      color: ref.watch(themeProvider).themeColor.settingBgColor(),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: Slidable(
-          key: ValueKey(getAppKeyId(bean)),
-          endActionPane: ActionPane(
-            motion: const ScrollMotion(),
-            extentRatio: 0.55,
-            children: [
-              AppSlideButton(
-                context: context,
-                color: const Color(0xff5D5E70),
-                icon: CupertinoIcons.pencil_outline,
-                label: '编辑',
-                onTap: () {
-                  Navigator.of(context)
-                      .push(
-                        CupertinoPageRoute(
-                          builder: (context) => AddAppKeyPage(bean: bean),
-                        ),
-                      )
-                      .then((value) {
-                        if (value != null && value == true) {
-                          ref
-                              .read(
-                                SingleAccountPageState.ofAppKeyProvider(
-                                  context,
-                                )(getProviderName(context)),
-                              )
-                              .loadData(context);
-                        }
-                      });
-                },
-                cyberMode: false,
-                width: double.infinity,
-                cornerRadius: 12,
-                iconSize: 22,
-                outerGap: 4,
-                innerGap: 6,
-              ),
-              AppSlideButton(
-                context: context,
-                color: const Color(0xffA356D6),
-                icon: CupertinoIcons.arrow_2_circlepath,
-                label: '重置',
-                onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then((value) {
-                    _reset(context);
-                  });
-                },
-                cyberMode: false,
-                width: double.infinity,
-                cornerRadius: 12,
-                iconSize: 22,
-                outerGap: 4,
-                innerGap: 6,
-              ),
-              AppSlideButton(
-                context: context,
-                color: const Color(0xffEA4D3E),
-                icon: CupertinoIcons.delete,
-                label: '删除',
-                onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then((value) {
-                    _del(context, ref);
-                  });
-                },
-                cyberMode: false,
-                width: double.infinity,
-                cornerRadius: 12,
-                iconSize: 22,
-                outerGap: 4,
-                innerGap: 6,
-              ),
-            ],
-          ),
-          child: cardChild,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: Slidable(
+        key: ValueKey(getAppKeyId(bean)),
+        endActionPane: ActionPane(
+          motion: const ScrollMotion(),
+          extentRatio: 0.55,
+          children: [
+            AppSlideButton(
+              context: context,
+              color: const Color(0xff5D5E70),
+              icon: CupertinoIcons.pencil_outline,
+              label: '编辑',
+              onTap: () {
+                Navigator.of(context)
+                    .push(
+                      CupertinoPageRoute(
+                        builder: (context) => AddAppKeyPage(bean: bean),
+                      ),
+                    )
+                    .then((value) {
+                      if (value != null && value == true) {
+                        ref
+                            .read(
+                              SingleAccountPageState.ofAppKeyProvider(
+                                context,
+                              )(getProviderName(context)),
+                            )
+                            .loadData(context);
+                      }
+                    });
+              },
+              cyberMode: false,
+              width: double.infinity,
+              cornerRadius: 12,
+              iconSize: 22,
+              outerGap: 4,
+              innerGap: 6,
+            ),
+            AppSlideButton(
+              context: context,
+              color: const Color(0xffA356D6),
+              icon: CupertinoIcons.arrow_2_circlepath,
+              label: '重置',
+              onTap: () {
+                WidgetsBinding.instance.endOfFrame.then((value) {
+                  _reset(context);
+                });
+              },
+              cyberMode: false,
+              width: double.infinity,
+              cornerRadius: 12,
+              iconSize: 22,
+              outerGap: 4,
+              innerGap: 6,
+            ),
+            AppSlideButton(
+              context: context,
+              color: const Color(0xffEA4D3E),
+              icon: CupertinoIcons.delete,
+              label: '删除',
+              onTap: () {
+                WidgetsBinding.instance.endOfFrame.then((value) {
+                  _del(context, ref);
+                });
+              },
+              cyberMode: false,
+              width: double.infinity,
+              cornerRadius: 12,
+              iconSize: 22,
+              outerGap: 4,
+              innerGap: 6,
+            ),
+          ],
         ),
+        child: cardChild,
       ),
     );
   }
