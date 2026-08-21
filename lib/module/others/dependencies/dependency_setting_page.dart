@@ -246,7 +246,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: Text('关闭', style: TextStyle(color: isCyber ? CyberColors.cyan : AppleColors.accent)),
+              child: Text('关闭', style: TextStyle(color: ref.read(themeProvider).primaryColor)),
             ),
           ],
         ),
@@ -257,12 +257,11 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
   @override
   Widget build(BuildContext context) {
     final _ = ref.watch(themeProvider);
-    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
 
     // 根据主题模式动态选择颜色
     final Color titleColor = ref.read(themeProvider).themeColor.titleColor();
     final Color subtitleColor = ref.read(themeProvider).themeColor.descColor();
-    final Color accentColor = isCyber ? CyberColors.cyan : AppleColors.accent;
+    final Color accentColor = ref.watch(themeProvider).primaryColor;
 
     Widget body;
     if (_loading) {

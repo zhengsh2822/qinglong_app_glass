@@ -152,7 +152,8 @@ class TaskPageState extends ConsumerState<TaskPage>
     });
   }
 
-  double searchCellHeight = 55;
+  // 搜索框 toolbarHeight = 48，与 env_page/config_page 等其他顶部 tab 页面保持一致
+  double searchCellHeight = 48;
 
   SliverAppBar _buildAppBar(WidgetRef ref, TaskViewModel model) {
     return SliverAppBar(
@@ -596,11 +597,16 @@ class TaskPageState extends ConsumerState<TaskPage>
   }
 
   Widget searchCell(WidgetRef context, TaskViewModel model) {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 10),
+    // 用 SizedBox 强制包一层，避免 SearchCell 内部高度撑大父容器，
+    // 保证跟 env_page 渲染结果严格一致（55 = 顶部 10 + SearchCell 44 + 底部 0）
+    return SizedBox(
       height: searchCellHeight.toDouble(),
-      child: SearchCell(controller: searchText),
+      child: Container(
+        color: Colors.transparent,
+        // 只保留顶部 10px 留白；底部不设留白，避免与顶部 tab 自身 6px top padding 拼成 16px 宽缝
+        padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 0),
+        child: SearchCell(controller: searchText),
+      ),
     );
   }
 

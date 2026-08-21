@@ -197,14 +197,15 @@ class _AboutPageState extends ConsumerState<AboutPage>
                 ),
                 child: Text(
                   "基于 ayoulx/qinglong-app 二次开发：\n"
-                  "· 三种主题模式（赛博 / Apple / 白色，黑色已并入赛博）\n"
+                  "· 三种主题模式（赛博 / Apple / 白色，黑色已并入赛博），切换含全局颜色过渡动画\n"
+                  "· 胶囊高光内发光卡片设计系统（任务 / 应用管理 / 京东助手等页面统一）\n"
                   "· 多账号 HTTP 缓存隔离，防止跨账号数据泄漏\n"
                   "· 仪表盘对齐 Web 端（7 日趋势自绘折线图 / Top5 耗时与执行次数 / 标签统计 / 实时运行态含 PID / 系统资源）\n"
                   "· 脚本搜索能力补全（列表常驻过滤 + 查看/编辑页弹出式搜索，支持正则与上下导航）\n"
+                  "· 悬浮式沉浸搜索框与顶部 Tab 大胶囊设计\n"
                   "· 切换底部 Tab 自动收起展开的滑动卡片\n"
                   "· 日志/详情页长按复制启用 iOS 风格文本选择放大镜\n"
                   "· 京东助手独立模块（独立登录 + Cookie 校验 + 弹窗样式统一，基于 yclown/ql_jd_cookie 二次开发）\n"
-                  "· 非破坏性按钮统一主色渐变，赛博模式搜索框深色化\n"
                   "· 统一滑动操作与卡片设计规范（搜索框胶囊 24 / 卡片圆角 18）\n",
                   style: TextStyle(
                     color: ref.watch(themeProvider).themeColor.titleColor(),

@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
-import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
@@ -182,7 +181,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
             onPressed: _loadData,
             child: Icon(
               CupertinoIcons.refresh,
-              color: isCyber ? CyberColors.cyan : AppleColors.accent,
+              color: ref.watch(themeProvider).primaryColor,
               size: 22,
             ),
           ),
@@ -195,7 +194,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
   Widget _buildLoading(bool isCyber) {
     return Center(
       child: LoadingWidget(
-        color: isCyber ? CyberColors.cyan : AppleColors.accent,
+        color: ref.watch(themeProvider).primaryColor,
         size: 30,
       ),
     );
@@ -276,13 +275,13 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: (isCyber ? CyberColors.cyan : AppleColors.accent)
+              color: ref.watch(themeProvider).primaryColor
                   .withOpacity(0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               CupertinoIcons.info,
-              color: isCyber ? CyberColors.cyan : AppleColors.accent,
+              color: ref.watch(themeProvider).primaryColor,
               size: 24,
             ),
           ),
@@ -427,6 +426,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
             painter: _TrendChartPainter(
               data: _trend,
               isCyber: isCyber,
+              primaryColor: ref.watch(themeProvider).primaryColor,
               descColor: ref.watch(themeProvider).themeColor.descColor(),
             ),
           ),
@@ -884,7 +884,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
   }) {
     final textColor =
         highlight
-            ? (isCyber ? CyberColors.cyan : AppleColors.accent)
+            ? ref.watch(themeProvider).primaryColor
             : ref.watch(themeProvider).themeColor.titleColor();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -941,7 +941,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
     String value,
     double percent,
   ) {
-    final color = isCyber ? CyberColors.cyan : AppleColors.accent;
+    final color = ref.watch(themeProvider).primaryColor;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1024,7 +1024,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               Icon(
                 icon,
                 size: 18,
-                color: isCyber ? CyberColors.cyan : AppleColors.accent,
+                color: ref.watch(themeProvider).primaryColor,
               ),
               const SizedBox(width: 8),
               Text(
@@ -1098,11 +1098,13 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
 class _TrendChartPainter extends CustomPainter {
   final List<Map<String, dynamic>> data;
   final bool isCyber;
+  final Color primaryColor;
   final Color descColor;
 
   _TrendChartPainter({
     required this.data,
     required this.isCyber,
+    required this.primaryColor,
     required this.descColor,
   });
 
@@ -1110,7 +1112,7 @@ class _TrendChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (data.isEmpty) return;
 
-    final color = isCyber ? CyberColors.cyan : AppleColors.accent;
+    final color = primaryColor;
     final successColor = isCyber ? CyberColors.neonGreen : AppColors.success;
     final failColor = isCyber ? CyberColors.neonRed : AppColors.danger;
     final gridColor = descColor.withOpacity(0.15);
@@ -1279,6 +1281,8 @@ class _TrendChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _TrendChartPainter old) {
-    return old.data != data;
+    return old.data != data ||
+        old.isCyber != isCyber ||
+        old.primaryColor != primaryColor;
   }
 }

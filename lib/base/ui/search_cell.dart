@@ -121,7 +121,7 @@ class _SearchCellState extends ConsumerState<SearchCell> {
               ];
 
     return Container(
-      height: 44,
+      height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: bgColor,

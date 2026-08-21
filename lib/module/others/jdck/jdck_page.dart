@@ -11,9 +11,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
+import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
+import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -638,23 +638,19 @@ class _JdckPageState extends ConsumerState<JdckPage> {
     final isCyber = ref.read(themeProvider).themeMode == modeCyber;
     final isDark = ref.read(themeProvider).themeMode == modeDark;
 
-    // 弹窗卡片采用 frosted glass 效果（半透明 + 高斯模糊）
-    // - 赛博模式：黑色 0.5 半透明 + 青色边框 + 青色阴影
-    // - 暗黑主题：深色 0.5 半透明
-    // - 白色主题：白色 0.5 半透明
-    final Color cardBg;
+    // 弹窗边框/阴影（背景去掉毛玻璃模糊后由 effectiveCardBg 提供不透明色）
+    // - 赛博模式：青色边框 + 青色阴影
+    // - 暗黑主题：浅色边框
+    // - 白色主题：黑色边框
     final Color borderColor;
     final Color shadowColor;
     if (isCyber) {
-      cardBg = const Color(0x80000000);
       borderColor = CyberColors.cyan.withValues(alpha: 0.3);
       shadowColor = CyberColors.cyan.withValues(alpha: 0.08);
     } else if (isDark) {
-      cardBg = const Color(0x801C1C1E);
       borderColor = const Color(0x33FFFFFF);
       shadowColor = const Color(0x1F000000);
     } else {
-      cardBg = const Color(0x80FFFFFF);
       borderColor = const Color(0x1A000000);
       shadowColor = const Color(0x1F000000);
     }
@@ -678,14 +674,10 @@ class _JdckPageState extends ConsumerState<JdckPage> {
           curve: Curves.easeOutCubic,
           reverseCurve: Curves.easeInCubic,
         );
-        // 读取毛玻璃开关（动画期间不变化）
-        final bool blurEnabled =
-            ProviderScope.containerOf(context).read(blurEffectProvider);
-        // 毛玻璃关闭时用完全不透明的主题卡片色（与"我的"页面卡片一致）
+        // 弹窗卡片背景：去掉毛玻璃模糊后统一用完全不透明主题卡片色
+        // （配合全屏压暗蒙版，卡片清晰可读）
         final Color effectiveCardBg;
-        if (blurEnabled) {
-          effectiveCardBg = cardBg;
-        } else if (isCyber) {
+        if (isCyber) {
           effectiveCardBg = CyberColors.cardBg; // 0xFF12121A 深蓝黑
         } else if (isDark) {
           effectiveCardBg = const Color(0xFF1C1C1E);
@@ -702,25 +694,14 @@ class _JdckPageState extends ConsumerState<JdckPage> {
               color: Colors.transparent,
               child: Stack(
                 children: [
-                  // 全屏蒙版 — 暗色透明度跟随动画
+                  // 全屏蒙版 — 纯压暗（去掉背景模糊），透明度跟随动画
                   Positioned.fill(
                     child: GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
                       behavior: HitTestBehavior.opaque,
-                      child:
-                          blurEnabled
-                              ? BackdropFilter(
-                                filter: ImageFilter.blur(
-                                  sigmaX: 20,
-                                  sigmaY: 20,
-                                ),
-                                child: Container(
-                                  color: Colors.black.withValues(alpha: 0.5 * t),
-                                ),
-                              )
-                              : Container(
-                                color: Colors.black.withValues(alpha: 0.5 * t),
-                              ),
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.5 * t),
+                      ),
                     ),
                   ),
                   // 弹窗卡片 — scale + fade
@@ -735,26 +716,12 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                             constraints: const BoxConstraints(maxWidth: 420),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(18),
-                              child:
-                                  blurEnabled
-                                      ? BackdropFilter(
-                                        filter: ImageFilter.blur(
-                                          sigmaX: 20,
-                                          sigmaY: 20,
-                                        ),
-                                        child: _jdckDialogCard(
-                                          effectiveCardBg,
-                                          borderColor,
-                                          shadowColor,
-                                          content,
-                                        ),
-                                      )
-                                      : _jdckDialogCard(
-                                        effectiveCardBg,
-                                        borderColor,
-                                        shadowColor,
-                                        content,
-                                      ),
+                              child: _jdckDialogCard(
+                                effectiveCardBg,
+                                borderColor,
+                                shadowColor,
+                                content,
+                              ),
                             ),
                           ),
                         ),
@@ -812,8 +779,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
   }
 
   Color _dialogPrimaryColor() {
-    final isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    return isCyber ? CyberColors.cyan : ref.read(themeProvider).primaryColor;
+    return ref.read(themeProvider).primaryColor;
   }
 
   // ==================== 弹窗：青龙面板登录 ====================
@@ -1693,10 +1659,10 @@ class _JdckPageState extends ConsumerState<JdckPage> {
           fontWeight: FontWeight.w600,
         ),
         iconTheme: IconThemeData(
-          color: isCyber ? CyberColors.cyan : primaryColor,
+          color: primaryColor,
         ),
         actionsIconTheme: IconThemeData(
-          color: isCyber ? CyberColors.cyan : primaryColor,
+          color: primaryColor,
         ),
         title: Text('京东助手'),
         actions: [
@@ -1800,16 +1766,52 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                   width: 1,
                 )
                 : Border.all(color: const Color(0x1A000000), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color:
-                isCyber
-                    ? CyberColors.cyan.withValues(alpha: 0.15)
-                    : const Color(0x1F000000),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        // 毛玻璃弹层叠加高光内发光，与 CapsuleGlowCard 视觉一致（保留毛玻璃）
+        boxShadow: isCyber
+            ? [
+                // 顶部青色高光（内发光）
+                BoxShadow(
+                  color: CyberColors.cyan.withValues(alpha: 0.28),
+                  blurRadius: 2.5,
+                  spreadRadius: 0.2,
+                  offset: const Offset(0, -1),
+                ),
+                // 底部青色内发光
+                BoxShadow(
+                  color: CyberColors.cyan.withValues(alpha: 0.12),
+                  blurRadius: 8,
+                  spreadRadius: 0.4,
+                  offset: const Offset(0, 2),
+                ),
+                // 外发光
+                BoxShadow(
+                  color: CyberColors.cyan.withValues(alpha: 0.08),
+                  blurRadius: 14,
+                  spreadRadius: 0.5,
+                ),
+              ]
+            : [
+                // 顶部浅灰高光（内发光）
+                BoxShadow(
+                  color: const Color(0xFFF2F2F4).withValues(alpha: 0.6),
+                  blurRadius: 2.5,
+                  spreadRadius: 0.2,
+                  offset: const Offset(0, -1),
+                ),
+                // 底部纯白内发光
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  blurRadius: 8,
+                  spreadRadius: 0.4,
+                  offset: const Offset(0, 2),
+                ),
+                // 外阴影
+                BoxShadow(
+                  color: const Color(0x1F000000),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxHeight: 240),
@@ -1864,7 +1866,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                           Icon(
                             Icons.check,
                             color:
-                                isCyber ? CyberColors.cyan : primaryColor,
+                                primaryColor,
                             size: 18,
                           ),
                       ],
@@ -1929,13 +1931,13 @@ class _JdckPageState extends ConsumerState<JdckPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: (isCyber ? CyberColors.cyan : primaryColor).withOpacity(0.1),
+      color: (primaryColor).withOpacity(0.1),
       child: Row(
         children: [
           Icon(
             Icons.info_outline,
             size: 16,
-            color: isCyber ? CyberColors.cyan : primaryColor,
+            color: primaryColor,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -1955,7 +1957,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isCyber ? CyberColors.cyan : primaryColor,
+                color: primaryColor,
               ),
             ),
           ),
@@ -1965,27 +1967,11 @@ class _JdckPageState extends ConsumerState<JdckPage> {
   }
 
   Widget _buildControlPanel(bool isCyber, Color primaryColor) {
-    return Container(
+    return CapsuleGlowCard(
+      isCyber: isCyber,
+      isPinned: false,
       margin: const EdgeInsets.all(AppleColors.spaceMd),
       padding: const EdgeInsets.all(AppleColors.spaceSm),
-      decoration: BoxDecoration(
-        color: isCyber ? CyberColors.cardBg : AppleColors.bgPrimary,
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        border:
-            isCyber
-                ? Border.all(color: CyberColors.borderGlow)
-                : Border.all(color: AppleColors.cardBorder),
-        boxShadow:
-            isCyber
-                ? null
-                : [
-                  BoxShadow(
-                    color: AppleColors.cardShadow,
-                    blurRadius: 12,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-      ),
       child: Column(
         children: [
           Row(
@@ -2117,16 +2103,10 @@ class _JdckPageState extends ConsumerState<JdckPage> {
   }
 
   Widget _buildWebView(bool isCyber) {
-    return Container(
+    return CapsuleGlowCard(
+      isCyber: isCyber,
+      isPinned: false,
       margin: const EdgeInsets.all(AppleColors.spaceMd),
-      decoration: BoxDecoration(
-        color: isCyber ? const Color(0x10FFFFFF) : AppleColors.bgSecondary,
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        border:
-            isCyber
-                ? Border.all(color: CyberColors.borderGlow)
-                : Border.all(color: AppleColors.cardBorder),
-      ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
         child: Stack(

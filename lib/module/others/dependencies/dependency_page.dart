@@ -430,7 +430,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
         });
   }
 
-  double searchCellHeight = 55;
+  double searchCellHeight = 48;
 
   SliverAppBar _buildAppBar(
     BuildContext context,
@@ -454,11 +454,13 @@ class DependcyPageState extends ConsumerState<DependencyPage>
     WidgetRef context1,
     DependencyViewModel model,
   ) {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 10),
+    return SizedBox(
       height: searchCellHeight.toDouble(),
-      child: SearchCell(controller: searchText),
+      child: Container(
+        color: Colors.transparent,
+        padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 0),
+        child: SearchCell(controller: searchText),
+      ),
     );
   }
 

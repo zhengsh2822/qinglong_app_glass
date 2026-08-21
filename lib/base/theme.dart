@@ -61,9 +61,72 @@ class ThemeViewModel extends ChangeNotifier {
 
   int _themeMode = modeLight;
 
-  Color primaryColor = _primaryColor;
+  // ===== 主题切换颜色插值（平滑过渡，对齐 demos/theme_transition_demo）=====
+  // 切换时 themeColor / primaryColor 从旧值 _from* 平滑过渡到新值 _to*
+  // 用 SchedulerBinding.frame 自驱帧回调（无需 TickerProvider vsync）
+  static const Duration _animDuration = Duration(milliseconds: 600);
+  static const Curve _animCurve = Curves.easeInOutCubic;
+  ThemeColors _fromColors = LightThemeColors();
+  ThemeColors _toColors = LightThemeColors();
+  Color _fromPrimary = _primaryColor;
+  Color _toPrimary = _primaryColor;
+  double _animValue = 1.0; // 0..1 动画进度；1 = 达到 _to*（静止态）
+  bool _animating = false;
+  DateTime? _animStart;
 
-  ThemeColors themeColor = LightThemeColors();
+  /// 当前生效的 themeColor：动画期间返回 from→to 的插值色
+  ThemeColors get themeColor {
+    if (!_animating) return _toColors;
+    final t = _animCurve.transform(_animValue);
+    if (t >= 1.0) return _toColors;
+    return _LerpThemeColors(_fromColors, _toColors, t);
+  }
+
+  /// 当前生效的主色：动画期间返回 from→to 的插值色
+  Color get primaryColor =>
+      !_animating
+          ? _toPrimary
+          : (Color.lerp(_fromPrimary, _toPrimary, _animCurve.transform(_animValue)))!;
+
+  /// 每帧自驱动画（SchedulerBinding 帧回调，无需 vsync）
+  void _scheduleFrame() {
+    SchedulerBinding.instance.scheduleFrameCallback(_onFrame);
+  }
+
+  void _onFrame(Duration _) {
+    if (!_animating || _animStart == null) return;
+    final elapsed = DateTime.now().difference(_animStart!);
+    final p = (elapsed.inMicroseconds / _animDuration.inMicroseconds).clamp(0.0, 1.0);
+    if (p >= 1.0) {
+      _animating = false;
+      _animValue = 1.0;
+    } else {
+      _animValue = p;
+    }
+    if (_animating) _scheduleFrame();
+    notifyListeners();
+  }
+
+  /// 触发一次 0→1 的主题过渡动画（from=当前目标色，to=新目标色）
+  void _startTransition(ThemeColors newColors, Color newPrimary) {
+    _fromColors = _toColors;
+    _fromPrimary = _toPrimary;
+    _toColors = newColors;
+    _toPrimary = newPrimary;
+    _animValue = 0;
+    _animating = true;
+    _animStart = DateTime.now();
+    _scheduleFrame();
+  }
+
+  void _setFinal(ThemeColors newColors, Color newPrimary) {
+    _toColors = newColors;
+    _toPrimary = newPrimary;
+    _fromColors = newColors;
+    _fromPrimary = newPrimary;
+    _animValue = 1.0;
+    _animating = false;
+  }
 
   // 兼容旧引用：主文字色 / 次要文字色
   // 支持用户自定义颜色（字体设置页面设置），未设置（-1）时用默认主题色
@@ -177,24 +240,28 @@ class ThemeViewModel extends ChangeNotifier {
   void changeThemeReal(int themeMode, [bool notify = true]) {
     _themeMode = themeMode;
     SpUtil.putInt(spThemeStyle, _themeMode);
+    ThemeData newTheme;
+    ThemeColors newColors;
+    Color newPrimary;
     if (_themeMode == modeLight) {
-      currentTheme = getLightTheme();
-      themeColor = LightThemeColors();
-      primaryColor = _primaryColor;
+      newTheme = getLightTheme();
+      newColors = LightThemeColors();
+      newPrimary = _primaryColor;
     } else if (_themeMode == modeDark) {
       // 黑色主题模式已合并为赛博模式，老用户存储的 modeDark 值也走赛博主题
-      currentTheme = getCyberTheme();
-      themeColor = CyberThemeColors();
-      primaryColor = CyberColors.cyan;
+      newTheme = getCyberTheme();
+      newColors = CyberThemeColors();
+      newPrimary = CyberColors.cyan;
     } else if (_themeMode == modeCyber) {
-      currentTheme = getCyberTheme();
-      themeColor = CyberThemeColors();
-      primaryColor = CyberColors.cyan;
+      newTheme = getCyberTheme();
+      newColors = CyberThemeColors();
+      newPrimary = CyberColors.cyan;
     } else {
-      currentTheme = getWhiteTheme();
-      themeColor = WhiteThemeColors();
-      primaryColor = _primaryColor;
+      newTheme = getWhiteTheme();
+      newColors = WhiteThemeColors();
+      newPrimary = _primaryColor;
     }
+    currentTheme = newTheme;
     if (Platform.isAndroid) {
       SystemUiOverlayStyle style;
       if (_themeMode == modeDark || _themeMode == modeCyber) {
@@ -211,7 +278,10 @@ class ThemeViewModel extends ChangeNotifier {
       SystemChrome.setSystemUIOverlayStyle(style);
     }
     if (notify) {
+      _startTransition(newColors, newPrimary);
       notifyListeners();
+    } else {
+      _setFinal(newColors, newPrimary);
     }
   }
 
@@ -1034,4 +1104,84 @@ class CyberThemeColors extends ThemeColors {
 
   @override
   List<Color> appBarBg() => [CyberColors.bg, CyberColors.bg];
+}
+
+/// 主题切换过渡用的插值颜色包装器
+///
+/// 对齐 demos/theme_transition_demo 的全局颜色过渡机制：
+/// 持有 from / to 两个 ThemeColors，动画期间按 t(0..1) 对每个颜色做 Color.lerp。
+/// primaryColor、appBarBg 归为一组，文字/背景等归类为 ThemeColors 各方法。
+class _LerpThemeColors implements ThemeColors {
+  final ThemeColors from;
+  final ThemeColors to;
+  final double t;
+
+  const _LerpThemeColors(this.from, this.to, this.t);
+
+  Color _c(Color a, Color b) => Color.lerp(a, b, t)!;
+
+  @override
+  Color settingBgColor() => _c(from.settingBgColor(), to.settingBgColor());
+
+  @override
+  Color bg2Color() => _c(from.bg2Color(), to.bg2Color());
+
+  @override
+  Color blackAndWhite() => _c(from.blackAndWhite(), to.blackAndWhite());
+
+  @override
+  Color codeBgColor() => _c(from.codeBgColor(), to.codeBgColor());
+
+  @override
+  Color pinedAndWhite() => _c(from.pinedAndWhite(), to.pinedAndWhite());
+
+  @override
+  Color settingBordorColor() =>
+      _c(from.settingBordorColor(), to.settingBordorColor());
+
+  @override
+  Color titleColor() => _c(from.titleColor(), to.titleColor());
+
+  @override
+  Color title2Color() => _c(from.title2Color(), to.title2Color());
+
+  @override
+  Color hintColor() => _c(from.hintColor(), to.hintColor());
+
+  @override
+  Color descColor() => _c(from.descColor(), to.descColor());
+
+  @override
+  Color filterColor() => _c(from.filterColor(), to.filterColor());
+
+  @override
+  Color tabBarColor() => _c(from.tabBarColor(), to.tabBarColor());
+
+  @override
+  Color pinColor() => _c(from.pinColor(), to.pinColor());
+
+  @override
+  Color searchBgColor() => _c(from.searchBgColor(), to.searchBgColor());
+
+  @override
+  Color buttonBgColor() => _c(from.buttonBgColor(), to.buttonBgColor());
+
+  @override
+  Color segmentedUnCheckBg() =>
+      _c(from.segmentedUnCheckBg(), to.segmentedUnCheckBg());
+
+  @override
+  Color otherFuncBg() => Color.lerp(from.otherFuncBg(), to.otherFuncBg(), t)!;
+
+  @override
+  Map<String, TextStyle> codeEditorTheme() => to.codeEditorTheme();
+
+  @override
+  List<Color> appBarBg() {
+    final a = from.appBarBg();
+    final b = to.appBarBg();
+    return [
+      for (var i = 0; i < a.length && i < b.length; i++) Color.lerp(a[i], b[i], t)!,
+    ];
+  }
 }

@@ -136,7 +136,7 @@ class EnvPageState extends ConsumerState<EnvPage>
     super.dispose();
   }
 
-  double searchCellHeight = 55;
+  double searchCellHeight = 48;
 
   SliverAppBar _buildAppBar(WidgetRef ref, EnvViewModel model) {
     return SliverAppBar(
@@ -431,11 +431,14 @@ class EnvPageState extends ConsumerState<EnvPage>
   }
 
   Widget searchCell(BuildContext context, WidgetRef ref, EnvViewModel model) {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 10),
+    // 用 SizedBox 强制锁高，与 task_page 一致：搜索框完整 44 高、底部无缝贴合 tab
+    return SizedBox(
       height: searchCellHeight.toDouble(),
-      child: SearchCell(controller: searchText),
+      child: Container(
+        color: Colors.transparent,
+        padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 0),
+        child: SearchCell(controller: searchText),
+      ),
     );
   }
 

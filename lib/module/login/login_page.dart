@@ -10,9 +10,9 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
+import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_glass_card.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/main.dart';
@@ -132,40 +132,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       // 标题
                       _buildHeader(isCyber),
                       SizedBox(height: MediaQuery.of(context).size.height / 18),
-                      // 表单卡片
-                      if (isCyber)
-                        CyberGlassCard(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 24,
-                          ),
-                          child: _buildFormFields(isCyber),
-                        )
-                      else
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 24,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppleColors.bgSecondary,
-                            borderRadius: BorderRadius.circular(
-                              AppleColors.radiusCard,
-                            ),
-                            border: Border.all(
-                              color: AppleColors.cardBorder,
-                              width: 0.5,
-                            ),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x0F000000),
-                                blurRadius: 12,
-                                offset: Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: _buildFormFields(isCyber),
+                      // 表单卡片（统一高光内发光设计）
+                      CapsuleGlowCard(
+                        isCyber: isCyber,
+                        isPinned: false,
+                        glowIntensity: 0.5,
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(AppleColors.radiusCard),
                         ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 24,
+                        ),
+                        child: _buildFormFields(isCyber),
+                      ),
                       const SizedBox(height: 12),
                     ],
                   ),
@@ -639,31 +619,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  /// 历史账号卡片（圆角 18 + 统一卡片设计）
+  /// 历史账号卡片（统一高光内发光设计）
   Widget _buildHistoryAccountCard(UserInfoBean bean, bool isCyber) {
-    return Container(
+    return CapsuleGlowCard(
+      isCyber: isCyber,
+      isPinned: false,
+      glowIntensity: 0.5,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color:
-            isCyber
-                ? const Color(0x20FFFFFF)
-                : ref.read(themeProvider).themeColor.settingBordorColor(),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isCyber ? CyberColors.borderGlow : AppleColors.cardBorder,
-          width: isCyber ? 1 : 0.5,
-        ),
-        boxShadow:
-            isCyber
-                ? null
-                : const [
-                  BoxShadow(
-                    color: Color(0x0F000000),
-                    blurRadius: 12,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-      ),
+      borderRadius: const BorderRadius.all(Radius.circular(18)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
         child: Material(

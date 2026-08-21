@@ -382,7 +382,7 @@ class HomePageState extends ConsumerState<HomePage> {
     );
 
     // 液态玻璃导航条：赛博/苹果 两套视觉参数（与 demo 确认效果一致）
-    final activeColor = isCyber ? CyberColors.cyan : theme.primaryColor;
+    final activeColor = ref.watch(themeProvider).primaryColor;
     final inactiveColor = isCyber
         ? CyberColors.hintGray
         : AppleColors.textSecondary;
