@@ -36,7 +36,7 @@ class SelectableChip extends ConsumerWidget {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
 
     final Color accentColor =
-        isCyber ? CyberColors.cyan : AppleColors.accent;
+        ref.watch(themeProvider).primaryColor;
     final Color titleColor =
         isCyber ? CyberColors.titleWhite : AppleColors.textPrimary;
     final Color descColor =

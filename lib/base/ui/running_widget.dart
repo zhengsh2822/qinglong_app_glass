@@ -11,8 +11,8 @@ class RunningWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    final color =
-        isCyber ? CyberColors.cyan : ref.watch(themeProvider).primaryColor;
+    // 提示色统一走 primaryColor（赛博模式下返回 cyan），参与主题切换颜色过渡
+    final color = ref.watch(themeProvider).primaryColor;
     // RepaintBoundary 隔离 LoadingWidget 的无限循环动画，
     // 避免向上冒泡触发整个列表项重绘（GPU 优化关键）
     return RepaintBoundary(

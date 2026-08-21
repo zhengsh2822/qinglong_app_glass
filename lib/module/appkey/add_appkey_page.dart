@@ -96,8 +96,7 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
   Widget build(BuildContext context) {
     final theme = ref.watch(themeProvider);
     final bool isCyber = theme.themeMode == modeCyber;
-    final Color accentColor =
-        isCyber ? CyberColors.cyan : AppleColors.accent;
+    final Color accentColor = theme.primaryColor;
     final Color titleColor =
         isCyber ? CyberColors.titleWhite : AppleColors.textPrimary;
 

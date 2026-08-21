@@ -109,7 +109,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
   /// 备份区域
   Widget _buildBackupSection() {
-    final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
     return OtherPageCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
@@ -179,7 +178,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: isCyber ? CyberColors.cyan : AppleColors.accent,
+                    color: ref.watch(themeProvider).primaryColor,
                   ),
                 ),
               ),
@@ -192,7 +191,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
   /// 恢复区域
   Widget _buildRestoreSection() {
-    final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
     return OtherPageCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
@@ -227,7 +225,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: isCyber ? CyberColors.cyan : AppleColors.accent,
+                    color: ref.watch(themeProvider).primaryColor,
                   ),
                 ),
               ),
@@ -478,7 +476,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       leading: Icon(
                         CupertinoIcons.clock,
                         color:
-                            isCyber ? CyberColors.cyan : AppleColors.accent,
+                            ref.watch(themeProvider).primaryColor,
                       ),
                       title: Text(
                         '从最近备份选择',
@@ -505,7 +503,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       leading: Icon(
                         CupertinoIcons.folder,
                         color:
-                            isCyber ? CyberColors.cyan : AppleColors.accent,
+                            ref.watch(themeProvider).primaryColor,
                       ),
                       title: Text(
                         '从文件管理器选择',
@@ -586,7 +584,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                               ? CupertinoIcons.checkmark_circle_fill
                               : CupertinoIcons.xmark_circle_fill,
                           color: isSuccess
-                              ? (isCyber ? CyberColors.cyan : AppleColors.accent)
+                              ? ref.watch(themeProvider).primaryColor
                               : Colors.redAccent,
                           size: 22,
                         ),
@@ -609,7 +607,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: (isCyber ? CyberColors.cyan : AppleColors.accent)
+                        color: ref.watch(themeProvider).primaryColor
                             .withOpacity(0.08),
                         borderRadius: BorderRadius.circular(10),
                       ),

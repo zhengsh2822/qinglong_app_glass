@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
 
 /// 只读标签 chip 组件
@@ -24,10 +23,9 @@ class TagChip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final _ = ref.watch(themeProvider);
-    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
 
     final Color accentColor =
-        isCyber ? CyberColors.cyan : AppleColors.accent;
+        ref.watch(themeProvider).primaryColor;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
@@ -155,54 +156,17 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
       return child;
     }
 
-    // 卡片容器
-    Widget card;
-    if (isCyber) {
-      card = Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            decoration: BoxDecoration(
-              color: CyberColors.cardBg,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: CyberColors.borderGlow, width: 1),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(18),
-              child: child,
-            ),
-          ),
-        ),
-      );
-    } else {
-      card = Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            decoration: BoxDecoration(
-              color: ref.watch(themeProvider).themeColor.settingBordorColor(),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppleColors.cardBorder, width: 0.5),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x0F000000),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(18),
-              child: child,
-            ),
-          ),
-        ),
-      );
-    }
+    // 卡片容器（复用 CapsuleGlowCard 高光内发光设计，与账号排序页统一）
+    Widget card = CapsuleGlowCard(
+      isCyber: isCyber,
+      isPinned: false,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: child,
+      ),
+    );
 
     // 滑动删除
     if (isCyber) {
@@ -341,9 +305,9 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
 
   /// 添加账号按钮（赛博/非赛博统一布局）
   Widget addAccount(BuildContext context, int index) {
-    final bool isCyber = _isCyber;
-    final accentColor =
-        isCyber ? CyberColors.cyan : ref.watch(themeProvider).primaryColor;
+    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+    // 提示色统一走 primaryColor（赛博模式下返回 cyan），参与主题切换颜色过渡
+    final accentColor = ref.watch(themeProvider).primaryColor;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
@@ -352,46 +316,16 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
         );
         Navigator.of(context).pop();
       },
-      child:
-          isCyber
-              ? Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: CyberColors.cardBg,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: CyberColors.borderGlow,
-                        width: 1,
-                      ),
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(18),
-                      child: _buildAddAccountContent(accentColor),
-                    ),
-                  ),
-                ),
-              )
-              : Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color:
-                      ref.watch(themeProvider).themeColor.settingBordorColor(),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppleColors.cardBorder, width: 0.5),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x0F000000),
-                      blurRadius: 12,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: _buildAddAccountContent(accentColor),
-              ),
+      child: CapsuleGlowCard(
+        isCyber: isCyber,
+        isPinned: false,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(18),
+          child: _buildAddAccountContent(accentColor),
+        ),
+      ),
     );
   }
 

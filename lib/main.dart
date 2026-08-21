@@ -209,7 +209,7 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
               behavior: const ScrollPhysicsConfig(),
               child: AnimatedTheme(
                 data: theme,
-                duration: const Duration(milliseconds: 800),
+                duration: const Duration(milliseconds: 600),
                 curve: Curves.easeInOutCubic,
                 child: child ?? Container(),
               ),

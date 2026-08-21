@@ -31,8 +31,8 @@ class CupertinoSheer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    final Color accent =
-        isCyber ? CyberColors.cyan : ref.watch(themeProvider).primaryColor;
+    // 提示色统一走 primaryColor（赛博模式下返回 cyan），参与主题切换颜色过渡
+    final Color accent = ref.watch(themeProvider).primaryColor;
     final Color textColor =
         isCyber ? CyberColors.titleWhite : const Color(0xFF1A1A1A);
     final Color dividerColor =

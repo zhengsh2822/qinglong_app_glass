@@ -72,13 +72,14 @@ class _GlassSegmentedTabState extends ConsumerState<GlassSegmentedTab> {
         ? const Color(0x22CCCCCC)
         : null;
 
-    // 文字色
-    final Color activeColor = isCyber ? CyberColors.cyan : theme.primaryColor;
+    // 文字色（提示色统一走 primaryColor，参与主题切换颜色过渡）
+    final Color activeColor = ref.watch(themeProvider).primaryColor;
     final Color inactiveColor = isCyber
         ? CyberColors.hintGray
         : theme.themeColor.title2Color();
 
     return SizedBox(
+      // 大胶囊总高度 55：左右 15 padding + 大胶囊自身 43（GlassSegmentedTabDelegate 不再外层加 padding）
       height: 55,
       child: IgnorePointer(
         ignoring: widget.editMode,
@@ -411,8 +412,8 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
                     // ---------- 液态滑块 ----------
                     Positioned(
                       left: thumbLeft,
-                      top: 4,
-                      bottom: 4,
+                      top: 2,
+                      bottom: 2,
                       width: thumbWidth,
                       child: IgnorePointer(
                         child: Transform(
@@ -508,6 +509,8 @@ class GlassSegmentedTabDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
+    // 不再额外包 Padding / Transform —— 与其他顶部 tab 页面（env_page/config_page 等）
+    // 使用 GlassSegmentedTab 原始默认行为，保持完全一致（搜索框↔大胶囊↔卡片 间距统一）
     return GlassSegmentedTab(
       tabs: tabs,
       tabController: tabController,
