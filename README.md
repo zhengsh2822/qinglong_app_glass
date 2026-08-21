@@ -65,47 +65,8 @@
 ### 其他功能
 
 - 配置文件管理、依赖管理（缺失依赖扫描）、登录日志、任务日志
-- 应用内购买、推送设置、字体大小、修改密码、账号排序、iCloud 备份
-- 检查更新、关于页面
-
-## 主要改进
-
-### 新增功能与设计
-
-- **三种主题模式**：赛博、Apple（#00cccc 纯色 + BackdropFilter 模糊弹窗）、白色（18px 圆角统一规范）。黑色主题已合并入赛博模式
-- **主题切换动画**：基于 `ThemeViewModel` 颜色插值 + `AnimatedTheme`（600ms easeInOutCubic）实现当前页面平滑过渡，`themeColor`/`primaryColor` 动画期间逐帧插值，图标/按钮/加载圈等提醒色一并参与过渡
-- **胶囊高光内发光卡片设计**：`CapsuleGlowCard` 可复用组件（顶部高光 + 底部内发光 + 外发光），支持置顶/未置顶状态，统一应用到定时任务、应用管理、京东助手、我的页面等卡片；京东助手弹窗由冰霜毛玻璃改为纯压暗蒙版 + 不透明卡片
-- **多账号 HTTP 缓存隔离**：HTTP 缓存按账号隔离，防止跨账号数据泄漏
-- **仪表盘功能扩展**：新增 4 个 API 端点（`/api/dashboard/trend`、`/top-time`、`/top-count`、`/labels`）及对应 UI 模块，自绘折线图（`CustomPaint`，无 fl_chart 依赖），老版本服务端自动隐藏不支持的卡片
-- **脚本搜索能力补全**：脚本列表页常驻搜索过滤；脚本查看/编辑页弹出式搜索卡片，支持正则语法、上下导航、200ms 防抖、CodeMirror 高亮匹配
-- **Slidable 跨 Tab 自动收起**：全局 `SlidableCloseNotifier`（`ValueNotifier<int>`）在底部导航切换时通知任务/环境变量/订阅三个页面，通过更新 `ValueKey` 强制重建 Slidable 卡片以重置展开状态
-- **iOS 风格文本选择放大镜**：11 个文件的 `SelectableText` / `SelectableText.rich` 应用了 `cupertinoTextSelectionControls`，覆盖日志、任务详情、环境变量详情、订阅详情、代码高亮等可复制区域
-- **京东助手独立模块**：独立青龙面板登录、自动从应用设置获取 clientId/clientSecret、Cookie 上传前校验 pt_key/pt_pin、账号与青龙配置备份/恢复
-- **京东助手弹窗统一**：添加/编辑/删除账号弹窗统一使用展开动画与卡片样式，三主题一致（自 v3.0.0 起由冰霜毛玻璃改为纯压暗蒙版）
-- **按钮配色统一**：非破坏性长按钮使用主色渐变 `[primaryColor, primaryColor.withOpacity(0.85)]`，Apple 主题为 #00cccc 渐变；破坏性按钮保留红色渐变
-- **赛博模式搜索框深色化**：搜索框在赛博模式下使用 `0xFF12121A` 深色背景 + 青色微光边框，解决白底问题
-- **统一滑动操作**：任务/环境变量/订阅/应用管理/京东助手等页面统一使用 `Slidable + ScrollMotion + AppSlideButton`，赛博与非赛博模式结构完全一致，仅配色不同
-- **悬浮式沉浸搜索框**：搜索框与列表分离、沉浸悬浮（`FloatingSearchBar`），与顶部 Tab 大胶囊一起规避列表背景色块
-- **统一设计规范**：所有搜索框/输入框胶囊形状（borderRadius 24）、卡片统一 18px 圆角、依赖管理 Tab 胶囊样式（24px 圆角 + 青色 thumb）
-- **HTTP 容错**：`ResponseType.plain` + 手动 `jsonDecode`，过滤底层库 JSON 解析错误
-- **构建脚本**：`build_apk.ps1` 启用 R8 混淆 + 资源压缩 + arm64-v8a ABI 过滤（最小 APK ≈27.8MB），自动复制 APK 到 apk_output，自动检测 ADB 设备并安装
-- **调试支持**：`debug_helper.ps1` + ADB 配置，支持 `flutter run` 热重载与 IDE 断点调试
-
-### 移除的不兼容功能与依赖
-
-- **App 内消息推送功能**（原项目 2.6.3 已移除，本项目延续此变更）
-- **`convex_bottom_bar`**：改用自定义底部导航
-- **`cached_network_image`**：移除网络图片缓存库
-- **`file_picker`**：移除文件选择器
-- **`quick_actions`**：移除桌面快捷方式
-- **`flutter_dynamic_icon`**：移除动态图标切换
-- **`flutter_scroll_to_top`**：移除列表顶部跳转
-- **`json_table` / `extended_text`**：移除表格与扩展文本
-- **`launch_review` / `package_info_plus` / `move_to_background`**：移除评分跳转、包信息、后台运行
-- **`dio_log` / `json_conversion`**：移除网络日志与 JSON 转换注解
-- **`CyberSlidable` 组件**：弃用，统一为标准 `Slidable`
-- **Lottie 扫描动画**：弃用无效的 `assets/scan.json`，改用 `CupertinoIcons.doc_text_search`
-- **主题切换强制跳转首页逻辑**：移除 `MaterialApp` 的 `key: ValueKey(themeMode)` 与 `onThemeChanged` 回调
+- 应用内购买、推送设置、字体大小、修改密码、账号排序
+- 检查更新、关于页面、依赖设置、备份恢复
 
 ### 依赖升级
 
