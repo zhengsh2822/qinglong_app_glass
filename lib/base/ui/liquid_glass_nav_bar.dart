@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui' show ImageFilter, lerpDouble;
 
 import 'package:flutter/material.dart';
-import 'package:qinglong_app/base/ui/spring_curve.dart';
 
 /// ============================================================
 /// 液态玻璃导航条 —— App 版（移植自 demos/liquid_glass_demo）
@@ -158,18 +157,26 @@ class _LiquidGlassNavBarState extends State<LiquidGlassNavBar>
   // 快速连续切换时不重置、平滑接管新目标 —— 与 demo 一致，跟手流畅。
   late final AnimationController _pos;
 
-  // 回弹挤压：0..1，0=挤压态（scaleX 0.78 / scaleY 1.05），1=恢复（1.0/1.0）。
-  // 边界 tab 冲撞回弹时压到 0 再恢复；中间 tab 保持 1（仅位置 spring 过冲）。
+  // 回弹挤压：0..1，0=挤压态，1=恢复（1.0/1.0）。挤压深度按 _lastAmp 缩放，
+  // 位移越大挤压越明显（回弹力度随距离反馈）。
   late final AnimationController _sq;
-  late final Animation<double> _sqCurveX;
-  late final Animation<double> _sqCurveY;
 
   // 抓取缩放：0..1，0=正常（1.0），1=长按抓取（0.85）。
   // 按压时轻微缩小（0.5），长按后进一步缩小（1.0）作为"抓取"反馈，随后可拖动。
   late final AnimationController _grab;
 
+  // 最近一次切换的回弹幅度（0.35~1.0）：挤压深度 + 过墙幅度都随它缩放
+  double _lastAmp = 1.0;
+
   // 回弹序列令牌：新的切换会使旧序列的"落回阶段"失效，避免位置回跳。
   int _reboundToken = 0;
+
+  // 按下原点（回弹距离/方向依据）：_currentIndex 在 _commit 会被覆盖成 target，
+  // 故回弹必须用按下时滑块的真实位置来计算"真实导航距离"。
+  double _pressP = 0;
+
+  // 按下是否已触发切换（用于松手 tap 时避免对已切目标重复提交造成二次回弹）
+  bool _downSwitched = false;
 
   // Layout 阶段记录的尺寸
   double _lastContentW = 0;
@@ -192,15 +199,12 @@ class _LiquidGlassNavBarState extends State<LiquidGlassNavBar>
       vsync: this,
       duration: const Duration(milliseconds: 220),
     )..addListener(_onTick);
-    // 挤压曲线：_sq=0 → 挤压态(0.78 / 1.05)，_sq=1 → 恢复(1.0 / 1.0)
-    _sqCurveX = Tween(begin: 0.78, end: 1.0).animate(_sq);
-    _sqCurveY = Tween(begin: 1.05, end: 1.0).animate(_sq);
     _grab = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 180),
     )..addListener(_onTick);
     _pos.value = _currentIndex * 100.0;
-    // 初始滑块不挤压（_sq=1 → scaleX 1.0 / scaleY 1.0）
+    // 初始滑块不挤压（_sq=1）
     _sq.value = 1.0;
   }
 
@@ -208,13 +212,17 @@ class _LiquidGlassNavBarState extends State<LiquidGlassNavBar>
   double get _grabScale =>
       lerpDouble(1.0, LiquidGlassNavBar._kGrabbedScale, _grab.value) ?? 1.0;
 
-  /// 动画每帧回调：位置 + 回弹挤压 + 抓取缩放写入 ValueNotifier，只重建滑块层
+  /// 动画每帧回调：位置 + 回弹挤压（深度随 _lastAmp）+ 抓取缩放写入 ValueNotifier
   void _onTick() {
     final double gs = _grabScale;
+    // _sq=0 → 挤压态，深度随 _lastAmp：scaleX=1-0.22*amp，scaleY=1+0.05*amp
+    final double sq = 1.0 - _sq.value;
+    final double sx = 1.0 - 0.22 * _lastAmp * sq;
+    final double sy = 1.0 + 0.05 * _lastAmp * sq;
     _visual.value = LiquidVisual(
       _pos.value,
-      scaleX: _sqCurveX.value * gs,
-      scaleY: _sqCurveY.value * gs,
+      scaleX: sx * gs,
+      scaleY: sy * gs,
     );
   }
 
@@ -249,19 +257,39 @@ class _LiquidGlassNavBarState extends State<LiquidGlassNavBar>
     _pos.stop();
     _sq.stop();
     _downLocal = e.localPosition;
+    // 记录按下原点：用于回弹的"真实导航距离/方向"（_currentIndex 在 _commit 里
+    // 会先被覆盖成 target，不能拿来算回弹距离）
+    _pressP = _visual.value.p;
+    // 按下立即切页（最快）：落到不同 tab 就直接 onSelected 切页 + 平滑滑动，
+    // 不等松手/长按，杜绝"长按延迟跳转"。同 tab 按下仅保留抓取预备反馈。
+    final int downTarget = _indexAt(e.localPosition.dx);
+    _hover.value = downTarget;
+    _downSwitched = downTarget != _currentIndex;
+    if (_downSwitched) {
+      // 按下立即切页（最快）：起手仅"平滑滑动"，二段回弹留到松手再决定
+      _commit(downTarget, bounce: false);
+    }
     // 按压即轻微缩小（抓取预备反馈）
     _grab.animateTo(
       0.5,
       duration: const Duration(milliseconds: 120),
       curve: Curves.easeOut,
     );
-    // 长按计时：到达后进入"抓取"（小胶囊缩小），并可继续拖动
+    // 长按计时：到达后进入"抓取"（小胶囊缩小），并可继续拖动。
+    // 长按（未移动）立即跳转到按住的标签，避免"要滑动一下才跳"造成的
+    // 小胶囊卡顿闪现；只有滑动选择（拖动）时才松手再跳转。
     _longTapTimer?.cancel();
     _longTapTimer = Timer(LiquidGlassNavBar._kLongTapDuration, () {
       if (!mounted || !_isInteracting || _isDragging) return;
       _longTapFired = true;
       _longTapTimer?.cancel();
-      widget.onLongTap?.call(_hover.value);
+      final target = _indexAt(e.localPosition.dx);
+      _hover.value = target;
+      widget.onLongTap?.call(target);
+      if (target != _currentIndex) {
+        // 长按不同标签：立即跳转（切换页面 + 回弹），不依赖后续拖动
+        _commit(target);
+      }
       // 长按：小胶囊缩小（抓取），随后可动画拖拽
       _grab.animateTo(
         1.0,
@@ -287,6 +315,9 @@ class _LiquidGlassNavBarState extends State<LiquidGlassNavBar>
       if (dx.abs() < widget.dragThreshold) return;
       _isDragging = true;
       _longTapTimer?.cancel();
+      // 打断"按下即跳转"预览动画，改由手指直接驱动
+      _pos.stop();
+      _sq.stop();
     }
 
     final rawP = _rawPFromFinger(e.localPosition.dx);
@@ -332,7 +363,14 @@ class _LiquidGlassNavBarState extends State<LiquidGlassNavBar>
     } else if (!_isDragging) {
       // 未超阈值 → 判定为点击
       final target = _indexAt(e.localPosition.dx);
-      _commit(target);
+      if (_downSwitched) {
+        // 按下已切页（平滑滑动），快速点击松手补一段"二段回弹"；
+        // 长按时 _longTapFired 走上面分支，此处不触发 → 长按无回弹
+        _startTo(target);
+      } else {
+        // 按下同 tab，走原逻辑（触发原有同 tab 交互）
+        _commit(target);
+      }
     } else {
       // 拖拽结束 → 吸附到 hoverIndex（松手才切页面）
       _commit(_hover.value);
@@ -377,72 +415,91 @@ class _LiquidGlassNavBarState extends State<LiquidGlassNavBar>
         .clamp(0, widget.items.length - 1);
   }
 
-  void _commit(int target, {bool notify = true}) {
+  void _commit(int target, {bool notify = true, bool bounce = true}) {
     _currentIndex = target;
     // hover 走 ValueNotifier：切换只重建文字层，大胶囊毛玻璃层不参与重建
     _hover.value = target;
     if (notify) {
       widget.onSelected?.call(target);
     }
-    _startTo(target);
+    if (bounce) {
+      _startTo(target);
+    } else {
+      _startPlainTo(target);
+    }
   }
 
-  /// 启动一次切换动画（对齐 demo LiquidGlassNavBar 的方向性回弹）：
-  ///  - 边界 tab（第 0 / 最后）：两段式"冲撞回弹" —— 先冲到"挤压位"（位置
-  ///    过墙 11、scaleX 压扁 0.78、scaleY 拉长 1.05），再落回 targetP 恢复。
-  ///    位置过墙的方向取决于冲向哪边，是"单侧冲撞"而非"两边对称收缩"。
-  ///  - 中间 tab：位置用 spring 过冲曲线（cubic-bezier(0.34,1.56,0.64,1)），无挤压。
+  /// 平滑滑动到目标（无二段回弹）：用于"按下立即切页"的起手，回弹与否在松手
+  /// 再决定（长按→无回弹，快速点击→补一段二段回弹），避免长按时先弹再抓的怪感。
+  void _startPlainTo(int target) {
+    final targetP = target * 100.0;
+    _pos.value = _visual.value.p; // 从当前实时视觉连续接管
+    _sq.animateTo(
+      1.0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+    );
+    _pos.animateTo(
+      targetP,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  /// 启动一次切换动画（对齐 demo LiquidGlassNavBar 的方向性回弹）。
+  ///
+  /// 全部 tab 统一"两段式 easeOutCubic 干脆回弹"，去掉中间 tab 的慢启动 SpringCurve：
+  ///  - 阶段1：先朝目标方向"过墙 + 挤压"（位置过墙 11%×幅度）
+  ///  - 阶段2：落回 targetP 全面恢复
+  ///
+  /// 回弹幅度随位移距离反馈：amp = 0.35 + 0.65 * (dist / maxDist)，
+  /// 位移越大回弹越明显（我的→定时任务幅度大，→环境变量次之，→配置文件最小）。
   ///
   /// 位置一律用 [AnimationController.animateTo]（从当前动画值继续，不重置），
   /// 快速连续切换时滑块一路平滑接管新目标、跟手；回弹走独立控制器，
-  /// 边界两段式的"落回阶段"用令牌防打断回跳。
+  /// 两段式的"落回阶段"用令牌防打断回跳。
   void _startTo(int target) {
     final token = ++_reboundToken;
     final targetP = target * 100.0;
-    final isBoundary = target == 0 || target == widget.items.length - 1;
+    final currentP = _visual.value.p;
+
+    // 回弹幅度随真实导航距离反馈（用按下原点，而非 _currentIndex：
+    // _currentIndex 在 _commit 已覆盖成 target，会让 dist 恒为 0 导致无回弹）
+    final maxDist = widget.items.length - 1;
+    final dist = (targetP - _pressP).abs() / 100.0;
+    final amp = 0.35 + 0.65 * (maxDist > 0 ? dist / maxDist : 1.0);
+    _lastAmp = amp;
 
     // 位置从当前实时视觉继续（拖拽松手 / 动画中途切换都无缝衔接）
-    _pos.value = _visual.value.p;
+    _pos.value = currentP;
 
-    if (isBoundary) {
-      // 边界：两段式冲撞回弹
-      const squeezeScaleX = 0.78;
-      final squeezeP = (target == 0)
-          ? -(1 - squeezeScaleX) * 50 // 左边界：中心过墙向左 11
-          : targetP + (1 - squeezeScaleX) * 50; // 右边界：中心过墙向右 11
+    // 阶段1：朝目标方向过墙 + 挤压（过墙 11% × 幅度）
+    final dir = targetP >= _pressP ? 1.0 : -1.0;
+    final squeezeP = targetP + dir * 11.0 * amp;
+    _sq.animateTo(
+      0.0,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+    );
+    final first = _pos.animateTo(
+      squeezeP,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+    );
+    // 阶段2：落回 targetP 全面恢复（若已被新的切换打断则跳过）
+    first.then((_) {
+      if (!mounted || token != _reboundToken) return;
       _sq.animateTo(
-        0.0,
-        duration: const Duration(milliseconds: 200),
+        1.0,
+        duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
       );
-      final first = _pos.animateTo(
-        squeezeP,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOutCubic,
-      );
-      // 阶段2：落回 targetP 全面恢复（若已被新的切换打断则跳过）
-      first.then((_) {
-        if (!mounted || token != _reboundToken) return;
-        _sq.animateTo(
-          1.0,
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-        );
-        _pos.animateTo(
-          targetP,
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-        );
-      });
-    } else {
-      // 中间 tab：位置 spring 轻过冲（300ms 快起步跟手 + 末端轻回弹），无挤压
-      _sq.animateTo(1.0);
       _pos.animateTo(
         targetP,
-        duration: const Duration(milliseconds: 300),
-        curve: const SpringCurve(),
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
       );
-    }
+    });
   }
 
   // ---------- build ----------
@@ -575,23 +632,29 @@ class _LiquidGlassNavBarState extends State<LiquidGlassNavBar>
                   },
                 ),
 
-                // ---------- tab 内容（hover 驱动：切换只重建文字层） ----------
+                // ---------- tab 内容（滑块位置驱动：每个标签颜色随"距滑块距离"平滑渐变） ----------
+                // 与顶部 tab 一致：颜色 = Color.lerp(选中色, 未选色, 滑块与该标签的距离)，
+                // 滑块越近颜色越"选中"，越远越"未选"，滑动过程平滑过渡、快速切换也不跳色。
                 Positioned(
                   left: pad,
                   top: pad,
                   child: SizedBox(
                     width: contentW,
                     height: contentH,
-                    child: ValueListenableBuilder<int>(
-                      valueListenable: _hover,
-                      builder: (context, hover, child) {
+                    child: ValueListenableBuilder<LiquidVisual>(
+                      valueListenable: _visual,
+                      builder: (context, v, child) {
+                        final double pos = v.p / 100.0; // 滑块中心（item 单位）
                         return Row(
                           children: List.generate(items.length, (i) {
-                            final active = i == hover;
-                            final color = active
-                                ? widget.activeColor
-                                : widget.inactiveColor;
-                            final weight = active
+                            final double distance = (pos - i).abs();
+                            final double t = distance.clamp(0.0, 1.0);
+                            final Color color = Color.lerp(
+                              widget.activeColor,
+                              widget.inactiveColor,
+                              t,
+                            )!;
+                            final FontWeight weight = t < 0.5
                                 ? FontWeight.w600
                                 : FontWeight.w500;
                             return SizedBox(
@@ -601,10 +664,11 @@ class _LiquidGlassNavBarState extends State<LiquidGlassNavBar>
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  // 单图标（低开销）：空/实心按"距滑块最近"选（t<0.5 实心），颜色随距离
+                                  // lerp。避免双图标交叉淡入的每帧重绘开销导致过中间标签卡顿，
+                                  // 与 demo / 顶部 tab 的轻量标签层一致。
                                   Icon(
-                                    active
-                                        ? items[i].activeIcon
-                                        : items[i].icon,
+                                    t < 0.5 ? items[i].activeIcon : items[i].icon,
                                     color: color,
                                     size: widget.iconSize,
                                   ),

@@ -1,5 +1,9 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qinglong_app/base/app_colors.dart';
+import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/utils/extension.dart';
 
 import 'log_line_renderers.dart';
 import 'log_models.dart';
@@ -22,15 +26,19 @@ class LogTextView extends ConsumerStatefulWidget {
   final EdgeInsets padding;
   final ScrollController? scrollController;
 
+  /// 是否显示右上角"复制全部"悬浮按钮（默认开启，一键复制整段日志）
+  final bool showCopyAll;
+
   const LogTextView({
-    Key? key,
+    super.key,
     required this.content,
     required this.accountIndex,
     this.emptyText = '暂无日志',
     this.textStyle,
     this.padding = const EdgeInsets.symmetric(horizontal: 15),
     this.scrollController,
-  }) : super(key: key);
+    this.showCopyAll = true,
+  });
 
   @override
   ConsumerState<LogTextView> createState() => _LogTextViewState();
@@ -57,14 +65,28 @@ class _LogTextViewState extends ConsumerState<LogTextView> {
     final lines = parseLogContent(content);
     final children = <Widget>[];
 
+    // 连续文本行聚合为单个 SelectableText，支持跨行自由框选复制；
+    // 遇到图片/Base64/字符画卡片时 flush 文本块，作为独立交互分隔段。
+    final textBuffer = <String>[];
+    void flushText() {
+      if (textBuffer.isEmpty) return;
+      final text = textBuffer.join('\n');
+      textBuffer.clear();
+      children.add(buildTextBlock(text, widget.textStyle));
+    }
+
     for (final line in lines) {
       if (line is EmptyLine) {
-        children.add(const SizedBox(height: 6));
+        // 空行并入文本块，保留原始换行结构
+        textBuffer.add('');
         continue;
       }
       if (line is TextLine) {
-        children.add(buildTextLine(line.text, widget.textStyle));
-      } else if (line is ImagePathLine) {
+        textBuffer.add(line.text);
+        continue;
+      }
+      flushText();
+      if (line is ImagePathLine) {
         children.add(buildImagePathCard(
           context: context,
           line: line,
@@ -76,18 +98,84 @@ class _LogTextViewState extends ConsumerState<LogTextView> {
         children.add(buildAsciiArtCard(context: context, line: line));
       }
     }
+    flushText();
 
-    return SingleChildScrollView(
-      controller: widget.scrollController,
-      padding: EdgeInsets.only(
-        left: widget.padding.left,
-        right: widget.padding.right,
-        top: widget.padding.top,
-        bottom: MediaQuery.of(context).viewPadding.bottom + 20,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children,
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          controller: widget.scrollController,
+          padding: EdgeInsets.only(
+            left: widget.padding.left,
+            right: widget.padding.right,
+            top: widget.padding.top,
+            bottom: MediaQuery.of(context).viewPadding.bottom + 20,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          ),
+        ),
+        if (widget.showCopyAll)
+          Positioned(
+            top: 6,
+            right: widget.padding.right,
+            child: _CopyAllButton(
+              onTap: () async {
+                await Clipboard.setData(ClipboardData(text: content));
+                if (context.mounted) '已复制全部日志'.toast();
+              },
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// 右上角"复制全部"悬浮按钮
+/// 设计语言与 LogScrollButton / 卡片"运行/停止"胶囊按钮保持一致
+class _CopyAllButton extends ConsumerWidget {
+  final VoidCallback onTap;
+
+  const _CopyAllButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
+    final Color accent = isCyber
+        ? CyberColors.cyan
+        : ref.watch(themeProvider).primaryColor;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: accent.withValues(alpha: 0.45), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: accent.withValues(alpha: 0.2),
+              blurRadius: 6,
+              spreadRadius: 0.3,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(CupertinoIcons.doc_on_doc, size: 15, color: accent),
+            const SizedBox(width: 4),
+            Text(
+              '复制全部',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: accent,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

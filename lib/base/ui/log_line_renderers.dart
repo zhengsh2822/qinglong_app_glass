@@ -110,8 +110,8 @@ class _NoopCallback {
   static void instance() {}
 }
 
-/// 文本行
-Widget buildTextLine(String text, TextStyle? baseStyle) {
+/// 连续文本块（多行合并成一个 SelectableText，跨行自由框选复制）
+Widget buildTextBlock(String text, TextStyle? baseStyle) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 1),
     child: SelectableText(

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/spring_curve.dart';
 
 /// 顶部 Tab —— 液态玻璃风格（对齐 demos/liquid_glass_demo 顶部 tab 视觉）
 ///
@@ -156,8 +155,9 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
   // 抓取缩放（长按缩小，与底部导航交互一致）
   late final AnimationController _grab;
 
-  bool _lastIsBoundary = false;
+  double _lastAmp = 1.0; // 最近一次切换的回弹幅度（随位移距离反馈，0.35~1.0）
   double _boundaryDir = 1.0; // +1 向右过墙 / -1 向左过墙
+  double _pressValue = 0; // 按下时页面位置（index 单位，回弹距离/方向依据）
 
   // 手势/拖拽状态
   bool _isInteracting = false;
@@ -168,6 +168,7 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
   Offset _downLocal = Offset.zero;
   Timer? _longTapTimer;
   double _lastTotalW = 0; // build 时记录的大胶囊宽度
+  bool _downSwitched = false; // 按下是否已立即切页（松手 tap 时避免重复提交）
 
   // 边界过墙量（tab 宽度比例，与底部导航 11% 一致）
   static const double _boundaryOvershoot = 0.11;
@@ -211,33 +212,55 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
   }
 
   /// 点击/提交：页面切换 + 回弹。
-  ///  - 边界 tab（全部/已禁用）：两段式冲撞（滑块本地过墙 + 挤压）。
-  ///  - 中间 tab（运行中/未使用）：整段 spring 过冲 —— 直接作用在
-  ///    tabController 上，页面与滑块一起单段连续回弹，不再"先到再弹"。
+  /// 全部 tab 统一"两段式 easeOutCubic 干脆回弹"（去掉中间 tab 慢启动 SpringCurve）：
+  ///  滑块本地两段式挤压回弹（幅度随位移距离反馈），页面用 easeOutCubic 平滑到位。
   void _onTap(int i) {
-    _lastIsBoundary = i == 0 || i == widget.tabs.length - 1;
-    _boundaryDir = i == 0 ? -1.0 : 1.0;
-    if (_lastIsBoundary) {
-      _rebound.forward(from: 0);
-      widget.tabController.animateTo(
-        i,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-      );
-    } else {
-      widget.tabController.animateTo(
-        i,
-        duration: const Duration(milliseconds: 300),
-        curve: const SpringCurve(),
-      );
-    }
+    final current = widget.tabController.animation!.value.round();
+    final maxDist = widget.tabs.length - 1;
+    final dist = (i - current).abs();
+    _lastAmp = 0.35 + 0.65 * (maxDist > 0 ? dist / maxDist : 1.0);
+    _boundaryDir = i >= current ? 1.0 : -1.0;
+    _rebound.forward(from: 0);
+    widget.tabController.animateTo(
+      i,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  /// 仅切页不回弹（长按/按下起手的"平滑滑动"），回弹留在快速点击松手再触发
+  void _onTapPlain(int i) {
+    final current = widget.tabController.animation!.value.round();
+    final maxDist = widget.tabs.length - 1;
+    final dist = (i - current).abs();
+    _lastAmp = 0.35 + 0.65 * (maxDist > 0 ? dist / maxDist : 1.0);
+    _boundaryDir = i >= current ? 1.0 : -1.0;
+    widget.tabController.animateTo(
+      i,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  /// 仅补一段二段回弹（快速点击：按下已平滑切页，松手再弹一下，幅度随按下原点距离）
+  void _bounceOnly(int i) {
+    final dist = (i - _pressValue).abs();
+    final maxDist = widget.tabs.length - 1;
+    _lastAmp = 0.35 + 0.65 * (maxDist > 0 ? dist / maxDist : 1.0);
+    _boundaryDir = i >= _pressValue ? 1.0 : -1.0;
+    _rebound.forward(from: 0);
   }
 
   /// 提交（点击/拖拽松手/长按拖拽）：拖拽/抓取场景保留滑块在目标位，
   /// 等页面动画到位后再跟随，避免"拖到 2 又跳回 0"的跳变。
-  void _commit(int i) {
+  /// bounce=false 时仅平滑滑动（长按/按下起手），快速点击松手再补回弹。
+  void _commit(int i, {bool bounce = true}) {
     _dragP = (_isDragging || _longTapFired) ? i.toDouble() : null;
-    _onTap(i);
+    if (bounce) {
+      _onTap(i);
+    } else {
+      _onTapPlain(i);
+    }
   }
 
   // ---------- 手势（同步底部导航：按压缩小 → 长按抓取 → 可拖拽） ----------
@@ -262,6 +285,16 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
     _longTapFired = false;
     _downLocal = e.localPosition;
     _dragP = null;
+    // 按下立即切页（最快的"立即跳转"，与底部导航一致）：落到不同 tab 直接提交，
+    // 不等松手/长按。同 tab 按下仅保留抓取预备反馈。
+    final int downTarget = _indexAt(e.localPosition.dx);
+    _pressValue = widget.tabController.animation!.value;
+    _downSwitched = downTarget != widget.tabController.animation!.value.round();
+    if (_downSwitched) {
+      _dragHover = downTarget;
+      // 按下立即切页：起手仅"平滑滑动"，二段回弹留到松手再决定（长按无回弹）
+      _commit(downTarget, bounce: false);
+    }
     // 按压即轻微缩小（抓取预备）
     _grab.animateTo(0.5, duration: const Duration(milliseconds: 120), curve: Curves.easeOut);
     _longTapTimer?.cancel();
@@ -269,8 +302,18 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
       if (!mounted || !_isInteracting || _isDragging) return;
       _longTapFired = true;
       _longTapTimer?.cancel();
-      // 长按：小胶囊缩小（抓取），随后可拖动
-      _grab.animateTo(1.0, duration: const Duration(milliseconds: 150), curve: Curves.easeOut);
+      // 长按：小胶囊缩小（抓取）；按下已立即切页，这里仅在同 tab 时才提交，
+      // 避免对已切换的目标重复提交造成二次回弹
+      final int target = _indexAt(_downLocal.dx);
+      _dragHover = target;
+      _grab.animateTo(
+        1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+      );
+      if (target != widget.tabController.animation!.value.round()) {
+        _commit(target);
+      }
     });
   }
 
@@ -299,8 +342,14 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
         _commit(_dragHover);
       }
     } else if (!_isDragging) {
-      // 点击
-      _commit(_indexAt(e.localPosition.dx));
+      // 点击：若按下已平滑切页（_downSwitched），快速点击松手补一段二段回弹；
+      // 长按时 _longTapFired 走上面分支不补 → 长按无回弹
+      final int target = _indexAt(e.localPosition.dx);
+      if (_downSwitched) {
+        _bounceOnly(target);
+      } else {
+        _commit(target);
+      }
     } else {
       // 拖拽松手
       _commit(_dragHover);
@@ -322,28 +371,27 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
     setState(() {});
   }
 
-  /// 滑块过冲偏移（tab 宽度单位）
+  /// 滑块过冲偏移（tab 宽度单位）：两段式回弹的"过墙"段，幅度随位移反馈
   double _offsetP() {
-    if (!_lastIsBoundary) return 0.0; // 中间：spring 直接在 base 上过冲
     final double t = _rebound.value;
     final double p = t < 0.48 ? (t / 0.48) : (1 - (t - 0.48) / 0.52);
-    return _boundaryDir * _boundaryOvershoot * p;
+    return _boundaryDir * _boundaryOvershoot * _lastAmp * p;
   }
 
   double _scaleX() {
-    if (!_lastIsBoundary) return 1.0;
     final double t = _rebound.value;
+    final double target = 1.0 - 0.22 * _lastAmp; // 挤压深度随幅度
     return t < 0.48
-        ? lerpDouble(1.0, 0.78, t / 0.48)!
-        : lerpDouble(0.78, 1.0, (t - 0.48) / 0.52)!;
+        ? lerpDouble(1.0, target, t / 0.48)!
+        : lerpDouble(target, 1.0, (t - 0.48) / 0.52)!;
   }
 
   double _scaleY() {
-    if (!_lastIsBoundary) return 1.0;
     final double t = _rebound.value;
+    final double target = 1.0 + 0.05 * _lastAmp; // 拉伸深度随幅度
     return t < 0.48
-        ? lerpDouble(1.0, 1.05, t / 0.48)!
-        : lerpDouble(1.05, 1.0, (t - 0.48) / 0.52)!;
+        ? lerpDouble(1.0, target, t / 0.48)!
+        : lerpDouble(target, 1.0, (t - 0.48) / 0.52)!;
   }
 
   @override

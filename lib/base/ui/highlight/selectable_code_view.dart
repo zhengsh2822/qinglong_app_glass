@@ -23,16 +23,16 @@ import 'package:qinglong_app/base/ui/highlight/themes/github.dart';
 /// 3. **块级缓存**：已解析的块缓存在内存，滚动回上方时无需重新解析。
 ///    外层 [RepaintBoundary] 隔离选择手柄拖动产生的重绘。
 ///
-/// 选择能力：每块使用独立的 [SelectableText.rich]，支持块内选择。
-/// 跨块选择不支持（牺牲少量体验换取 10000 行脚本的流畅滚动）。
+/// 选择能力：外层用 [SelectionArea] 统一管理，所有分块共享一个选择会话，
+/// 长按可跨块按字符自由框选复制；底层仍保留分块懒加载，超长脚本（10000+ 行）流畅滚动。
 class SelectableCodeView extends ConsumerStatefulWidget {
   const SelectableCodeView({
-    Key? key,
+    super.key,
     required this.source,
     required this.language,
     this.padding = const EdgeInsets.all(12),
     this.chunkSize = 100,
-  }) : super(key: key);
+  });
 
   /// 代码原文
   final String source;
@@ -208,49 +208,83 @@ class _SelectableCodeViewState extends ConsumerState<SelectableCodeView> {
     ref.watch(themeProvider);
     _initTheme();
 
-    return ColoredBox(
-      color: _cachedBgColor ?? Colors.transparent,
-      child: ListView.builder(
-        itemCount: _chunks.length,
-        padding: EdgeInsets.zero,
-        addAutomaticKeepAlives: false,
-        addRepaintBoundaries: false, // 已在 itemBuilder 中手动加 RepaintBoundary
-        itemBuilder: (context, index) {
-          // 预解析前后块，实现「滚动时不闪烁」
-          for (final i in [index - 1, index + 1, index + 2]) {
-            if (i >= 0 && i < _chunks.length && !_spanCache.containsKey(i)) {
-              _parseChunkAsync(i);
+    // SelectionArea：让所有分块共享一个选择会话，长按可跨块按字符自由框选复制；
+    // 底层仍保留分块懒加载（ListView.builder），超长脚本性能不受影响。
+    return SelectionArea(
+      contextMenuBuilder: _buildContextMenu,
+      child: ColoredBox(
+        color: _cachedBgColor ?? Colors.transparent,
+        child: ListView.builder(
+          itemCount: _chunks.length,
+          padding: EdgeInsets.zero,
+          addAutomaticKeepAlives: false,
+          addRepaintBoundaries: false, // 已在 itemBuilder 中手动加 RepaintBoundary
+          itemBuilder: (context, index) {
+            // 预解析前后块，实现「滚动时不闪烁」
+            for (final i in [index - 1, index + 1, index + 2]) {
+              if (i >= 0 &&
+                  i < _chunks.length &&
+                  !_spanCache.containsKey(i)) {
+                _parseChunkAsync(i);
+              }
             }
-          }
 
-          final span = _spanCache[index];
-          final isFirst = index == 0;
-          final isLast = index == _chunks.length - 1;
+            final span = _spanCache[index];
+            final isFirst = index == 0;
+            final isLast = index == _chunks.length - 1;
 
-          return RepaintBoundary(
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.only(
-                left: widget.padding.horizontal / 2,
-                right: widget.padding.horizontal / 2,
-                top: isFirst ? widget.padding.vertical / 2 : 0,
-                bottom: isLast ? widget.padding.vertical / 2 : 0,
+            return RepaintBoundary(
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.only(
+                  left: widget.padding.horizontal / 2,
+                  right: widget.padding.horizontal / 2,
+                  top: isFirst ? widget.padding.vertical / 2 : 0,
+                  bottom: isLast ? widget.padding.vertical / 2 : 0,
+                ),
+                child: span == null
+                    ? _PlaceholderText(
+                        source: _chunks[index],
+                        baseStyle: _baseStyle!,
+                      )
+                    : SelectableText.rich(
+                        span,
+                        selectionControls: cupertinoTextSelectionControls,
+                        selectionWidthStyle: BoxWidthStyle.max,
+                        selectionHeightStyle: BoxHeightStyle.max,
+                      ),
               ),
-              child: span == null
-                  ? _PlaceholderText(
-                      source: _chunks[index],
-                      baseStyle: _baseStyle!,
-                    )
-                  : SelectableText.rich(
-                      span,
-                      selectionControls: cupertinoTextSelectionControls,
-                      selectionWidthStyle: BoxWidthStyle.max,
-                      selectionHeightStyle: BoxHeightStyle.max,
-                    ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
+    );
+  }
+
+  /// 长按/框选结束后的上下文菜单（中文：复制 / 全选）
+  Widget _buildContextMenu(
+    BuildContext context,
+    SelectableRegionState selectableRegionState,
+  ) {
+    return AdaptiveTextSelectionToolbar.buttonItems(
+      anchors: selectableRegionState.contextMenuAnchors,
+      buttonItems: [
+        ContextMenuButtonItem(
+          label: '复制',
+          onPressed: () {
+            // 官方 contextMenuBuilder 示例用法；SDK 对接口方法误标 deprecated，功能正常
+            // ignore: deprecated_member_use
+            selectableRegionState.copySelection(SelectionChangedCause.toolbar);
+            selectableRegionState.hideToolbar();
+          },
+        ),
+        ContextMenuButtonItem(
+          label: '全选',
+          onPressed: () {
+            selectableRegionState.selectAll(SelectionChangedCause.toolbar);
+          },
+        ),
+      ],
     );
   }
 }

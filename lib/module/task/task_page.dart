@@ -1280,18 +1280,22 @@ class TaskItemCell extends StatelessWidget {
         ? CyberColors.cyan
         : ref.watch(themeProvider).primaryColor;
 
+    // 二次字体：运行时间 / 命令路径 跟随自定义"次字体颜色"（未设置时回退默认次色）
+    final Color secondaryText =
+        ref.watch(themeProvider).customSecondaryTextColor;
     // 禁用卡片：整体灰显
     final Color nameColor = isDisabled
         ? (dark ? const Color(0xFF5A5A6E) : const Color(0xFFB0B0B8))
         : (dark ? CyberColors.titleWhite : const Color(0xFF1A1A1A));
-    final Color timeColor =
-        dark ? const Color(0xFF4A4A5E) : const Color(0xFF9A9AA0);
+    final Color timeColor = isDisabled
+        ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFF9A9AA0))
+        : secondaryText;
     final Color cronColor = isDisabled
         ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFB0B0B8))
         : accent.withValues(alpha: 0.9);
     final Color commandColor = isDisabled
         ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFC4C4CC))
-        : (dark ? const Color(0xFF8888AA) : const Color(0xFF8A8A8E));
+        : secondaryText;
 
     final String timeText =
         (bean.lastExecutionTime == null || bean.lastExecutionTime == 0)
