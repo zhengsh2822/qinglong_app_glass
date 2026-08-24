@@ -218,7 +218,8 @@ class ConfigCell extends ConsumerWidget {
                 color:
                 ref.watch(themeProvider).themeColor.titleColor(),
                 fontSize: 17,
-                fontWeight: isCyber ? null : FontWeight.w600,
+                // 跟随全局字重（四档 400/500/600/700），统一三个模式
+                fontWeight: FontWeight(ref.watch(textWeightProvider)),
               ),
             ),
           ),

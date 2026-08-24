@@ -53,6 +53,9 @@ class TaskPageState extends ConsumerState<TaskPage>
   @override
   bool get wantKeepAlive => true;
 
+  /// 全局字重（build 顶部统一 watch，供 helper/通知 builder 使用，避免非 build 上下文 watch 问题）
+  FontWeight _globalFw = FontWeight.w400;
+
   TextEditingController searchText = TextEditingController();
   Timer? _searchDebounce;
 
@@ -193,6 +196,7 @@ class TaskPageState extends ConsumerState<TaskPage>
   Widget build(BuildContext context) {
     super.build(context); // keepAlive 保活（AutomaticKeepAliveClientMixin）
     final _ = ref.watch(themeProvider);
+    _globalFw = FontWeight(ref.watch(textWeightProvider));
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     if (widget.onlyShowPullRepo) {
       return GestureDetector(
@@ -906,7 +910,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: ref.watch(themeProvider).themeColor.titleColor(),
-                        fontWeight: FontWeight.bold,
+                        fontWeight: _globalFw,
                         fontSize: 14,
                       ),
                     ),
@@ -970,6 +974,7 @@ class _ListBodyState extends ConsumerState<ListBodyWidget>
     super.build(context);
     final lowerSearch = widget.searchText.toLowerCase();
     final isCyber = ref.read(themeProvider).themeMode == modeCyber;
+    final globalFw = FontWeight(ref.watch(textWeightProvider));
     // 预过滤列表，避免为不匹配项构建 SizedBox.shrink 浪费资源
     final filteredList = lowerSearch.isEmpty
         ? widget.list
@@ -986,6 +991,7 @@ class _ListBodyState extends ConsumerState<ListBodyWidget>
           item,
           ref,
           editMode: widget.editMode,
+          fontWeight: globalFw,
           checkedCallback: (id) {
             widget.changed(id);
           },
@@ -1007,6 +1013,7 @@ class _ListBodyState extends ConsumerState<ListBodyWidget>
 class TaskItemCell extends StatelessWidget {
   final TaskBean bean;
   final WidgetRef ref;
+  final FontWeight fontWeight;
   final bool editMode;
   final bool checked;
   final ValueChanged<String> checkedCallback;
@@ -1015,6 +1022,7 @@ class TaskItemCell extends StatelessWidget {
     this.bean,
     this.ref, {
     Key? key,
+    required this.fontWeight,
     this.editMode = false,
     required this.checkedCallback,
     required this.checked,
@@ -1283,16 +1291,19 @@ class TaskItemCell extends StatelessWidget {
     // 二次字体：运行时间 / 命令路径 跟随自定义"次字体颜色"（未设置时回退默认次色）
     final Color secondaryText =
         ref.watch(themeProvider).customSecondaryTextColor;
+    // 主字体色：任务名称 跟随字体设置里的"主字体颜色"（未设置时回退默认主色）
+    final Color primaryText = ref.watch(themeProvider).customPrimaryTextColor;
     // 禁用卡片：整体灰显
     final Color nameColor = isDisabled
         ? (dark ? const Color(0xFF5A5A6E) : const Color(0xFFB0B0B8))
-        : (dark ? CyberColors.titleWhite : const Color(0xFF1A1A1A));
+        : primaryText;
     final Color timeColor = isDisabled
         ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFF9A9AA0))
         : secondaryText;
+    // 定时规则（cron 表达式）：不跟随字体颜色调节，始终保留硬编码青色
     final Color cronColor = isDisabled
         ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFB0B0B8))
-        : accent.withValues(alpha: 0.9);
+        : CyberColors.cyan.withValues(alpha: 0.9);
     final Color commandColor = isDisabled
         ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFC4C4CC))
         : secondaryText;
@@ -1374,9 +1385,10 @@ class TaskItemCell extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: dark ? CyberColors.monoFont : null,
+                                // 所有模式统一 MiSans（继承全局字体，fontFamily 不指定）
+                                fontSize: 16,
+                                // 跟随全局字重设置（四档 400/500/600/700）
+                                fontWeight: fontWeight,
                                 color: nameColor,
                               ),
                             ),
@@ -1550,7 +1562,7 @@ class TaskItemCell extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: fontWeight,
                 color: c,
               ),
             ),

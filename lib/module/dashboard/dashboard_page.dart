@@ -24,6 +24,8 @@ class DashboardPage extends ConsumerStatefulWidget {
 }
 
 class DashboardPageState extends ConsumerState<DashboardPage> {
+  /// 全局字重（build 顶部统一 watch，供 helper 方法使用）
+  FontWeight _globalFw = FontWeight.w400;
   bool _loading = true;
   String? _errorMsg;
 
@@ -172,6 +174,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final _ = ref.watch(themeProvider);
+    _globalFw = FontWeight(ref.watch(textWeightProvider));
     final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
 
     Widget body =
@@ -331,7 +334,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                   _version,
                   style: TextStyle(
                     fontSize: isCyber ? 20 : 17,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: _globalFw,
                     color:
                         ref.watch(themeProvider).themeColor.titleColor(),
                   ),
@@ -909,7 +912,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                 fontSize: isCyber ? 11 : 12,
                 color:
                     ref.watch(themeProvider).themeColor.descColor(),
-                fontWeight: FontWeight.w500,
+                fontWeight: _globalFw,
               ),
               textAlign: i == 0 ? TextAlign.start : TextAlign.center,
               overflow: TextOverflow.ellipsis,
@@ -942,7 +945,8 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: isCyber ? 12 : 13,
-                fontWeight: highlight && i == 0 ? FontWeight.w600 : null,
+                // 高亮行靠颜色区分，字重统一跟随全局设置
+                fontWeight: _globalFw,
                 color: textColor,
               ),
               textAlign: i == 0 ? TextAlign.start : TextAlign.center,
@@ -970,7 +974,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
           value,
           style: TextStyle(
             fontSize: isCyber ? 18 : 17,
-            fontWeight: FontWeight.w600,
+            fontWeight: _globalFw,
             color: isCyber ? color : AppleColors.textPrimary,
           ),
         ),
@@ -1075,7 +1079,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                 title,
                 style: TextStyle(
                   fontSize: isCyber ? 15 : 17,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: _globalFw,
                   color:
                       ref.watch(themeProvider).themeColor.titleColor(),
                 ),

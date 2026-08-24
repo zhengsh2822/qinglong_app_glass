@@ -29,6 +29,8 @@ class JdckPage extends ConsumerStatefulWidget {
 }
 
 class _JdckPageState extends ConsumerState<JdckPage> {
+  /// 全局字重（build 顶部统一 watch，供 helper 方法使用）
+  FontWeight _globalFw = FontWeight.w400;
   static const String _jdUrl = 'https://home.m.jd.com/myJd/home.action';
   static const MethodChannel _cookieChannel = MethodChannel(
     'com.qlapp.qinglong_app/cookies',
@@ -806,7 +808,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                             '青龙面板登录',
                             style: TextStyle(
                               fontSize: 19,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: _globalFw,
                               color: textColor,
                               letterSpacing: 0.3,
                             ),
@@ -992,7 +994,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
         labelStyle: TextStyle(
           color: labelColor,
           fontSize: 14,
-          fontWeight: FontWeight.w500,
+          fontWeight: _globalFw,
         ),
         hintStyle: TextStyle(color: hintColor, fontSize: 15),
         enabledBorder: OutlineInputBorder(
@@ -1040,7 +1042,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                         '添加账号',
                         style: TextStyle(
                           fontSize: 20,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: _globalFw,
                           color: textColor,
                           letterSpacing: 0.5,
                           height: 1.2,
@@ -1156,7 +1158,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                         '编辑账号',
                         style: TextStyle(
                           fontSize: 20,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: _globalFw,
                           color: textColor,
                           letterSpacing: 0.5,
                           height: 1.2,
@@ -1268,7 +1270,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                   '确认删除',
                   style: TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: _globalFw,
                     color: textColor,
                     letterSpacing: 0.5,
                     height: 1.2,
@@ -1356,7 +1358,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                   '数据管理',
                   style: TextStyle(
                     fontSize: 19,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: _globalFw,
                     color: textColor,
                     letterSpacing: 0.3,
                   ),
@@ -1426,7 +1428,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                     title,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: _globalFw,
                       color: textColor,
                     ),
                   ),
@@ -1478,7 +1480,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                 '恢复数据',
                 style: TextStyle(
                   fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: _globalFw,
                   color: textColor,
                 ),
               ),
@@ -1629,6 +1631,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
   @override
   Widget build(BuildContext context) {
     final _ = ref.watch(themeProvider);
+    _globalFw = FontWeight(ref.watch(textWeightProvider));
     final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
     final Color primaryColor = ref.watch(themeProvider).primaryColor;
 
@@ -1656,7 +1659,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
         titleTextStyle: TextStyle(
           color: isCyber ? Colors.white : AppleColors.textPrimary,
           fontSize: 17,
-          fontWeight: FontWeight.w600,
+          fontWeight: _globalFw,
         ),
         iconTheme: IconThemeData(
           color: primaryColor,
@@ -1956,7 +1959,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
               '去登录',
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontWeight: _globalFw,
                 color: primaryColor,
               ),
             ),

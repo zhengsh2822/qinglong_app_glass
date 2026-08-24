@@ -70,8 +70,8 @@
 
 ### 依赖升级
 
-- Dart SDK：`>=2.18.0` → `^3.7.2`
-- `dio`：`4.0.6` → `5.7.0`
+- Dart SDK：`>=2.18.0` → `3.12.2`（随 Flutter 3.44.4）
+- `dio`：`4.0.6` → `5.10.0`
 - `flutter_slidable`：`2.0.0` → `3.1.2`
 - `flutter_riverpod`：`2.1.1` → `2.6.1`
 - `local_auth`：`2.1.2` → `2.3.0`
@@ -79,6 +79,7 @@
 - `logger`：`1.1.0` → `2.7.0`
 - `cupertino_icons`：`1.0.5` → `1.0.8`
 - `flutter_displaymode`：`0.4.1` → `0.7.0`
+- 新增 `liquid_glass_easy`（本地依赖 `demos/liquid_glass_easy`）：液态玻璃双管道（底部导航 + 顶部 tab）
 
 ## 构建打包
 

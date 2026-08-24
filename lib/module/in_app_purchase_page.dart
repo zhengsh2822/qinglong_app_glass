@@ -14,8 +14,12 @@ class InAppPurchasePage extends ConsumerStatefulWidget {
 }
 
 class _InAppPurchasePageState extends ConsumerState<InAppPurchasePage> {
+  /// 全局字重（build 顶部统一 watch，供 helper 方法使用）
+  FontWeight _globalFw = FontWeight.w400;
+
   @override
   Widget build(BuildContext context) {
+    _globalFw = FontWeight(ref.watch(textWeightProvider));
     return Scaffold(
       appBar: QlAppBar(title: "APP功能介绍", canBack: true),
       body: SingleChildScrollView(
@@ -113,7 +117,7 @@ class _InAppPurchasePageState extends ConsumerState<InAppPurchasePage> {
           style: TextStyle(
             color: ref.watch(themeProvider).themeColor.titleColor(),
             fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontWeight: _globalFw,
           ),
         ),
         const SizedBox(height: 10),
