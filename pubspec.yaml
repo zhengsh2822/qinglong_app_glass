@@ -45,6 +45,9 @@ dependencies:
   loading_animation_widget: any
   get: any
   timezone: any
+  # 液态玻璃双管道（底部导航 + 顶部 tab），对齐 demos/liquid_glass_easy
+  liquid_glass_easy:
+    path: demos/liquid_glass_easy
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +70,8 @@ flutter:
           weight: 500
         - asset: assets/fonts/MiSans-Demibold.ttf
           weight: 600
+        - asset: assets/fonts/MiSans-Bold.ttf
+          weight: 700
 
 flutter_native_splash:
   color: "#ffffff"

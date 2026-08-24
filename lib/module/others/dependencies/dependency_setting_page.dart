@@ -34,6 +34,8 @@ class DependencySettingPage extends ConsumerStatefulWidget {
 }
 
 class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
+  /// 全局字重（build 顶部统一 watch，供 helper 方法使用）
+  FontWeight _globalFw = FontWeight.w400;
   final _proxyController = TextEditingController();
   final _nodeController = TextEditingController();
   final _pythonController = TextEditingController();
@@ -257,6 +259,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
   @override
   Widget build(BuildContext context) {
     final _ = ref.watch(themeProvider);
+    _globalFw = FontWeight(ref.watch(textWeightProvider));
 
     // 根据主题模式动态选择颜色
     final Color titleColor = ref.read(themeProvider).themeColor.titleColor();
@@ -398,7 +401,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
             title,
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: _globalFw,
               color: titleColor,
             ),
           ),
@@ -436,7 +439,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
             '保存',
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: _globalFw,
               color: accentColor,
             ),
           ),

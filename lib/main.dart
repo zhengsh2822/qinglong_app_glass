@@ -22,6 +22,7 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/module/home/home_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:local_auth_android/local_auth_android.dart';
+import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 
 final getIt = GetIt.instance;
 var navigatorState = GlobalKey<NavigatorState>();
@@ -30,6 +31,14 @@ var logger = Logger();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 预编译液态玻璃 shader：首页底部导航 / 顶部 tab 的 LiquidGlassLens 首次
+  // 渲染即走完整 shader 路径，避免首帧走 frosted fallback（无折射、无外圈
+  // 高光 —— "顶部 tab 外圈高光丢失"的根源之一）。
+  try {
+    await LiquidGlassShaders.ensureLoaded();
+  } catch (e) {
+    // shader 不可用（异常构建/测试环境）：LiquidGlassLens 自动降级 fallback
+  }
   await SpUtil.getInstance();
   getIt.registerSingleton<MultiAccountUserInfoViewModel>(
     MultiAccountUserInfoViewModel(),
@@ -115,9 +124,11 @@ class QlApp extends ConsumerStatefulWidget {
 
 class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
   double textScaleFactor = 1;
+  FontWeight textFontWeight = FontWeight.w400;
   @override
   void initState() {
     textScaleFactor = SpUtil.getDouble(spTextScaleFactor, defValue: 1.0);
+    textFontWeight = _readFontWeight();
     super.initState();
     if (Platform.isAndroid) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -165,10 +176,69 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
   }
 
   void updateTextScaleFactor(double target) {
+    debugPrint('[字体排查] updateTextScaleFactor called, target=$target, current=$textScaleFactor');
     if (textScaleFactor == target) return;
     textScaleFactor = target;
     SpUtil.putDouble(spTextScaleFactor, textScaleFactor);
+    debugPrint('[字体排查] saved spTextScaleFactor=$textScaleFactor, calling setState');
     setState(() {});
+  }
+
+  /// 读取全局字体粗细（SP 存 400/500/600/700，默认 w400）
+  FontWeight _readFontWeight() {
+    final int w = SpUtil.getInt(spTextFontWeight, defValue: 400);
+    return switch (w) {
+      500 => FontWeight.w500,
+      600 => FontWeight.w600,
+      700 => FontWeight.w700,
+      _ => FontWeight.w400,
+    };
+  }
+
+  /// 更新全局字体粗细（保存到 SP 并重建）
+  void updateTextFontWeight(int weight) {
+    if (textFontWeight.value == weight) return;
+    textFontWeight = FontWeight(weight);
+    SpUtil.putInt(spTextFontWeight, textFontWeight.value);
+    ref.read(textWeightProvider.notifier).state = weight;
+    setState(() {});
+  }
+
+  /// 把全局字重应用到 textTheme / AppBar 标题 / TabBar 标签（全局单一基准，四档全跟随）
+  ThemeData _withGlobalFontWeight(ThemeData theme, FontWeight fw) {
+    final tt = theme.textTheme;
+    TextTheme weighted(TextTheme s) => TextTheme(
+      displayLarge: s.displayLarge?.copyWith(fontWeight: fw),
+      displayMedium: s.displayMedium?.copyWith(fontWeight: fw),
+      displaySmall: s.displaySmall?.copyWith(fontWeight: fw),
+      headlineLarge: s.headlineLarge?.copyWith(fontWeight: fw),
+      headlineMedium: s.headlineMedium?.copyWith(fontWeight: fw),
+      headlineSmall: s.headlineSmall?.copyWith(fontWeight: fw),
+      titleLarge: s.titleLarge?.copyWith(fontWeight: fw),
+      titleMedium: s.titleMedium?.copyWith(fontWeight: fw),
+      titleSmall: s.titleSmall?.copyWith(fontWeight: fw),
+      bodyLarge: s.bodyLarge?.copyWith(fontWeight: fw),
+      bodyMedium: s.bodyMedium?.copyWith(fontWeight: fw),
+      bodySmall: s.bodySmall?.copyWith(fontWeight: fw),
+      labelLarge: s.labelLarge?.copyWith(fontWeight: fw),
+      labelMedium: s.labelMedium?.copyWith(fontWeight: fw),
+      labelSmall: s.labelSmall?.copyWith(fontWeight: fw),
+    );
+    return theme.copyWith(
+      textTheme: weighted(tt),
+      appBarTheme: theme.appBarTheme.copyWith(
+        titleTextStyle:
+            theme.appBarTheme.titleTextStyle?.copyWith(fontWeight: fw),
+        toolbarTextStyle:
+            theme.appBarTheme.toolbarTextStyle?.copyWith(fontWeight: fw),
+      ),
+      tabBarTheme: theme.tabBarTheme.copyWith(
+        labelStyle: theme.tabBarTheme.labelStyle?.copyWith(fontWeight: fw),
+        unselectedLabelStyle: theme.tabBarTheme.unselectedLabelStyle?.copyWith(
+          fontWeight: fw,
+        ),
+      ),
+    );
   }
 
   @override
@@ -180,7 +250,8 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ref.watch<ThemeViewModel>(themeProvider).currentTheme;
+    final baseTheme = ref.watch<ThemeViewModel>(themeProvider).currentTheme;
+    final theme = _withGlobalFontWeight(baseTheme, textFontWeight);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: "青龙客户端",
@@ -197,6 +268,7 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
             color: Colors.white,
           );
           final mediaQuery = MediaQuery.of(context);
+          debugPrint('[字体排查] build MediaQuery textScaler, textScaleFactor=$textScaleFactor');
           return MediaQuery(
             data: mediaQuery.copyWith(
               textScaler: TextScaler.linear(textScaleFactor),

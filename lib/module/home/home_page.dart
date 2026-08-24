@@ -11,8 +11,8 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/liquid_glass_nav_bar.dart';
-import 'package:qinglong_app/base/ui/blur_effect.dart';
+import 'package:liquid_glass_easy/liquid_glass_easy.dart';
+import 'package:qinglong_app/base/ui/liquid_glass_shapes.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/config/config_page.dart';
@@ -36,8 +36,6 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class HomePageState extends ConsumerState<HomePage> {
-  List<IndexBean> titles = [];
-
   // 底部 tab 页面控制器：与顶部 TabBar 同机制（PageView + animateToPage）
   // NeverScrollableScrollPhysics 禁手势，仅由底部 tab 点击驱动平滑滑动
   // 惰性初始化：initialPage 需读 provider，需等 build 有 context 后创建
@@ -45,7 +43,6 @@ class HomePageState extends ConsumerState<HomePage> {
 
   @override
   void initState() {
-    initTitles();
     super.initState();
     SingleAccountPageState.of(context)?.registerICloud();
     SingleAccountPageState.of(
@@ -267,11 +264,11 @@ class HomePageState extends ConsumerState<HomePage> {
         }
       },
     );
-    // 底部导航"我的"按钮几何（与 _buildBottomNav 的胶囊侧边距 16 +
-    // LiquidGlassNavBar.padding=4 保持一致），用于长按"我的"弹窗对齐悬浮"我的"位置
+    // 底部导航"我的"按钮几何（与官方 LiquidGlassTabBar 的胶囊侧边距 16 +
+    // itemPadding=3 保持一致），用于长按"我的"弹窗对齐悬浮"我的"位置
     final double screenW = MediaQuery.of(context).size.width;
     const double navSide = 16.0;
-    const double navInnerPad = 4.0;
+    const double navInnerPad = 3.0;
     final double navItemW = (screenW - navSide * 2 - navInnerPad * 2) / 4;
     final double meCenter = navSide + navInnerPad + 3.5 * navItemW;
     return PopScope(
@@ -314,9 +311,10 @@ class HomePageState extends ConsumerState<HomePage> {
                     ),
                   ],
                 ),
-                bottomNavigationBar: _buildBottomNavigationBar(context),
               ),
             ),
+            // 官方液态玻璃底部导航（withImpeller：双管道自包含，实时采样页面背景）
+            _buildLiquidGlassNav(context, homeIndex),
             Visibility(
               visible: showMask,
               child: GestureDetector(
@@ -356,84 +354,22 @@ class HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  /// 构建底部导航栏容器（悬浮大胶囊，无整块背景色块）
-  ///
-  /// 悬浮胶囊直接浮在页面内容之上：去掉整块色块背景与毛玻璃结构，
-  /// 大胶囊自带深色悬浮投影（由 LiquidGlassNavBar.barShadow 提供）。
-  Widget _buildBottomNavigationBar(BuildContext context) {
-    // 高度 = 悬浮胶囊(75) + 上边距(14) + 下边距(2) + 底部安全区
-    return Container(
-      height: 91.0 + MediaQuery.of(context).padding.bottom,
-      width: MediaQuery.of(context).size.width,
-      color: Colors.transparent,
-      child: _buildBottomNav(context),
-    );
-  }
-
-  /// 构建底部导航栏内容
-  Widget _buildBottomNav(BuildContext context) {
+  /// 官方液态玻璃底部导航（withImpeller 双管道：实时采样页面背景，
+  /// morph pill 滑动 + 长按拖拽抓取 + 变形，对齐 demo 效果）
+  Widget _buildLiquidGlassNav(BuildContext context, int homeIndex) {
     final isCyber = ref.watch(themeProvider).themeMode == modeCyber;
     final theme = ref.watch(themeProvider);
-    final bool blurEnabled = ref.watch(blurEffectProvider);
-    final homeIndex = ref.watch<int>(
-      SingleAccountPageState.ofHomeIndexProvider(context)(
-        getProviderName(context),
-      ),
-    );
-
-    // 液态玻璃导航条：赛博/苹果 两套视觉参数（与 demo 确认效果一致）
-    final activeColor = ref.watch(themeProvider).primaryColor;
+    final double screenW = MediaQuery.of(context).size.width;
+    final double barWidth = (screenW - 16 * 2).clamp(280.0, 560.0);
+    final activeColor = theme.primaryColor;
     final inactiveColor = isCyber
         ? CyberColors.hintGray
         : AppleColors.textSecondary;
 
-    // 大胶囊：毛玻璃开启 = 半透明玻璃色 + BackdropFilter；关闭 = 纯色
-    // 悬浮投影：胶囊自带深色投影（无需外层色块）
-    final Color barColor = isCyber
-        ? CyberColors.cardBg
-        : AppleColors.bgSecondary;
-    final List<BoxShadow> barShadow =
-        isCyber
-            ? const [
-              BoxShadow(color: Color(0x80000000), blurRadius: 24, offset: Offset(0, 10)),
-              BoxShadow(color: Color(0x40000000), blurRadius: 8, offset: Offset(0, 4)),
-            ]
-            : const [
-              BoxShadow(color: Color(0x26000000), blurRadius: 24, offset: Offset(0, 10)),
-              BoxShadow(color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 4)),
-            ];
-
-    // 悬浮布局：胶囊水平左右留 16，上 14 下 2（较之前整体下移 10px，降低悬浮高度）
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        14,
-        16,
-        2 + MediaQuery.of(context).padding.bottom,
-      ),
-      child: LiquidGlassNavBar(
-      items:
-          titles
-              .asMap()
-              .entries
-              .map((entry) {
-                // 底部导航图标与 demo 一致（Material Icons，随 active 着色）
-                const icons = [
-                  (Icons.schedule_outlined, Icons.schedule),
-                  (Icons.settings_ethernet_outlined, Icons.settings_ethernet),
-                  (Icons.description_outlined, Icons.description),
-                  (Icons.person_outline, Icons.person),
-                ];
-                final e = entry.value;
-                return LiquidNavItem(
-                  label: e.title,
-                  icon: icons[entry.key].$1,
-                  activeIcon: icons[entry.key].$2,
-                );
-              })
-              .toList(),
-      initialIndex: homeIndex,
-      onSelected: (index) async {
+    return LiquidGlassTabBar.withImpeller(
+      items: _navItems,
+      selectedIndex: homeIndex,
+      onChanged: (index) async {
         final currentIdx = ref.read<int>(
           SingleAccountPageState.ofHomeIndexProvider(context)(
             getProviderName(context),
@@ -460,75 +396,94 @@ class HomePageState extends ConsumerState<HomePage> {
               .state = index;
         }
       },
-      onLongTap: (index) async {
-        if (index == 3) {
-          HapticFeedback.mediumImpact();
-          setState(() {
-            showMask = true;
-          });
-        }
-      },
-      activeColor: activeColor,
-      inactiveColor: inactiveColor,
-      padding: 4,
-      labelSize: 11,
-      // 大胶囊：毛玻璃（跟随开关）+ 深色悬浮投影
-      barColor: barColor,
-      barGlass: blurEnabled,
-      barGlassColor: isCyber
-          ? CyberColors.cardBg.withValues(alpha: 0.7)
-          : AppleColors.bgSecondary.withValues(alpha: 0.75),
-      barShadow: barShadow,
-      barBorder: isCyber
-          ? Border.all(
-              color: CyberColors.cyan.withValues(alpha: 0.2),
-              width: 1.5,
-            )
-          : null,
-      // 小胶囊：赛博全透明滑块（保留内发光）；苹果风格保持原样（渐变+顶部高光）
-      sliderColor: isCyber
-          ? Colors.transparent
-          : const Color(0xFFE5E5E5),
-      sliderBorder: isCyber
-          ? Border.all(color: const Color(0xFF404040), width: 1)
-          : Border.all(color: Colors.white70, width: 1),
-      sliderTopGlow: isCyber ? null : Colors.white.withValues(alpha: 0.9),
-      sliderBottomGlow: isCyber ? const Color(0x22CCCCCC) : null,
+      width: barWidth,
+      height: 60,
+      itemPadding: 3,
+      // 悬浮胶囊下边距 2（safe-area inset 由 withImpeller 内部自动加）
+      margin: const EdgeInsets.only(bottom: 2),
+      style: LiquidGlassStyle(
+        shape: isCyber ? cyberShape(30) : glassShape(30),
+        appearance: isCyber
+            ? const LiquidGlassAppearance(
+                color: Color(0x8C12121A), // 赛博：半透明深色（对齐苹果半透明结构）
+                blur: LiquidGlassBlur(sigmaX: 5, sigmaY: 5),
+                shadow: LiquidGlassShadow(blur: 9, opacity: 0.2),
+              )
+            : const LiquidGlassAppearance(
+                color: Color(0x8FFFFFFF),
+                blur: LiquidGlassBlur(sigmaX: 5, sigmaY: 5),
+                // 苹果浅色背景：阴影加深，避免大胶囊与背景融为一体
+                shadow: LiquidGlassShadow(blur: 9, opacity: 0.22),
+              ),
+        refraction: const LiquidGlassRefraction(
+          distortion: 0.06,
+          distortionWidth: 26,
+        ),
       ),
+      itemStyle: LiquidGlassTabItemStyle(
+        selectedColor: activeColor,
+        unselectedColor: inactiveColor,
+        iconSize: 24,
+        labelFontSize: 10,
+        iconLabelGap: 2,
+        underGlassIconSize: 30,
+        underGlassLabelFontSize: 10,
+        selectedFontWeight: FontWeight.w700,
+        unselectedFontWeight: FontWeight.w600,
+      ),
+      pillStyle: LiquidGlassTabPillStyle(
+        mode: LiquidGlassPillMode.both,
+        rest: LiquidGlassStyle(
+          shape: isCyber ? cyberShape(28) : glassShape(28),
+          appearance: LiquidGlassAppearance(
+            // 赛博/苹果选中 pill 统一浅灰微光，深色胶囊上可见（不再深色隐没）
+            color: isCyber ? const Color(0x2EAEAEB2) : const Color(0x2EAEAEB2),
+          ),
+        ),
+      ),
+      // 长按 500ms：我的弹窗（onLongTapItem 返回 true 消费长按，不拖拽 pill）；
+      // 其他 tab 保留官方长按抓取拖拽（longPressDuration 同步为 500ms，与旧自研一致）
+      longPressDuration: const Duration(milliseconds: 500),
+      onLongTapItem: (i) {
+        if (i == 3) {
+          HapticFeedback.mediumImpact();
+          setState(() => showMask = true);
+          return true;
+        }
+        return false;
+      },
+      // 按住胶囊直接左右滑动切换（无需长按等待，对齐 demo 手感）
+      directDragSwitch: true,
     );
   }
 
-  void initTitles() {
-    titles.clear();
-    titles.add(
-      IndexBean(
-        "assets/images/icon_cron.png",
-        "assets/images/icon_cron_checked.png",
-        "定时任务",
-      ),
-    );
-    titles.add(
-      IndexBean(
-        "assets/images/icon_env.png",
-        "assets/images/icon_env_checked.png",
-        "环境变量",
-      ),
-    );
-    titles.add(
-      IndexBean(
-        "assets/images/icon_file.png",
-        "assets/images/icon_file_checked.png",
-        "配置文件",
-      ),
-    );
-    titles.add(
-      IndexBean(
-        "assets/images/icon_other.png",
-        "assets/images/icon_other_checked.png",
-        "我的",
-      ),
-    );
+  /// 底部导航项（图标与 demo 一致，随 active 着色 + 选中发光）
+  static final List<LiquidGlassTabBarItem> _navItems = _buildNavItems();
+
+  static List<LiquidGlassTabBarItem> _buildNavItems() {
+    const labels = ['定时任务', '环境变量', '配置文件', '我的'];
+    const icons = [
+      (Icons.schedule_outlined, Icons.schedule),
+      (Icons.settings_ethernet_outlined, Icons.settings_ethernet),
+      (Icons.description_outlined, Icons.description),
+      (Icons.person_outline, Icons.person),
+    ];
+    return List.generate(4, (i) {
+      final (outlined, filled) = icons[i];
+      return LiquidGlassTabBarItem(
+        label: labels[i],
+        iconBuilder: (context, g) => Icon(
+          g.selected ? filled : outlined,
+          size: g.underGlass == true ? 24 : 24,
+          color: g.color,
+          shadows: g.selected
+              ? [Shadow(color: g.color.withValues(alpha: 0.85), blurRadius: 14)]
+              : null,
+        ),
+      );
+    });
   }
+
 
   Widget _buildOtherWidget({double? meCenter}) {
     if (!showMask) return const SizedBox.shrink();
@@ -886,13 +841,4 @@ class HomePageState extends ConsumerState<HomePage> {
       twoFact(hepler);
     }
   }
-}
-
-class IndexBean {
-  String icon;
-  String checkedIcon;
-  String title;
-  String celebrate;
-
-  IndexBean(this.icon, this.checkedIcon, this.title, {this.celebrate = ""});
 }

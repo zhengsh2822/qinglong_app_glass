@@ -13,6 +13,13 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 
 var themeProvider = ChangeNotifierProvider((ref) => ThemeViewModel());
 
+/// 全局字体粗细运行时状态（400/500/600/700，四档）
+/// 持久化（spTextFontWeight）由 main.dart 统一读写，本 provider 仅承载运行时状态，
+/// 业务页面 watch 它即可让主文字字重跟随全局调节。
+final StateProvider<int> textWeightProvider = StateProvider<int>((ref) {
+  return SpUtil.getInt(spTextFontWeight, defValue: 400);
+});
+
 Color whiteColor = const Color(0xfff1f1f1);
 
 int modeLight = 0;
@@ -438,6 +445,13 @@ class ThemeViewModel extends ChangeNotifier {
         brightness: Brightness.light,
         primaryColor: _primaryColor,
         scaffoldBackgroundColor: AppleColors.bgSecondary,
+        // 全局修复：CupertinoButton 内部默认使用 CupertinoSystemText 且 inherit:false，
+        // 会覆盖子文本的 fontFamily，导致文字回退到系统字体（非 MiSans），字重映射异常（w500/w600 都渲染成 Bold）
+        // 这里显式改为 MiSans，让所有 CupertinoButton 内文字跟随全局字体与字重设置
+        textTheme: const CupertinoTextThemeData(
+          actionTextStyle: TextStyle(fontFamily: 'MiSans'),
+          actionSmallTextStyle: TextStyle(fontFamily: 'MiSans'),
+        ),
       ),
     );
   }
@@ -593,6 +607,10 @@ class ThemeViewModel extends ChangeNotifier {
         brightness: Brightness.light,
         primaryColor: _primaryColor,
         scaffoldBackgroundColor: AppleColors.bgSecondary,
+        textTheme: const CupertinoTextThemeData(
+          actionTextStyle: TextStyle(fontFamily: 'MiSans'),
+          actionSmallTextStyle: TextStyle(fontFamily: 'MiSans'),
+        ),
       ),
     );
   }
@@ -682,6 +700,10 @@ class ThemeViewModel extends ChangeNotifier {
         brightness: Brightness.dark,
         primaryColor: Color(0xffffffff),
         scaffoldBackgroundColor: Colors.black,
+        textTheme: CupertinoTextThemeData(
+          actionTextStyle: TextStyle(fontFamily: 'MiSans'),
+          actionSmallTextStyle: TextStyle(fontFamily: 'MiSans'),
+        ),
       ),
     );
   }
@@ -786,6 +808,10 @@ class ThemeViewModel extends ChangeNotifier {
         brightness: Brightness.dark,
         primaryColor: CyberColors.cyan,
         scaffoldBackgroundColor: CyberColors.bg,
+        textTheme: CupertinoTextThemeData(
+          actionTextStyle: TextStyle(fontFamily: 'MiSans'),
+          actionSmallTextStyle: TextStyle(fontFamily: 'MiSans'),
+        ),
       ),
     );
   }

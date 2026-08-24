@@ -240,7 +240,7 @@ class AppKeyItemCell extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight(ref.watch(textWeightProvider)),
                     color: ref.watch(themeProvider).themeColor.titleColor(),
                   ),
                 ),

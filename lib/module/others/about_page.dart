@@ -78,7 +78,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
                 child: Text(
                   "青龙客户端",
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight(ref.watch(textWeightProvider)),
                     color: ref.watch(themeProvider).themeColor.titleColor(),
                     fontSize: 16,
                   ),

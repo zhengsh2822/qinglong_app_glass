@@ -709,8 +709,10 @@ class EnvItemCell extends StatelessWidget {
                                             .themeColor
                                             .titleColor(),
                                     fontSize: isCyber ? 16 : 17,
-                                    fontWeight:
-                                        isCyber ? FontWeight.w500 : FontWeight.w600,
+                                    // 三个模式统一跟随全局字重（四档 400/500/600/700）
+                                    fontWeight: FontWeight(
+                                      ref.watch(textWeightProvider),
+                                    ),
                                   ),
                                   children: <TextSpan>[
                                     TextSpan(

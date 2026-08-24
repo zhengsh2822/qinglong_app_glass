@@ -33,6 +33,8 @@ class BackupPage extends ConsumerStatefulWidget {
 }
 
 class _BackupPageState extends ConsumerState<BackupPage> {
+  /// 全局字重（build 顶部统一 watch，供 helper 方法使用）
+  FontWeight _globalFw = FontWeight.w400;
   // 备份内容选项（对齐青龙官方导出数据 API 的 type 枚举，共 10 项）
   final Map<String, String> _backupOptions = {
     'base': '基础数据',
@@ -57,6 +59,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   @override
   Widget build(BuildContext context) {
     final _ = ref.watch(themeProvider);
+    _globalFw = FontWeight(ref.watch(textWeightProvider));
 
     return Stack(
       children: [
@@ -118,7 +121,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             '数据备份',
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: _globalFw,
               color: ref.read(themeProvider).themeColor.titleColor(),
             ),
           ),
@@ -177,7 +180,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   '开始备份',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: _globalFw,
                     color: ref.watch(themeProvider).primaryColor,
                   ),
                 ),
@@ -200,7 +203,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             '数据恢复',
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: _globalFw,
               color: ref.read(themeProvider).themeColor.titleColor(),
             ),
           ),
@@ -224,7 +227,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   '选择文件恢复',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: _globalFw,
                     color: ref.watch(themeProvider).primaryColor,
                   ),
                 ),
@@ -463,7 +466,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           '选择恢复来源',
                           style: TextStyle(
                             fontSize: 17,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: _globalFw,
                             color: ref
                                 .read(themeProvider)
                                 .themeColor
@@ -593,7 +596,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           isSuccess ? '备份成功' : '备份失败',
                           style: TextStyle(
                             fontSize: 17,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: _globalFw,
                             color: ref
                                 .read(themeProvider)
                                 .themeColor
@@ -648,7 +651,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                   '分享/保存到文件管理器',
                                   style: TextStyle(
                                     fontSize: 15,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: _globalFw,
                                     color: isCyber
                                         ? CyberColors.cyan
                                         : AppleColors.accent,
@@ -731,7 +734,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           '选择备份文件',
                           style: TextStyle(
                             fontSize: 17,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: _globalFw,
                             color: ref
                                 .read(themeProvider)
                                 .themeColor
@@ -797,7 +800,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
                                           fontSize: 15,
-                                          fontWeight: FontWeight.w500,
+                                          fontWeight: _globalFw,
                                           color: ref
                                               .read(themeProvider)
                                               .themeColor

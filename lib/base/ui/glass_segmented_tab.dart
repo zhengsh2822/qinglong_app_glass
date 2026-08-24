@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'dart:ui' show lerpDouble;
+import 'dart:ui' show lerpDouble, ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/blur_effect.dart';
 
 /// 顶部 Tab —— 液态玻璃风格（对齐 demos/liquid_glass_demo 顶部 tab 视觉）
 ///
@@ -46,6 +47,8 @@ class _GlassSegmentedTabState extends ConsumerState<GlassSegmentedTab> {
   Widget build(BuildContext context) {
     final isCyber = ref.watch(themeProvider).themeMode == modeCyber;
     final theme = ref.watch(themeProvider);
+    // 毛玻璃开关：开启时大胶囊用 BackdropFilter + 半透明底色（alpha 0.3）
+    final bool blurEnabled = ref.watch(blurEffectProvider);
 
     // ===== 液态玻璃视觉参数（与 demo 顶部 tab 一致） =====
     // 大胶囊背景
@@ -56,20 +59,13 @@ class _GlassSegmentedTabState extends ConsumerState<GlassSegmentedTab> {
     final Border? bgBorder = isCyber
         ? Border.all(color: CyberColors.cyan.withValues(alpha: 0.2), width: 1)
         : Border.all(color: Colors.white, width: 1);
-    // 液态滑块底色（赛博全透明 + 内发光，与底部导航同款；苹果保持渐变底）
-    final Color thumbColor = isCyber
-        ? Colors.transparent
-        : const Color(0xFFE5E5E5);
-    // 滑块边框（赛博 #404040 细边框；苹果白色高光边框）
-    final Border thumbBorder = isCyber
-        ? Border.all(color: const Color(0xFF404040), width: 1)
-        : Border.all(color: Colors.white70, width: 1);
-    // 滑块顶部高光（苹果） / 底部内发光（赛博）
-    final Color? thumbTopGlow =
-        isCyber ? null : Colors.white.withValues(alpha: 0.9);
-    final Color? thumbBottomGlow = isCyber
-        ? const Color(0x22CCCCCC)
-        : null;
+    // ===== 液态滑块视觉（对齐底部导航滑块默认状态） =====
+    // 滑块底色与底部导航 pill rest 完全一致：浅灰微光 0x2EAEAEB2（约 18% 透明）。
+    // 纯色、无描边、无投影、无高光（避免泛白与层叠效果），赛博/苹果统一，不随毛玻璃开关。
+    final Color thumbColor = const Color(0x2EAEAEB2);
+    final Border? thumbBorder = null;
+    final Color? thumbTopGlow = null;
+    final Color? thumbBottomGlow = null;
 
     // 文字色（提示色统一走 primaryColor，参与主题切换颜色过渡）
     final Color activeColor = ref.watch(themeProvider).primaryColor;
@@ -107,6 +103,7 @@ class _GlassSegmentedTabState extends ConsumerState<GlassSegmentedTab> {
                 activeColor: activeColor,
                 inactiveColor: inactiveColor,
                 isCyber: isCyber,
+                blurEnabled: blurEnabled,
               ),
             ),
           ),
@@ -122,12 +119,13 @@ class _LiquidTabBarSlider extends StatefulWidget {
   final Color bgColor;
   final Border? bgBorder;
   final Color thumbColor;
-  final Border thumbBorder;
+  final Border? thumbBorder;
   final Color? thumbTopGlow;
   final Color? thumbBottomGlow;
   final Color activeColor;
   final Color inactiveColor;
   final bool isCyber;
+  final bool blurEnabled;
 
   const _LiquidTabBarSlider({
     required this.tabs,
@@ -141,6 +139,7 @@ class _LiquidTabBarSlider extends StatefulWidget {
     required this.activeColor,
     required this.inactiveColor,
     required this.isCyber,
+    required this.blurEnabled,
   });
 
   @override
@@ -405,137 +404,130 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
     final int count = widget.tabs.length;
 
     // 统一底层 Listener 处理 点击/长按抓取/拖拽（与底部导航一致）
+    // 大胶囊：毛玻璃开启时底色 alpha 0.3 + BackdropFilter 模糊；关闭时纯色
+    final Color capsuleColor = widget.blurEnabled
+        ? widget.bgColor.withValues(alpha: 0.3)
+        : widget.bgColor;
+    final Widget capsule = Container(
+      height: 43,
+      decoration: BoxDecoration(
+        color: capsuleColor,
+        borderRadius: BorderRadius.circular(22),
+        border: widget.bgBorder,
+        boxShadow: widget.isCyber
+            ? null
+            : const [
+                BoxShadow(
+                  color: AppleColors.cardShadow,
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final double totalWidth = constraints.maxWidth;
+          final double tabWidth = totalWidth / count;
+          const double horizontalPadding = 3.0;
+          final double thumbWidth = tabWidth - horizontalPadding * 2;
+          _lastTotalW = totalWidth;
+
+          return AnimatedBuilder(
+            animation: Listenable.merge([
+              widget.tabController.animation!,
+              _rebound,
+              _grab,
+            ]),
+            builder: (context, child) {
+              final double base = widget.tabController.animation!.value;
+              // 拖拽/提交中：保留滑块在拖拽位，直到页面动画到位
+              final bool holdDrag =
+                  _dragP != null &&
+                  (_isDragging || (base - _dragP!).abs() > 0.02);
+              final double displayP = holdDrag ? _dragP! : base + _offsetP();
+              final double gs = _grabScale;
+              final double sx = holdDrag ? gs : _scaleX() * gs;
+              final double sy = holdDrag ? gs : _scaleY() * gs;
+              final double thumbLeft =
+                  horizontalPadding + displayP * tabWidth;
+
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // ---------- 液态滑块 ----------
+                  Positioned(
+                    left: thumbLeft,
+                    top: 2,
+                    bottom: 2,
+                    width: thumbWidth,
+                    child: IgnorePointer(
+                      child: Transform(
+                        alignment: Alignment.center,
+                        transform: Matrix4.identity()..scale(sx, sy),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            // 纯色浅灰微光（与底部导航 pill rest 一致），无描边/投影/高光
+                            color: widget.thumbColor,
+                            borderRadius: BorderRadius.circular(17.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // ---------- 文字 ----------
+                  Row(
+                    children: List.generate(count, (i) {
+                      // 文字跟随滑块位置变色（拖拽时随手指滑动）
+                      final double distance = (displayP - i).abs();
+                      final double t = distance.clamp(0.0, 1.0);
+                      final Color textColor = Color.lerp(
+                        widget.activeColor,
+                        widget.inactiveColor,
+                        t,
+                      )!;
+
+                      return Expanded(
+                        child: Center(
+                          child: Text(
+                            widget.tabs[i],
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: textColor,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+    );
+
+    final Widget body = widget.blurEnabled
+        ? ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: kDefaultBlurSigma,
+                sigmaY: kDefaultBlurSigma,
+              ),
+              child: capsule,
+            ),
+          )
+        : capsule;
+
     return Listener(
       onPointerDown: _onPointerDown,
       onPointerMove: _onPointerMove,
       onPointerUp: _onPointerUp,
       onPointerCancel: _onPointerCancel,
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        height: 43,
-        decoration: BoxDecoration(
-          color: widget.bgColor,
-          borderRadius: BorderRadius.circular(22),
-          border: widget.bgBorder,
-          boxShadow: widget.isCyber
-              ? null
-              : const [
-                  BoxShadow(
-                    color: AppleColors.cardShadow,
-                    blurRadius: 12,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final double totalWidth = constraints.maxWidth;
-            final double tabWidth = totalWidth / count;
-            const double horizontalPadding = 3.0;
-            final double thumbWidth = tabWidth - horizontalPadding * 2;
-            _lastTotalW = totalWidth;
-
-            return AnimatedBuilder(
-              animation: Listenable.merge([
-                widget.tabController.animation!,
-                _rebound,
-                _grab,
-              ]),
-              builder: (context, child) {
-                final double base = widget.tabController.animation!.value;
-                // 拖拽/提交中：保留滑块在拖拽位，直到页面动画到位
-                final bool holdDrag =
-                    _dragP != null &&
-                    (_isDragging || (base - _dragP!).abs() > 0.02);
-                final double displayP = holdDrag ? _dragP! : base + _offsetP();
-                final double gs = _grabScale;
-                final double sx = holdDrag ? gs : _scaleX() * gs;
-                final double sy = holdDrag ? gs : _scaleY() * gs;
-                final double thumbLeft =
-                    horizontalPadding + displayP * tabWidth;
-
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // ---------- 液态滑块 ----------
-                    Positioned(
-                      left: thumbLeft,
-                      top: 2,
-                      bottom: 2,
-                      width: thumbWidth,
-                      child: IgnorePointer(
-                        child: Transform(
-                          alignment: Alignment.center,
-                          transform: Matrix4.identity()..scale(sx, sy),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  widget.thumbColor,
-                                  widget.thumbColor.withValues(alpha: 0.35),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(17.5),
-                              border: widget.thumbBorder,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0x2E000000),
-                                  blurRadius: 5,
-                                  offset: const Offset(0, 3),
-                                ),
-                                if (widget.thumbTopGlow != null)
-                                  BoxShadow(
-                                    color: widget.thumbTopGlow!,
-                                    blurRadius: 4,
-                                    offset: const Offset(0, -1),
-                                  ),
-                                if (widget.thumbBottomGlow != null)
-                                  BoxShadow(
-                                    color: widget.thumbBottomGlow!,
-                                    blurRadius: 5,
-                                    offset: const Offset(0, 2),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // ---------- 文字 ----------
-                    Row(
-                      children: List.generate(count, (i) {
-                        // 文字跟随滑块位置变色（拖拽时随手指滑动）
-                        final double distance = (displayP - i).abs();
-                        final double t = distance.clamp(0.0, 1.0);
-                        final Color textColor = Color.lerp(
-                          widget.activeColor,
-                          widget.inactiveColor,
-                          t,
-                        )!;
-
-                        return Expanded(
-                          child: Center(
-                            child: Text(
-                              widget.tabs[i],
-                              maxLines: 1,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: textColor,
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
-        ),
-      ),
+      child: body,
     );
   }
 }

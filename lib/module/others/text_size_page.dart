@@ -25,11 +25,13 @@ class TextSizePage extends ConsumerStatefulWidget {
 class _TextSizePageState extends ConsumerState<TextSizePage>
     with TickerProviderStateMixin {
   double textScaleFactor = 1.0;
+  int fontWeight = 400;
   late TabController _tabController;
 
   @override
   void initState() {
     textScaleFactor = SpUtil.getDouble(spTextScaleFactor, defValue: 1.0);
+    fontWeight = SpUtil.getInt(spTextFontWeight, defValue: 400);
     // 默认显示当前主题模式对应的分段：赛博模式→赛博，否则→主题版
     final bool isCyberNow =
         ref.read(themeProvider).themeMode == modeCyber ||
@@ -102,9 +104,26 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
     setState(() {});
   }
 
-  void _resetColors() {
+  /// 重置字体设置：字体大小回标准 + 粗细回标准 + 主/次字体颜色恢复默认
+  void _resetFontSettings() {
+    textScaleFactor = 1;
+    fontWeight = 400;
     _savePrimaryColor(null);
     _saveSecondaryColor(null);
+    // 与颜色一致：立即持久化并全局生效，避免只重置本地未保存
+    final app = context.findAncestorStateOfType<QlAppState>();
+    app?.updateTextScaleFactor(1);
+    app?.updateTextFontWeight(400);
+  }
+
+  /// 当前粗细档位文案（四档）
+  String get _fontWeightLabel {
+    return switch (fontWeight) {
+      500 => "常规 (w500)",
+      600 => "中等 (w600)",
+      700 => "粗体 (w700)",
+      _ => "标准 (w400)",
+    };
   }
 
   void _showColorPicker(bool isPrimary) {
@@ -144,7 +163,7 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
           title: "字体设置",
           actions: [
             CupertinoButton(
-              onPressed: _resetColors,
+              onPressed: _resetFontSettings,
               padding: EdgeInsets.zero,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -162,6 +181,9 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
                 context
                     .findAncestorStateOfType<QlAppState>()
                     ?.updateTextScaleFactor(textScaleFactor);
+                context
+                    .findAncestorStateOfType<QlAppState>()
+                    ?.updateTextFontWeight(fontWeight);
                 Navigator.of(context).pop();
               },
             ),
@@ -203,6 +225,7 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 17,
+                                fontWeight: FontWeight(fontWeight),
                                 color: _previewPrimary,
                               ),
                             ),
@@ -213,6 +236,7 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 13,
+                                fontWeight: FontWeight(fontWeight),
                                 color: _previewSecondary,
                               ),
                             ),
@@ -223,6 +247,7 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 13,
+                                fontWeight: FontWeight(fontWeight),
                                 color: _previewSecondary,
                               ),
                             ),
@@ -291,6 +316,53 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
                             fontSize: 14,
                             color: theme.primaryColor,
                           ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // 卡片2.5：字体粗细调整（四档：w400/w500/w600/w700，与字体大小滑块同风格）
+              OtherPageCard(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 15,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: const [
+                        Text("细", style: TextStyle(fontSize: 14)),
+                        Text("粗", style: TextStyle(fontSize: 20)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: double.infinity,
+                      child: CupertinoSlider(
+                        key: const Key('weight_slider'),
+                        value: ((fontWeight - 400) / 100).toDouble(),
+                        max: 3,
+                        min: 0,
+                        divisions: 3,
+                        onChanged: (double value) {
+                          fontWeight = 400 + (value.round() * 100);
+                          setState(() {});
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Center(
+                      child: Text(
+                        _fontWeightLabel,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: theme.primaryColor,
                         ),
                       ),
                     ),
