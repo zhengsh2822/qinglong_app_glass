@@ -407,7 +407,7 @@ class ThemeViewModel extends ChangeNotifier {
         ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: _primaryColor),
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
         unselectedLabelStyle: const TextStyle(fontSize: 15),
         labelColor: _primaryColor,
@@ -562,7 +562,7 @@ class ThemeViewModel extends ChangeNotifier {
         ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: _primaryColor),
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
         unselectedLabelStyle: const TextStyle(fontSize: 15),
         labelColor: _primaryColor,
@@ -657,7 +657,7 @@ class ThemeViewModel extends ChangeNotifier {
           borderRadius: BorderRadius.circular(4),
         ),
       ),
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         labelStyle: TextStyle(fontSize: 14),
         unselectedLabelStyle: TextStyle(fontSize: 14),
         labelColor: Color(0xffffffff),
@@ -755,7 +755,7 @@ class ThemeViewModel extends ChangeNotifier {
           borderRadius: BorderRadius.circular(24),
         ),
       ),
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         labelStyle: TextStyle(fontSize: 14),
         unselectedLabelStyle: TextStyle(fontSize: 14),
         labelColor: CyberColors.cyan,
