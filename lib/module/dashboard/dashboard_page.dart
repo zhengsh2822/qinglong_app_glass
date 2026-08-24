@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
+import 'package:qinglong_app/base/http/api.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
@@ -49,9 +50,14 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
   }
 
+  // 记录当前在新数据返回前是否已有可展示的旧数据，避免二次进入闪烁全屏转圈
+  bool _hasData = false;
+
   Future<void> _loadData() async {
+    final bool firstLoad = !_hasData;
     setState(() {
-      _loading = true;
+      // 仅首次无数据时全屏转圈；已有数据时保留旧数据显示、后台刷新
+      _loading = firstLoad;
       _errorMsg = null;
     });
 
@@ -62,9 +68,9 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
 
     final api = SingleAccountPageState.ofApi(context);
 
+    // 主体 6 个快接口并行加载，返回后立即显示，不等待 system
     final results = await Future.wait([
       api.dashboardOverview(),
-      api.dashboardSystem(),
       api.dashboardRuntime(),
       api.dashboardTrend(days: 7),
       api.dashboardTopTime(),
@@ -73,26 +79,31 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
     ]);
 
     final overviewRes = results[0];
-    final systemRes = results[1];
-    final runtimeRes = results[2];
-    final trendRes = results[3];
-    final topTimeRes = results[4];
-    final topCountRes = results[5];
-    final labelsRes = results[6];
+    final runtimeRes = results[1];
+    final trendRes = results[2];
+    final topTimeRes = results[3];
+    final topCountRes = results[4];
+    final labelsRes = results[5];
 
     setState(() {
       _loading = false;
       _overview = _parseObject(overviewRes.bean);
-      _system = _parseObject(systemRes.bean);
       _runtime = _parseObject(runtimeRes.bean);
       _trend = _parseList(trendRes.bean);
       _topTime = _parseList(topTimeRes.bean);
       _topCount = _parseList(topCountRes.bean);
       _labels = _parseList(labelsRes.bean);
+      if (_overview != null ||
+          _runtime != null ||
+          _trend.isNotEmpty ||
+          _topTime.isNotEmpty ||
+          _topCount.isNotEmpty ||
+          _labels.isNotEmpty) {
+        _hasData = true;
+      }
 
-      // 仅当所有接口都失败时显示错误（容忍老版本部分接口不存在）
+      // 仅当所有主体接口都失败时才显示整页错误（容忍老版本部分接口不存在）
       if (!overviewRes.success &&
-          !systemRes.success &&
           !runtimeRes.success &&
           !trendRes.success &&
           !topTimeRes.success &&
@@ -104,6 +115,21 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                 : '当前版本不支持仪表盘，请将青龙更新到最新版';
       }
     });
+
+    // 含 CPU/磁盘的 system 接口独立加载，返回后原位更新资源卡片
+    await _loadSystem(api);
+  }
+
+  Future<void> _loadSystem(Api api) async {
+    try {
+      final systemRes = await api.dashboardSystem();
+      if (!mounted) return;
+      setState(() {
+        _system = _parseObject(systemRes.bean);
+      });
+    } catch (_) {
+      // 网络波动或老版本无此接口时忽略，保留 _system 旧值（或隐藏资源卡片）
+    }
   }
 
   Map<String, dynamic>? _parseObject(String? raw) {
@@ -749,6 +775,24 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
           '${heapUsed.toStringAsFixed(1)} MB / ${heapTotal.toStringAsFixed(1)} MB',
           heapTotal > 0 ? heapUsed / heapTotal : 0,
         ),
+        // 磁盘容量（青龙 dashboard/system 扩展字段，未返回时隐藏）
+        if (_system!['diskTotal'] != null) ...[
+          const SizedBox(height: 8),
+          _buildProgress(
+            isCyber,
+            '磁盘容量',
+            '${_formatBytes((_system!['diskUsed'] as num?)?.toDouble() ?? 0)} / '
+            '${_formatBytes((_system!['diskTotal'] as num?)?.toDouble() ?? 0)}',
+            (double.tryParse(
+                  (_system!['diskUsagePercent']?.toString() ?? '0').replaceAll(
+                    '%',
+                    '',
+                  ),
+                ) ??
+                0) /
+                100,
+          ),
+        ],
       ],
     );
   }
