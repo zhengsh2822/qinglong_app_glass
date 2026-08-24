@@ -9,6 +9,15 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  exclude:
+    # demos/ 下的独立演示工程（各自有独立 pubspec，互相引用官方示例
+    # package:liquid_glass_easy）。它们不在主项目 lib 内，analyze 不应
+    # 扫描它们，否则会因嵌套 example 的失效包引报出数百个无关 error。
+    - demos/**
+    - build/**
+    - docs/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
