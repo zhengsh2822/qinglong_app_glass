@@ -8,7 +8,7 @@
 
 ## 相关项目
 
-- [qinglong_app_glass_Wallpaper](https://github.com/zhengsh2822/qinglong_app_glass_Wallpaper) — 支持更换壁纸的版本
+- [qinglong_app_glass_Wallpaper](https://github.com/zhengsh2822/qinglong_app_glass_Wallpaper) — 支持更换壁纸版本
 
 
 ## App 功能介绍
