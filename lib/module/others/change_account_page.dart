@@ -199,7 +199,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
             width: double.infinity,
             cornerRadius: 12,
             iconSize: 22,
-            outerGap: 4,
+            outerGap: 5,
             innerGap: 6,
           ),
         ],

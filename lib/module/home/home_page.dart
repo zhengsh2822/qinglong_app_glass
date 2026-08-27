@@ -92,6 +92,59 @@ class HomePageState extends ConsumerState<HomePage> {
     });
   }
 
+  GlobalKey<TaskPageState> taskKey = GlobalKey();
+  GlobalKey<EnvPageState> envKey = GlobalKey();
+  GlobalKey<ConfigPageState> configKey = GlobalKey();
+  GlobalKey<OtherPageState> meKey = GlobalKey();
+
+  /// 底部导航双击回顶判定：记录上次点击的 tab 与时间
+  int _lastNavTapIndex = -1;
+  DateTime _lastNavTapAt = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// 双击同一 tab（500ms 内第二次点击当前 tab）时回到该页顶部；
+  /// 单击当前 tab 保持无动作，切换 tab 正常切页。
+  void _onNavTapRepeated(int index) {
+    final now = DateTime.now();
+    final isDoubleTap =
+        index == _lastNavTapIndex &&
+        now.difference(_lastNavTapAt) < const Duration(milliseconds: 500);
+    _lastNavTapIndex = index;
+    _lastNavTapAt = now;
+    if (!isDoubleTap) return;
+    switch (index) {
+      case 0:
+        taskKey.currentState?.move2Top();
+        break;
+      case 1:
+        envKey.currentState?.move2Top();
+        break;
+      case 2:
+        configKey.currentState?.move2Top();
+        break;
+      case 3:
+        meKey.currentState?.move2Top();
+        break;
+    }
+  }
+
+  /// 双击顶部状态栏区域：让当前激活 tab 页面回到顶部
+  void _onStatusBarDoubleTap(int homeIndex) {
+    switch (homeIndex) {
+      case 0:
+        taskKey.currentState?.move2Top();
+        break;
+      case 1:
+        envKey.currentState?.move2Top();
+        break;
+      case 2:
+        configKey.currentState?.move2Top();
+        break;
+      case 3:
+        meKey.currentState?.move2Top();
+        break;
+    }
+  }
+
   void getSystemBean(BuildContext context) async {
     var bean = await SingleAccountPageState.ofApi(context).system();
 
@@ -236,10 +289,6 @@ class HomePageState extends ConsumerState<HomePage> {
 
   bool showMask = false;
 
-  GlobalKey<TaskPageState> taskKey = GlobalKey();
-  GlobalKey<EnvPageState> envKey = GlobalKey();
-  GlobalKey<OtherPageState> meKey = GlobalKey();
-
   @override
   Widget build(BuildContext context) {
     final int homeIndex = ref.watch<int>(
@@ -303,7 +352,7 @@ class HomePageState extends ConsumerState<HomePage> {
                     ),
                     TickerMode(
                       enabled: homeIndex == 2,
-                      child: const ConfigPage(),
+                      child: ConfigPage(key: configKey),
                     ),
                     TickerMode(
                       enabled: homeIndex == 3,
@@ -348,6 +397,21 @@ class HomePageState extends ConsumerState<HomePage> {
                 ),
               ),
             ),
+            // 安卓双击状态栏区域回到顶部：
+            // 沉浸式 edgeToEdge 下内容延伸到状态栏后方，此处放状态栏高度的
+            // 透明双击层，双击即让当前激活 tab 页面回到顶部（仅拦截双击，
+            // 高程位于最上层；单击不响应，不影响 AppBar 内按钮）。
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: MediaQuery.of(context).padding.top,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onDoubleTap: () => _onStatusBarDoubleTap(homeIndex),
+                child: const SizedBox(width: double.infinity),
+              ),
+            ),
           ],
         ),
       ),
@@ -376,15 +440,13 @@ class HomePageState extends ConsumerState<HomePage> {
           ),
         );
         if (currentIdx == index) {
-          if (index == 0) {
-            await taskKey.currentState?.move2Top();
-          } else if (index == 1) {
-            await envKey.currentState?.move2Top();
-          } else if (index == 3) {
-            await meKey.currentState?.move2Top();
-          }
+          // 点击当前 tab：双击判定（500ms 内第二次点击 → 回顶）
+          _onNavTapRepeated(index);
           return;
         } else {
+          // 切换 tab：重置双击记录，双击语义只针对"连续两次点击当前 tab"
+          _lastNavTapIndex = -1;
+          _lastNavTapAt = DateTime.fromMillisecondsSinceEpoch(0);
           // 切换 tab 时关闭所有打开的 Slidable 卡片
           SlidableCloseNotifier.notify();
           ref
@@ -441,9 +503,9 @@ class HomePageState extends ConsumerState<HomePage> {
           ),
         ),
       ),
-      // 长按 500ms：我的弹窗（onLongTapItem 返回 true 消费长按，不拖拽 pill）；
-      // 其他 tab 保留官方长按抓取拖拽（longPressDuration 同步为 500ms，与旧自研一致）
-      longPressDuration: const Duration(milliseconds: 500),
+      // 长按 100ms：官方 demo 默认时长；"我的"弹窗（onLongTapItem 返回 true 消费长按，不拖拽 pill）
+      // 其余 tab 保留官方长按抓取拖拽（100ms 下抓取更跟手；"我的"弹窗可能更易误触，必要时上调）
+      longPressDuration: const Duration(milliseconds: 100),
       onLongTapItem: (i) {
         if (i == 3) {
           HapticFeedback.mediumImpact();

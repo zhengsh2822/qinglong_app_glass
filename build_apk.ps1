@@ -1,4 +1,4 @@
-param(
+﻿param(
     [switch]$DebugMode,
     [switch]$NoCopy,
     [switch]$NoInstall
@@ -23,6 +23,22 @@ if ($pubspecContent -match 'version:\s*(\d+\.\d+\.\d+)\+(\d+)') {
 }
 Write-Host "version: $versionName" -ForegroundColor Yellow
 
+# 计算构建序号：扫描 apk_output 已有同版本 release 包，取最大序号+1（无则从 1 开始）
+$apkOutputDir = Join-Path $projectRoot "apk_output"
+$buildNo = 1
+if (Test-Path $apkOutputDir) {
+    $existing = @(Get-ChildItem -Path $apkOutputDir -Filter "qinglong_app_glass_v${versionName}_release_*.apk" -File -ErrorAction SilentlyContinue)
+    foreach ($f in $existing) {
+        if ($f.BaseName -match '_(\d+)$') {
+            $n = [int]$Matches[1]
+            if ($n -ge $buildNo) { $buildNo = $n + 1 }
+        }
+    }
+}
+# 本地构建时间戳（epoch 毫秒，供新版检测"本地包比 GitHub 新时不提示"）
+$buildMs = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+Write-Host "build no: $buildNo" -ForegroundColor Yellow
+
 # 2. build args
 $buildArgs = @("build", "apk")
 if ($DebugMode) {
@@ -32,6 +48,13 @@ if ($DebugMode) {
 } else {
     $buildArgs += "--release"
     $buildArgs += "--no-shrink"
+    # 仅安卓64位 + 图标不裁剪（防 tree-shake 导致动态图标变竖条）
+    $buildArgs += "--target-platform"
+    $buildArgs += "android-arm64"
+    $buildArgs += "--no-tree-shake-icons"
+    # 注入本地构建时间与安装包序号（新版检测用）
+    $buildArgs += "--dart-define=LOCAL_BUILD_TIME=$buildMs"
+    $buildArgs += "--dart-define=LOCAL_BUILD_NO=$buildNo"
     $mode = "release"
     $filePattern = "*release*.apk"
 }
@@ -65,18 +88,21 @@ Write-Host "  file: $($apkFile.Name)" -ForegroundColor Gray
 Write-Host "  size: $sizeMB MB" -ForegroundColor Gray
 Write-Host "  time: $($apkFile.LastWriteTime)" -ForegroundColor Gray
 
-# 4. copy to desktop
+# 4. copy to apk_output (NOT to desktop - user rule: 严禁动桌面文件)
 if ($NoCopy) {
     Write-Host ""
     Write-Host "[3/4] skip copy (-NoCopy)" -ForegroundColor DarkGray
 } else {
-    $desktopPath = [Environment]::GetFolderPath("Desktop")
+    if (-not (Test-Path $apkOutputDir)) {
+        New-Item -ItemType Directory -Path $apkOutputDir -Force | Out-Null
+    }
     $suffix = if ($DebugMode) { "debug" } else { "release" }
-    $destName = "qinglong_app_v${versionName}_${suffix}.apk"
-    $destPath = Join-Path $desktopPath $destName
+    # 文件名规则：项目目录名 + _v + 版本号 + _release + _序号.apk（序号递增便于新版检测）
+    $destName = "qinglong_app_glass_v${versionName}_${suffix}_${buildNo}.apk"
+    $destPath = Join-Path $apkOutputDir $destName
     Copy-Item $apkFile.FullName -Destination $destPath -Force
     Write-Host ""
-    Write-Host "[3/4] copied to desktop" -ForegroundColor Green
+    Write-Host "[3/4] copied to apk_output" -ForegroundColor Green
     Write-Host "  file: $destName" -ForegroundColor Gray
     Write-Host "  path: $destPath" -ForegroundColor Gray
 }

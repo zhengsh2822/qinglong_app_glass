@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -98,39 +99,60 @@ class _AboutPageState extends ConsumerState<AboutPage>
               OtherPageCard(
                 child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        left: 15,
-                        right: 15,
-                        top: 10,
-                        bottom: 10,
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            "版本",
-                            style: TextStyle(
-                              color:
-                                  ref
-                                      .watch(themeProvider)
-                                      .themeColor
-                                      .titleColor(),
-                              fontSize: 16,
-                            ),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(18),
+                          topRight: Radius.circular(18),
+                        ),
+                        onTap: _checkGithubUpdate,
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            left: 15,
+                            right: 15,
+                            top: 10,
+                            bottom: 10,
                           ),
-                          const Spacer(),
-                          Text(
-                            "$desc ($versionCode)",
-                            style: TextStyle(
-                              color:
-                                  ref
-                                      .watch(themeProvider)
-                                      .themeColor
-                                      .descColor(),
-                              fontSize: 16,
-                            ),
+                          child: Row(
+                            children: [
+                              Text(
+                                "版本",
+                                style: TextStyle(
+                                  color:
+                                      ref
+                                          .watch(themeProvider)
+                                          .themeColor
+                                          .titleColor(),
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                "$desc ($versionCode)",
+                                style: TextStyle(
+                                  color:
+                                      ref
+                                          .watch(themeProvider)
+                                          .themeColor
+                                          .descColor(),
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              // 小刷新图标提示：点击检测 GitHub 新版安装包
+                              Icon(
+                                CupertinoIcons.refresh,
+                                size: 14,
+                                color:
+                                    ref
+                                        .watch(themeProvider)
+                                        .themeColor
+                                        .descColor(),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                     const Divider(indent: 15, height: 1),
@@ -197,16 +219,16 @@ class _AboutPageState extends ConsumerState<AboutPage>
                 ),
                 child: Text(
                   "基于 ayoulx/qinglong-app 二次开发：\n"
-                  "· 三种主题模式（赛博 / Apple / 白色，黑色已并入赛博），切换含全局颜色过渡动画\n"
-                  "· 胶囊高光内发光卡片设计系统（任务 / 应用管理 / 京东助手等页面统一）\n"
+                  "· 三种主题模式（赛博 / Apple / 白色），切换含全局颜色过渡动画\n"
+                  "· 底部液态玻璃导航栏 + 顶部大胶囊 Tab\n"
+                  "· 胶囊高光卡片设计，统一 18px 圆角与毛玻璃视觉（可开关纯色模式）\n"
                   "· 多账号 HTTP 缓存隔离，防止跨账号数据泄漏\n"
-                  "· 仪表盘对齐 Web 端（7 日趋势自绘折线图 / Top5 耗时与执行次数 / 标签统计 / 实时运行态含 PID / 系统资源）\n"
-                  "· 脚本搜索能力补全（列表常驻过滤 + 查看/编辑页弹出式搜索，支持正则与上下导航）\n"
-                  "· 悬浮式沉浸搜索框与顶部 Tab 大胶囊设计\n"
-                  "· 切换底部 Tab 自动收起展开的滑动卡片\n"
+                  "· 仪表盘对齐 Web 端（7 日趋势 / Top5 统计 / 实时运行态 / 系统资源）\n"
+                  "· 全局字号 + 字重调节（400~700 四档）\n"
                   "· 日志/详情页长按复制启用 iOS 风格文本选择放大镜\n"
-                  "· 京东助手独立模块（独立登录 + Cookie 校验 + 弹窗样式统一，基于 yclown/ql_jd_cookie 二次开发）\n"
-                  "· 统一滑动操作与卡片设计规范（搜索框胶囊 24 / 卡片圆角 18）\n",
+                  "· 京东助手独立模块（独立登录 + Cookie 校验）\n"
+                  "· 安卓小白条 + 状态栏沉浸适配（兼容澎湃 OS）\n"
+                  "· Flutter 3.44.4 全面升级\n",
                   style: TextStyle(
                     color: ref.watch(themeProvider).themeColor.titleColor(),
                     fontSize: 13,
@@ -443,6 +465,162 @@ class _AboutPageState extends ConsumerState<AboutPage>
 
   @override
   void onLazyLoad() {}
+
+  /// 获取新版安装包信息：GitHub Releases latest 的发布时间与本地已确认时间对比。
+  /// 构建版本号固定不变（3.0.0+300），仅靠时间/序号判断是否有新安装包；
+  /// 仅用户主动点击"版本"行时检测，不主动提醒。
+  ///
+  /// 双基准比较（任一满足即新版，序号优先、时间戳兜底）：
+  /// 1. 序号：从 GitHub 附件文件名解析 release_N，与本地已确认序号
+  ///    [spGithubLastReleaseNo] 及本地构建序号 LOCAL_BUILD_NO 对比
+  /// 2. 时间：附件上传时间与本地已确认时间 [spGithubLastReleaseTime] 对比
+  /// 本地包比 GitHub 附件还新（如刚构建完上传前）时不会重复提示。
+  Future<void> _checkGithubUpdate() async {
+    const String releaseUrl =
+        'https://github.com/zhengsh2822/qinglong_app_glass/releases/latest';
+    try {
+      final resp = await Dio().get(
+        'https://api.github.com/repos/zhengsh2822/qinglong_app_glass/releases/latest',
+        options: Options(
+          headers: {
+            'Accept': 'application/vnd.github+json',
+            'User-Agent': 'qinglong-app',
+          },
+          receiveTimeout: const Duration(seconds: 10),
+          sendTimeout: const Duration(seconds: 10),
+        ),
+      );
+      if (resp.statusCode != 200 || resp.data is! Map) {
+        "获取更新信息失败".toast();
+        return;
+      }
+      final data = resp.data as Map;
+      // 版本号固定不变，只能靠时间判断；
+      // 上传新安装包时常替换同一 release 的附件（asset），release 的 published_at 不会更新，
+      // 因此必须取 APK 附件的最新上传时间（updated_at）作为版本时间，否则永远检测不到新包。
+      DateTime? publishedAt;
+      String? assetName;
+      final assets = data['assets'];
+      if (assets is List) {
+        for (final a in assets) {
+          if (a is Map) {
+            final t = DateTime.tryParse(a['updated_at']?.toString() ?? '');
+            if (t != null && (publishedAt == null || t.isAfter(publishedAt))) {
+              publishedAt = t;
+              assetName = a['name']?.toString();
+            }
+          }
+        }
+      }
+      publishedAt ??= DateTime.tryParse(
+        data['published_at']?.toString() ?? '',
+      );
+      if (publishedAt == null) {
+        "获取更新信息失败".toast();
+        return;
+      }
+      // 闭包内引用需要 final 局部变量（可空类型无法在闭包中窄化）
+      final DateTime releaseTime = publishedAt;
+      final int latestEpoch = releaseTime.millisecondsSinceEpoch;
+      // 从附件文件名解析安装包序号（qinglong_app_glass_v3.0.0_release_N.apk → N），
+      // 无序号（旧命名）记为 0，交由时间戳判断兜底
+      int githubNo = 0;
+      if (assetName != null) {
+        final m = RegExp(r'_(\d+)\.apk$').firstMatch(assetName);
+        if (m != null) {
+          githubNo = int.tryParse(m.group(1) ?? '') ?? 0;
+        }
+      }
+      // 与本地已确认的 release 对比：时间 + 序号双基准，任一更新即提示
+      final last = SpUtil.getInt(spGithubLastReleaseTime, defValue: 0);
+      final lastNo = SpUtil.getInt(spGithubLastReleaseNo, defValue: 0);
+      // 构建时注入的本地构建时间戳 LOCAL_BUILD_TIME（epoch，0 表示未注入不参与比较）
+      // 兼容秒/毫秒两种单位：毫秒时间戳为 13 位（≥1e11），秒为 10 位（<1e11），
+      // 若传入的是秒则自动放大 1000 倍，避免与 GitHub updated_at 毫秒对比失效
+      final localBuildRaw = int.tryParse(
+            const String.fromEnvironment('LOCAL_BUILD_TIME'),
+          ) ??
+          0;
+      final int localBuildAt = localBuildRaw > 0 && localBuildRaw < 100000000000
+          ? localBuildRaw * 1000
+          : localBuildRaw;
+      // 构建时注入的本地安装包序号 LOCAL_BUILD_NO（0 表示未注入不参与比较）
+      final int localBuildNo = int.tryParse(
+            const String.fromEnvironment('LOCAL_BUILD_NO'),
+          ) ??
+          0;
+      // 时间基准：GitHub 附件时间 > 已确认时间 且 > 本地构建时间
+      final bool newByTime =
+          latestEpoch > last && (localBuildAt == 0 || latestEpoch > localBuildAt);
+      // 序号基准：GitHub 序号 > 已确认序号 且 > 本地构建序号
+      final bool newByNo =
+          githubNo > lastNo && (localBuildNo == 0 || githubNo > localBuildNo);
+      if (!newByTime && !newByNo) {
+        "已是最新安装包".toast();
+        return;
+      }
+      final name = (data['name']?.toString().isNotEmpty ?? false)
+          ? data['name'].toString()
+          : (data['tag_name']?.toString() ?? '新版本');
+      final body = (data['body']?.toString() ?? '').trim();
+      final local = releaseTime.toLocal();
+      final timeStr =
+          '${local.year}-${local.month.toString().padLeft(2, '0')}-'
+          '${local.day.toString().padLeft(2, '0')} '
+          '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+      final content =
+          '名称：$name\n发布时间：$timeStr\n${body.length > 200 ? '${body.substring(0, 200)}...' : body}';
+
+      // 确认获取安装包后，记录该 release 附件上传时间+序号，下次检测不到更新即不重复提示
+      void markAndOpen() {
+        SpUtil.putInt(
+          spGithubLastReleaseTime,
+          releaseTime.millisecondsSinceEpoch,
+        );
+        if (githubNo > 0) {
+          SpUtil.putInt(spGithubLastReleaseNo, githubNo);
+        }
+        launchUrl(Uri.parse(releaseUrl));
+      }
+
+      final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+      if (isCyber) {
+        showCyberConfirmDialog(
+          context,
+          title: "发现新版安装包",
+          content: content,
+          cancelLabel: "稍后",
+          confirmLabel: "获取安装包",
+        ).then((confirmed) {
+          if (confirmed == true) markAndOpen();
+        });
+        return;
+      }
+      showCupertinoDialog(
+        context: context,
+        useRootNavigator: false,
+        builder: (childContext) => CupertinoAlertDialog(
+          title: const Text("发现新版安装包"),
+          content: Text(content, textAlign: TextAlign.left),
+          actions: [
+            CupertinoDialogAction(
+              child: const Text("稍后"),
+              onPressed: () => Navigator.pop(childContext),
+            ),
+            CupertinoDialogAction(
+              child: const Text("获取安装包"),
+              onPressed: () {
+                Navigator.pop(childContext);
+                markAndOpen();
+              },
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      "网络异常，无法获取更新信息".toast();
+    }
+  }
 
   void _checkUpdate() async {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;

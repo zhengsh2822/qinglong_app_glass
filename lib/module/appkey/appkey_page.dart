@@ -281,7 +281,7 @@ class AppKeyItemCell extends StatelessWidget {
                 width: double.infinity,
                 cornerRadius: 12,
                 iconSize: 22,
-                outerGap: 4,
+                outerGap: 5,
                 innerGap: 6,
                 onTap: () {
                   Navigator.of(context)
@@ -312,7 +312,7 @@ class AppKeyItemCell extends StatelessWidget {
                 width: double.infinity,
                 cornerRadius: 12,
                 iconSize: 22,
-                outerGap: 4,
+                outerGap: 5,
                 innerGap: 6,
                 onTap: () {
                   WidgetsBinding.instance.endOfFrame.then((value) {
@@ -329,7 +329,7 @@ class AppKeyItemCell extends StatelessWidget {
                 width: double.infinity,
                 cornerRadius: 12,
                 iconSize: 22,
-                outerGap: 4,
+                outerGap: 5,
                 innerGap: 6,
                 onTap: () {
                   WidgetsBinding.instance.endOfFrame.then((value) {

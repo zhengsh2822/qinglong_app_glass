@@ -24,9 +24,9 @@ android {
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        // ABI 由 Flutter 3.44 插件根据 --target-platform 自动配置，
+        // ABI 由 Flutter 插件根据 --target-platform 自动配置，
         // 构建命令统一传 android-arm64（见根目录构建脚本/说明）。
-        // 不再手动设置 splits/ndk.abiFilters，避免与 3.44 插件冲突。
+        // 不要手动设置 splits/ndk.abiFilters，避免与 Flutter 插件冲突。
     }
 
     buildTypes {
