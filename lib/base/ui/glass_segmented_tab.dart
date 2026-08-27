@@ -46,15 +46,14 @@ class _GlassSegmentedTabState extends ConsumerState<GlassSegmentedTab> {
   @override
   Widget build(BuildContext context) {
     final isCyber = ref.watch(themeProvider).themeMode == modeCyber;
-    final theme = ref.watch(themeProvider);
     // 毛玻璃开关：开启时大胶囊用 BackdropFilter + 半透明底色（alpha 0.3）
     final bool blurEnabled = ref.watch(blurEffectProvider);
 
     // ===== 液态玻璃视觉参数（与 demo 顶部 tab 一致） =====
-    // 大胶囊背景
+    // 大胶囊背景（苹果模式接近白色；赛博保持深色）
     final Color bgColor = isCyber
         ? const Color(0xFF1A1A24)
-        : AppleColors.bgTertiary;
+        : const Color(0xFFFFFFFF);
     // 大胶囊边框（赛博：未置顶卡片青色；苹果白：1px 纯白边框）
     final Border? bgBorder = isCyber
         ? Border.all(color: CyberColors.cyan.withValues(alpha: 0.2), width: 1)
@@ -71,7 +70,7 @@ class _GlassSegmentedTabState extends ConsumerState<GlassSegmentedTab> {
     final Color activeColor = ref.watch(themeProvider).primaryColor;
     final Color inactiveColor = isCyber
         ? CyberColors.hintGray
-        : theme.themeColor.title2Color();
+        : const Color(0xB33C3C43); // 未选中灰色（比 AppleColors.textSecondary 0x99 深一点点）
 
     return SizedBox(
       // 大胶囊总高度 55：左右 15 padding + 大胶囊自身 43（GlassSegmentedTabDelegate 不再外层加 padding）
@@ -404,9 +403,11 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
     final int count = widget.tabs.length;
 
     // 统一底层 Listener 处理 点击/长按抓取/拖拽（与底部导航一致）
-    // 大胶囊：毛玻璃开启时底色 alpha 0.3 + BackdropFilter 模糊；关闭时纯色
+    // 大胶囊：毛玻璃开启时底色 alpha 0.45 纯白 + BackdropFilter 模糊（比 0.3 更白，
+    // 避免透出灰色背景显灰）；关闭时纯色。
+    // 投影放外层 body（本项目内层会被 ClipRRect 裁剪导致投影不可见）。
     final Color capsuleColor = widget.blurEnabled
-        ? widget.bgColor.withValues(alpha: 0.3)
+        ? widget.bgColor.withValues(alpha: 0.45)
         : widget.bgColor;
     final Widget capsule = Container(
       height: 43,
@@ -414,15 +415,6 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
         color: capsuleColor,
         borderRadius: BorderRadius.circular(22),
         border: widget.bgBorder,
-        boxShadow: widget.isCyber
-            ? null
-            : const [
-                BoxShadow(
-                  color: AppleColors.cardShadow,
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ],
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -508,7 +500,9 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
       ),
     );
 
-    final Widget body = widget.blurEnabled
+    // 投影放外层，避免被 ClipRRect 裁剪：苹果模式轻微投影与内容区分；
+    // 毛玻璃体（模糊层）叠在其上，不裁剪阴影。
+    final Widget glassBody = widget.blurEnabled
         ? ClipRRect(
             borderRadius: BorderRadius.circular(22),
             child: BackdropFilter(
@@ -520,6 +514,23 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
             ),
           )
         : capsule;
+
+    final Widget body = Container(
+      height: 43,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: widget.isCyber
+            ? null
+            : const [
+                BoxShadow(
+                  color: AppleColors.cardShadow,
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
+      ),
+      child: glassBody,
+    );
 
     return Listener(
       onPointerDown: _onPointerDown,
