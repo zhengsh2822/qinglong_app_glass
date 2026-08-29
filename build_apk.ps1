@@ -135,6 +135,10 @@ if ($NoInstall) {
         Write-Host ""
         Write-Host "[4/4] adb not found, skip install" -ForegroundColor DarkGray
     } else {
+        # adb 首次启动会向 stderr 打印 "daemon not running..."，
+        # 在 $ErrorActionPreference="Stop" 下会被当成 NativeCommandError 中断脚本，这里临时放宽
+        $prevEA = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
         # get connected devices
         $devicesOutput = & $adb devices 2>$null
         $deviceLines = $devicesOutput -split "`n" | Where-Object {
@@ -161,6 +165,7 @@ if ($NoInstall) {
                 }
             }
         }
+        $ErrorActionPreference = $prevEA
     }
 }
 
