@@ -466,15 +466,16 @@ class _AboutPageState extends ConsumerState<AboutPage>
   @override
   void onLazyLoad() {}
 
-  /// 获取新版安装包信息：GitHub Releases latest 的发布时间与本地已确认时间对比。
-  /// 构建版本号固定不变（3.0.0+300），仅靠时间/序号判断是否有新安装包；
+  /// 获取新版安装包信息：GitHub Releases latest 与本地已装安装包对比。
+  /// 构建版本号固定不变（3.0.0+300），仅靠序号/时间判断是否有新安装包；
   /// 仅用户主动点击"版本"行时检测，不主动提醒。
   ///
-  /// 双基准比较（任一满足即新版，序号优先、时间戳兜底）：
-  /// 1. 序号：从 GitHub 附件文件名解析 release_N，与本地已确认序号
-  ///    [spGithubLastReleaseNo] 及本地构建序号 LOCAL_BUILD_NO 对比
-  /// 2. 时间：附件上传时间与本地已确认时间 [spGithubLastReleaseTime] 对比
-  /// 本地包比 GitHub 附件还新（如刚构建完上传前）时不会重复提示。
+  /// 判定规则（序号优先，时间兜底）：
+  /// 1. 序号可比（GitHub 附件名与本地 LOCAL_BUILD_NO 均带序号）：GitHub 序号必须
+  ///    严格大于本地构建序号才算新版；相等即同一包，即使上传时间更晚也不提示
+  ///    （解决"先构建安装、后上传 GitHub"场景的误报）
+  /// 2. 序号不可比（任一方无序号）：退回附件上传时间对比，需晚于本地已确认时间
+  ///    [spGithubLastReleaseTime] 且晚于本地构建时间 LOCAL_BUILD_TIME。
   Future<void> _checkGithubUpdate() async {
     const String releaseUrl =
         'https://github.com/zhengsh2822/qinglong_app_glass/releases/latest';
@@ -549,12 +550,19 @@ class _AboutPageState extends ConsumerState<AboutPage>
             const String.fromEnvironment('LOCAL_BUILD_NO'),
           ) ??
           0;
-      // 时间基准：GitHub 附件时间 > 已确认时间 且 > 本地构建时间
-      final bool newByTime =
-          latestEpoch > last && (localBuildAt == 0 || latestEpoch > localBuildAt);
+      // 序号可比（GitHub 与本地均带序号）时以序号为准：
+      // GitHub 序号必须严格大于本地构建序号才算新版，等于/小于都视为同一或更旧包。
+      // 解决"先本地构建安装、再上传 GitHub"场景：上传时间必然晚于本地构建时间，
+      // 仅靠时间对比会把刚上传的同一安装包误判为新版。
+      final bool canCompareNo = githubNo > 0 && localBuildNo > 0;
       // 序号基准：GitHub 序号 > 已确认序号 且 > 本地构建序号
       final bool newByNo =
-          githubNo > lastNo && (localBuildNo == 0 || githubNo > localBuildNo);
+          githubNo > 0 && githubNo > lastNo && githubNo > localBuildNo;
+      // 时间基准：仅在序号无法比较（GitHub 或本地无序号）时兜底
+      final bool newByTime =
+          !canCompareNo &&
+          latestEpoch > last &&
+          (localBuildAt == 0 || latestEpoch > localBuildAt);
       if (!newByTime && !newByNo) {
         "已是最新安装包".toast();
         return;
