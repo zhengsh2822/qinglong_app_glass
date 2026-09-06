@@ -823,6 +823,16 @@ class EnvItemCell extends StatelessWidget {
           slidableKey: ValueKey(bean.sId),
           enabled: !editMode,
           borderRadius: AppleColors.radiusCard,
+          startActions: [
+            CyberSlideAction(
+              label: '复制',
+              icon: CupertinoIcons.doc_on_doc,
+              color: const Color(0xFF00C8FF),
+              onTap: () {
+                _copyEnv(bean, context);
+              },
+            ),
+          ],
           endActions: [
             CyberSlideAction(
               label: '编辑',
@@ -879,6 +889,22 @@ class EnvItemCell extends StatelessWidget {
         child: Slidable(
           enabled: !editMode,
           key: ValueKey(bean.sId),
+          // 右滑：startActionPane（卡片左侧复制按钮）
+          startActionPane: ActionPane(
+            motion: const ScrollMotion(),
+            extentRatio: 0.28,
+            children: [
+              AppSlideButton(
+                context: context,
+                color: const Color(0xff2F9BD8),
+                icon: CupertinoIcons.doc_on_doc,
+                label: '复制',
+                cyberMode: isCyber,
+                width: double.infinity,
+                onTap: () => _copyEnv(bean, context),
+              ),
+            ],
+          ),
           endActionPane: ActionPane(
             motion: const ScrollMotion(),
             // 3 按钮：等分 Pane 宽度（screen × 0.55 ≈ 198px ≈ 3×60+18）
@@ -947,6 +973,27 @@ class EnvItemCell extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppleColors.radiusCard),
       child: Material(color: Colors.transparent, child: cardContent),
     );
+  }
+
+  /// 复制环境变量：跳转新增页面并预填原变量全部字段（isCopy 走新增而非编辑）
+  void _copyEnv(EnvBean bean, BuildContext context) {
+    HapticFeedback.mediumImpact();
+    Navigator.of(context)
+        .push(
+          CupertinoPageRoute(
+            builder: (context) => AddEnvPage(envBean: bean, isCopy: true),
+          ),
+        )
+        .then((value) {
+          // 与编辑按钮一致：返回后无条件刷新列表，覆盖新增/取消两种情况
+          ref
+              .read(
+                SingleAccountPageState.ofEnvProvider(context)(
+                  getProviderName(context),
+                ).notifier,
+              )
+              .loadData(context, false);
+        });
   }
 
   void enableEnv(BuildContext context) {

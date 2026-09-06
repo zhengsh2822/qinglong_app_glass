@@ -45,9 +45,10 @@ dependencies:
   loading_animation_widget: any
   get: any
   timezone: any
-  # 液态玻璃双管道（底部导航 + 顶部 tab），对齐 demos/liquid_glass_easy
+  # 液态玻璃双管道（底部导航 + 顶部 tab），正式版独立于实验 demo，
+  # 存于主项目 packages/liquid_glass_easy（改 demos/liquid_glass_easy 不影响主项目）
   liquid_glass_easy:
-    path: demos/liquid_glass_easy
+    path: packages/liquid_glass_easy
 
 dev_dependencies:
   flutter_test:
