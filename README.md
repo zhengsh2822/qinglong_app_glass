@@ -79,8 +79,7 @@
 - `logger`：`1.1.0` → `2.7.0`
 - `cupertino_icons`：`1.0.5` → `1.0.8`
 - `flutter_displaymode`：`0.4.1` → `0.7.0`
-- 新增 `liquid_glass_easy`（本地依赖 `demos/liquid_glass_easy`）
-
+- 新增 `liquid_glass_easy`
 ## 构建打包
 
 ```powershell
