@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get_it/get_it.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:logger/logger.dart';
+import 'package:qinglong_app/base/ui/keyboard_dismiss_observer.dart';
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/http/http.dart';
@@ -257,6 +258,9 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
       title: "青龙客户端",
       locale: const Locale('zh', 'CN'),
       navigatorKey: navigatorState,
+      // 退场键盘错峰：手势返回/pop 开始瞬间即收键盘，键盘动画与退场动画
+      // 时间重叠被吸收，避免"键盘未收起就退出"导致掉帧（并行优化 B 方案）
+      navigatorObservers: [KeyboardDismissNavigatorObserver()],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -268,7 +272,11 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
             color: Colors.white,
           );
           final mediaQuery = MediaQuery.of(context);
-          debugPrint('[字体排查] build MediaQuery textScaler, textScaleFactor=$textScaleFactor');
+          // 键盘动画期间 viewInsets 逐帧变化会重新执行本 builder。强制把
+          // viewInsets 归零后 MediaQueryData 与上一帧恒等，MediaQuery 的
+          // updateShouldNotify 返回 false → 子树不随键盘动画 rebuild
+          // （不能再用 RepaintBoundary 包整树：会缓存整屏 surface、且可能
+          //   切断液态玻璃 BackdropFilter 的采样链，IMP-2026 教训）
           return MediaQuery(
             data: mediaQuery.copyWith(
               textScaler: TextScaler.linear(textScaleFactor),

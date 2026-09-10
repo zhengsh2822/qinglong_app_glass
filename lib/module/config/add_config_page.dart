@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/upload_pill_button.dart';
 import 'package:qinglong_app/module/others/scripts/script_download_page.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -143,8 +144,8 @@ class _AddConfigPageState extends ConsumerState<AddConfigPage> {
   }
 
   Widget addWidget(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
+    return UploadPillButton(
+      onTap: () {
         showMoreOperate(
           context,
           [
@@ -164,23 +165,6 @@ class _AddConfigPageState extends ConsumerState<AddConfigPage> {
           ],
         );
       },
-      child: Container(
-        margin: const EdgeInsets.only(
-          top: 10,
-        ),
-        width: 70,
-        height: 70,
-        decoration: const BoxDecoration(
-          color: Color(0xfff7f7f7),
-        ),
-        child: const Center(
-          child: Icon(
-            CupertinoIcons.add,
-            size: 35,
-            color: Color(0xff6e6e6e),
-          ),
-        ),
-      ),
     );
   }
 

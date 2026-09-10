@@ -34,10 +34,11 @@ const String spThemeSecondaryTextColor = "spThemeSecondaryTextColor";
 const String spLogAutoJump2Bottom = "spLogAutoJump2Bottom";
 const String spAndroidKeyboardError = "spAndroidKeyboardError";
 const String spSingleInstance = "spSingleInstance";
-// 已确认过的 GitHub 最新 release 附件上传时间(epoch 毫秒)，用于"获取新版安装包"时间对比（版本号不变，靠时间判断）
-const String spGithubLastReleaseTime = "spGithubLastReleaseTime";
-// 已确认过的 GitHub 安装包文件名序号（release_N），用于新版安装包"序号"判断（时间戳兜底）
-const String spGithubLastReleaseNo = "spGithubLastReleaseNo";
+// 冷启动主动提醒时"已提醒过"的 GitHub release 附件上传时间(epoch 毫秒)，
+// 用于避免同一版本重复打扰；出现更新的 release 后才再次提醒
+const String spGithubLastRemindTime = "spGithubLastRemindTime";
+// 冷启动主动提醒时"已提醒过"的 GitHub 安装包文件名序号（release_N）
+const String spGithubLastRemindNo = "spGithubLastRemindNo";
 
 /// 毛玻璃效果开关（bool，默认 true=开启）
 ///

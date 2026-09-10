@@ -14,6 +14,9 @@ class QlAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final bool canBack;
   final Widget? backWidget;
   final bool canClick2Vip;
+  /// 自定义 leading 区域宽度（默认 null 走 AppBar 默认 56）。当 backWidget
+  /// 含多个按钮（如"编辑 + 名称排序"）时需传足够宽度避免截断。
+  final double? leadingWidth;
 
   const QlAppBar({
     super.key,
@@ -23,6 +26,7 @@ class QlAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.canBack = true,
     this.backWidget,
     this.canClick2Vip = true,
+    this.leadingWidth,
   });
 
   @override
@@ -60,6 +64,7 @@ class QlAppBar extends ConsumerWidget implements PreferredSizeWidget {
     Widget appBar = AppBar(
       backgroundColor: Colors.transparent,
       leading: canBack ? back : null,
+      leadingWidth: leadingWidth,
       automaticallyImplyLeading: canBack,
       title: GestureDetector(
         onTap: () {

@@ -121,7 +121,11 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                           TaskLogBean item = list[index];
 
                             if (searchText.text.isNotEmpty &&
-                                !(item.name?.contains(searchText.text) ??
+                                !(item.name
+                                        ?.toLowerCase()
+                                        .contains(
+                                          searchText.text.toLowerCase(),
+                                        ) ??
                                     false)) {
                               return const SizedBox.shrink();
                             }

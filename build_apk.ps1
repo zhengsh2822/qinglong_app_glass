@@ -1,4 +1,4 @@
-﻿param(
+param(
     [switch]$DebugMode,
     [switch]$NoCopy,
     [switch]$NoInstall
@@ -65,7 +65,14 @@ Write-Host "command: flutter $($buildArgs -join ' ')" -ForegroundColor DarkGray
 
 $beforeTime = Get-Date
 & flutter @buildArgs | Out-Null
-Write-Host "flutter build finished (exit code ignored)" -ForegroundColor DarkGray
+# 严禁忽略构建失败：一旦 flutter 编译出错（Gradle 被占用/代码报错），
+# 立即中止，绝不能复用 build 目录里上次成功的旧包复制改名（曾导致
+# release_32 = release_31 复制品，新改动全部丢失）
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[ERROR] flutter build failed (exit code $LASTEXITCODE), abort. 不复制旧包!" -ForegroundColor Red
+    exit 1
+}
+Write-Host "flutter build finished (exit code $LASTEXITCODE)" -ForegroundColor DarkGray
 
 # 3. find APK
 $apkDir = Join-Path $projectRoot "build\app\outputs\flutter-apk"

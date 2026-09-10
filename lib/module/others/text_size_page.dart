@@ -184,7 +184,10 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
                 context
                     .findAncestorStateOfType<QlAppState>()
                     ?.updateTextFontWeight(fontWeight);
-                Navigator.of(context).pop();
+                // 保存后留在字体设置页：全局字体变化会触发整树重建，
+                // 若此时路退回"我的"页，重建 + 退场动画叠加必然掉帧；
+                // 就地停留在本页，重建过程感知不到路转即无卡顿
+                "已保存".toast();
               },
             ),
           ],
