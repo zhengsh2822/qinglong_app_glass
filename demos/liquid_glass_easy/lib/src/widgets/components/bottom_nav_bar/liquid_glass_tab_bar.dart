@@ -58,8 +58,11 @@ class LiquidGlassTabBar extends StatelessWidget {
     this.itemPadding = 6,
     this.alignment = Alignment.bottomCenter,
     this.longPressDuration = const Duration(milliseconds: 100),
+    this.longPressDurationByIndex = const {},
     this.onLongTapItem,
+    this.onLongTapTriggered,
     this.directDragSwitch = false,
+    this.pressScale,
   })  : _impellerStandalone = false,
         assert(items.length > 0, 'Provide at least one item'),
         assert(selectedIndex >= 0 && selectedIndex < items.length,
@@ -105,8 +108,11 @@ class LiquidGlassTabBar extends StatelessWidget {
     this.itemPadding = 6,
     this.alignment = Alignment.bottomCenter,
     this.longPressDuration = const Duration(milliseconds: 100),
+    this.longPressDurationByIndex = const {},
     this.onLongTapItem,
+    this.onLongTapTriggered,
     this.directDragSwitch = false,
+    this.pressScale,
   })  : _impellerStandalone = true,
         assert(items.length > 0, 'Provide at least one item'),
         assert(selectedIndex >= 0 && selectedIndex < items.length,
@@ -121,12 +127,22 @@ class LiquidGlassTabBar extends StatelessWidget {
   /// See [LiquidGlassAnimatedNavBar.longPressDuration].
   final Duration longPressDuration;
 
+  /// Per-tab long-press recognition overrides. See
+  /// [LiquidGlassAnimatedNavBar.longPressDurationByIndex].
+  final Map<int, Duration> longPressDurationByIndex;
+
   /// Optional long-press handler per tab. See
   /// [LiquidGlassAnimatedNavBar.onLongTapItem].
   final bool Function(int index)? onLongTapItem;
 
+  /// [LiquidGlassAnimatedNavBar.onLongTapTriggered].
+  final void Function(int index)? onLongTapTriggered;
+
   /// Direct slide-to-switch. See [LiquidGlassAnimatedNavBar.directDragSwitch].
   final bool directDragSwitch;
+
+  /// Press-scale q-bounce (experimental). See LiquidGlassAnimatedNavBar.pressScale.
+  final double? pressScale;
 
   /// The tab items.
   final List<LiquidGlassTabBarItem> items;
@@ -298,8 +314,11 @@ class LiquidGlassTabBar extends StatelessWidget {
       useImpellerBackdrop: useImpellerBackdrop,
       realTimeCapture: realTimeCapture,
       longPressDuration: longPressDuration,
+      longPressDurationByIndex: longPressDurationByIndex,
       onLongTapItem: onLongTapItem,
+      onLongTapTriggered: onLongTapTriggered,
       directDragSwitch: directDragSwitch,
+      pressScale: pressScale,
     );
   }
 

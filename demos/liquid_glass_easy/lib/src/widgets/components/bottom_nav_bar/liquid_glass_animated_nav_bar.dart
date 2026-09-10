@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -134,6 +135,55 @@ import '../liquid_glass_shadow.dart';
 /// [body] is the page content, captured behind the glass. [outerLenses]
 /// are composited in the outer view on top of the bar (e.g. the app bar
 /// and the side action button).
+
+/// Long-press recognizer that picks its recognition duration from the tab
+/// under the pointer on each down. The built-in [LongPressGestureRecognizer]
+/// only takes a fixed `duration` at construction (the newer gesture engine
+/// exposes no live setter), so this subclass disables the built-in deadline
+/// (`duration: null`) and re-arms its own per-tab [Timer], then re-enters the
+/// stock accept chain via [didExceedDeadlineWithEvent] — keeping the
+/// `onLongPressStart/MoveUpdate/End/Cancel` and slop behavior identical.
+class _PerTabLongPressGestureRecognizer extends LongPressGestureRecognizer {
+  _PerTabLongPressGestureRecognizer({
+    required this.defaultDuration,
+    required this.durationByIndex,
+    required this.resolveTabIndex,
+  }) : super(duration: null);
+
+  final Duration defaultDuration;
+  final Map<int, Duration> durationByIndex;
+  final int Function(double globalDx) resolveTabIndex;
+
+  Timer? _tabTimer;
+
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    super.addAllowedPointer(event);
+    if (state == GestureRecognizerState.possible) {
+      _tabTimer?.cancel();
+      final idx = resolveTabIndex(event.position.dx);
+      _tabTimer = Timer(durationByIndex[idx] ?? defaultDuration, () {
+        _tabTimer = null;
+        didExceedDeadlineWithEvent(event);
+      });
+    }
+  }
+
+  @override
+  void didStopTrackingLastPointer(int pointer) {
+    _tabTimer?.cancel();
+    _tabTimer = null;
+    super.didStopTrackingLastPointer(pointer);
+  }
+
+  @override
+  void dispose() {
+    _tabTimer?.cancel();
+    _tabTimer = null;
+    super.dispose();
+  }
+}
+
 class LiquidGlassAnimatedNavBar extends StatefulWidget {
   final Widget body;
   final List<LiquidGlassTabBarItem> items;
@@ -287,6 +337,13 @@ class LiquidGlassAnimatedNavBar extends StatefulWidget {
   /// match their own long-tap conventions.
   final Duration longPressDuration;
 
+  /// Per-tab long-press recognition overrides. When a pointer goes down
+  /// on a tab listed here, that tab recognizes its long-press at this
+  /// duration instead of [longPressDuration] — e.g. the "我的" tab pops an
+  /// account sheet at 500ms while the other tabs keep the 100ms pill grab.
+  /// A down-then-slide inside the window still hands to the pan/drag.
+  final Map<int, Duration> longPressDurationByIndex;
+
   /// Optional handler for a long-press on a specific tab. Return `true` to
   /// CONSUME the long-press (the pill is NOT picked up / dragged); return
   /// `false` to keep the package's default pick-up-and-drag behavior.
@@ -296,12 +353,25 @@ class LiquidGlassAnimatedNavBar extends StatefulWidget {
   /// tabs keep the drag-to-move pill.
   final bool Function(int index)? onLongTapItem;
 
+  /// Fired once the long-press on a tab consumed by [onLongTapItem] is
+  /// CONFIRMED — i.e. the finger lifted without having slid into a drag
+  /// (a slide mid-hold hands to the pill drag / grab instead, and this is
+  /// NOT called). Hosts use this to defer a popup (e.g. the "我的"
+  /// account switcher) until a real hold is certain, so a press-then-slide
+  /// never pops it.
+  final void Function(int index)? onLongTapTriggered;
+
   /// When `true`, a finger can slide directly on the bar to switch tabs —
   /// a horizontal drag starts the pill drag immediately (no long-press
   /// wait). Tap still selects, long-press still picks the pill up.
   /// `false` (default) keeps the package behavior: only tap and
   /// long-press-drag.
   final bool directDragSwitch;
+
+  /// Q-bounce press scale: when non-null the whole bar eases up to this
+  /// scale while a finger is down and springs back to 1.0 (elasticOut) on
+  /// release. null (default) keeps the resting size. Small values read best.
+  final double? pressScale;
 
   const LiquidGlassAnimatedNavBar({
     super.key,
@@ -358,8 +428,11 @@ class LiquidGlassAnimatedNavBar extends StatefulWidget {
     this.realTimeCapture = true,
     this.magnifierPill = const LiquidGlassTabMagnifierPillStyle(),
     this.longPressDuration = const Duration(milliseconds: 100),
+    this.longPressDurationByIndex = const {},
     this.onLongTapItem,
+    this.onLongTapTriggered,
     this.directDragSwitch = false,
+    this.pressScale,
   });
 
   @override
@@ -395,6 +468,36 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
   /// True once the finger has moved far enough from [_pressFrac] to count
   /// as a genuine drag.
   bool _draggedRealMove = false;
+
+  /// Tab index whose long-press was consumed by [LiquidGlassAnimatedNavBar.onLongTapItem]
+  /// and is AWAITING confirmation: the popup fires only if the finger lifts
+  /// WITHOUT sliding. A slide mid-hold (>= 0.2 cell) clears this and hands
+  /// to the pill drag instead. `-1` = no pending popup.
+  int _longTapArmedTab = -1;
+
+  // ── Whole-bar slide-follow (酷安式：拖拽时整个导航栏跟手轻微偏移) ──
+  /// Horizontal offset (logical px) applied to the WHOLE bar — capsule,
+  /// icon shell and pill — while the finger slides, so the bar answers
+  /// the hand like Coolapk's liquid-glass nav. Springs back to 0 on
+  /// release. Never touches Transform-wrapped lenses (Impeller safe).
+  double _navSlideDx = 0;
+  double _navSlideVel = 0;
+
+  /// Drives the capsule / icon-shell rebuilds for the slide offset, since
+  /// the press-scale controller alone only animates the q-bounce.
+  final ValueNotifier<double> _navSlideNotifier = ValueNotifier<double>(0);
+
+  /// How far (as a fraction of one cell) the bar follows the finger —
+  /// deliberately small: the whole bar should drift only a few px ("一点点"),
+  /// never chase the finger across the screen. 0.05 → 0.04 (缩小 20%).
+  static const double _kNavSlideFollow = 0.04;
+
+  /// Edge-safe gap (logical px): after the slide the capsule must stay this
+  /// far away from the screen edges. The centred bar already leaves
+  /// [_barLeft] on each side; the press-scale growth eats into that, so the
+  /// clamp in [_updateNavSlideDx] subtracts it too. 5.2 → 7.4 (长拖 clamp
+  /// 上限随 pressScale 减小后的 grow 一并再收 20%).
+  static const double _kNavSlideEdgeSafe = 7.4;
 
   // ── Travel spring ────────────────────────────────────────────────
   double _travelPos = 0;
@@ -498,6 +601,10 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
   /// Effective bottom inset of the bar.
   double _effBottomMargin = 0;
 
+  /// Parent height, recomputed each build — used to bound the press-scale
+  /// hit test to the bar's own row (the root Listener spans the whole page).
+  double _parentHeight = 0;
+
   /// True when the lenses render on the Impeller BackdropFilter path —
   /// the same resolution [LiquidGlassView] applies. Only there do
   /// stacked lenses chain (each samples everything painted beneath it),
@@ -507,6 +614,39 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
       ui.ImageFilter.isShaderFilterSupported;
 
   LiquidGlassTabBarLayout get _layout => widget.layout;
+
+  late final AnimationController _pressController;
+  late final Animation<double> _pressScale;
+
+  void _onPressPointerDown(PointerDownEvent e) {
+    if (widget.pressScale == null) return;
+    // q弹只在导航栏区域内触发。根部 Listener 包着全屏 Stack（外层视图
+    // 需要全屏渲染），若不限制命中，页面上任意位置按压/滚动都会让
+    // 导航栏放大（用户反馈"导航栏区域以外的页面操作也有放大效果"）。
+    if (!_pressInBar(e.position)) return;
+    _pressController.forward();
+  }
+
+  void _onPressPointerUp([PointerEvent? e]) {
+    if (widget.pressScale == null) return;
+    _pressController.reverse();
+  }
+
+  /// Whether a press at [local] (the root Listener's own coordinates,
+  /// which span the whole page) falls inside the bar row — the capsule
+  /// plus its padding. Mirrors the gesture overlay's rect so the q-bounce
+  /// fires exactly where the bar can be grabbed.
+  bool _pressInBar(Offset local) {
+    final l = _layout;
+    final double left = _barLeft + l.padding;
+    final double right = _barLeft + l.width - l.padding;
+    final double bottom = _parentHeight - _effBottomMargin - l.padding;
+    final double top = bottom - l.cellHeight;
+    return local.dx >= left &&
+        local.dx <= right &&
+        local.dy >= top &&
+        local.dy <= bottom;
+  }
 
   @override
   void initState() {
@@ -518,6 +658,22 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
     _travelTarget = _travelPos;
     _travelFrom = _travelPos;
     _ticker = createTicker(_onTick);
+    _pressController = AnimationController(
+      vsync: this,
+      // 放大 140ms easeOutCubic：按下立即快速放大。
+      duration: const Duration(milliseconds: 140),
+      // 缩小 240ms easeOutBack：松手即刻响应、末尾轻微过冲回弹（比
+      // elasticOut 更跟手优雅，elasticOut 起点慢会有"延迟"感）。
+      reverseDuration: const Duration(milliseconds: 240),
+    );
+    _pressScale =
+        Tween<double>(begin: 1.0, end: widget.pressScale ?? 1.0).animate(
+      CurvedAnimation(
+        parent: _pressController,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeOutBack,
+      ),
+    );
   }
 
   /// Starts the shared ticker if it isn't already running.
@@ -542,6 +698,8 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
   @override
   void dispose() {
     _ticker?.dispose();
+    _pressController.dispose();
+    _navSlideNotifier.dispose();
     _outerViewController.detach();
     _innerViewController.detach();
     super.dispose();
@@ -616,38 +774,96 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
     if (handler != null) {
       final frac = _xToTabFrac(d.globalPosition.dx);
       final idx = frac.round().clamp(0, _layout.itemCount - 1);
-      if (handler(idx)) return;
+      if (handler(idx)) {
+        // Consumed: the popup is DEFERRED until the hold is confirmed —
+        // if the finger lifts right here it fires via [onLongTapTriggered];
+        // if it slides, the slide hands to the pill drag and cancels it.
+        _longTapArmedTab = idx;
+        _pressFrac = frac;
+        _draggedRealMove = false;
+        _resetNavSlideDx();
+        return;
+      }
     }
+    _enterPillDrag(_xToTabFrac(d.globalPosition.dx));
+  }
+
+  /// Starts the pill's grab-and-drag (lift + capture + follow).
+  void _enterPillDrag(double frac, {bool realMove = false}) {
     _tabDragging = true;
     _travelActive = false;
     _lifted = true;
     // The hand takes the deformation back off the travel.
     _travelSign = 0;
     _startCapture();
-    final frac = _xToTabFrac(d.globalPosition.dx);
     // Start the smoothed follow at the pill's current resting position so
     // a hold away from the pill EASES over to the finger.
     _dragFollow = _travelPos;
     _travelVel = 0;
     _pressFrac = frac;
-    _draggedRealMove = false;
+    _draggedRealMove = realMove;
+    _resetNavSlideDx();
     _startTicker();
     setState(() => _tabPillFracIndex = frac);
   }
 
+  /// The whole bar follows the finger by [_kNavSlideFollow] of the cell
+  /// span from the press point (酷安式轻微跟手), springing back on release.
+  /// Clamped to the room the centred bar leaves on each side minus the
+  /// press-scale growth and the edge-safe gap, so the capsule never touches
+  /// (let alone crosses) the screen edges — even while the q-bounce is up.
+  void _updateNavSlideDx(double frac) {
+    final double s = widget.pressScale == null ? 1.0 : _pressScale.value;
+    final double grow = (s - 1) * _layout.width / 2;
+    final double limit =
+        math.max(0.0, _barLeft - grow - _kNavSlideEdgeSafe);
+    double dx = (frac - _pressFrac) * _layout.cellWidth * _kNavSlideFollow;
+    _navSlideDx = dx.clamp(-limit, limit);
+    _navSlideNotifier.value = _navSlideDx;
+  }
+
+  void _resetNavSlideDx() {
+    _navSlideDx = 0;
+    _navSlideVel = 0;
+    _navSlideNotifier.value = 0;
+  }
+
   void _onTabPillLongPressMoveUpdate(LongPressMoveUpdateDetails d) {
+    if (_longTapArmedTab >= 0) {
+      // A held "我的" slid far enough: cancel the pending popup and hand
+      // the gesture to the pill drag (grab magnifier), never pop.
+      final frac = _xToTabFrac(d.globalPosition.dx);
+      if ((frac - _pressFrac).abs() > 0.2) {
+        _longTapArmedTab = -1;
+        _enterPillDrag(frac, realMove: true);
+        _updateNavSlideDx(frac);
+      }
+      return;
+    }
     if (!_tabDragging) return;
     final frac = _xToTabFrac(d.globalPosition.dx);
     if ((frac - _pressFrac).abs() > 0.2) _draggedRealMove = true;
+    _updateNavSlideDx(frac);
     setState(() => _tabPillFracIndex = frac);
   }
 
   void _onTabPillLongPressEnd(LongPressEndDetails d) {
+    if (_longTapArmedTab >= 0) {
+      // Held still and released: confirm the popup.
+      final idx = _longTapArmedTab;
+      _longTapArmedTab = -1;
+      widget.onLongTapTriggered?.call(idx);
+      return;
+    }
     if (!_tabDragging) return;
     _releaseTabPillDrag();
   }
 
   void _onTabPillLongPressCancel() {
+    if (_longTapArmedTab >= 0) {
+      _longTapArmedTab = -1;
+      return;
+    }
     if (!_tabDragging) return;
     _releaseTabPillDrag();
   }
@@ -692,6 +908,7 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
     _travelVel = 0;
     _pressFrac = frac;
     _draggedRealMove = false;
+    _resetNavSlideDx();
     _startTicker();
     setState(() => _tabPillFracIndex = frac);
   }
@@ -700,6 +917,7 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
     if (!_tabDragging) return;
     final frac = _xToTabFrac(d.globalPosition.dx);
     if ((frac - _pressFrac).abs() > 0.2) _draggedRealMove = true;
+    _updateNavSlideDx(frac);
     setState(() => _tabPillFracIndex = frac);
   }
 
@@ -749,6 +967,17 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
       const followTau = 0.05;
       _dragFollow +=
           (_tabPillFracIndex - _dragFollow) * (1 - math.exp(-dt / followTau));
+    }
+
+    // 2b) The whole bar's slide-follow springs back to centre on release.
+    // While the finger is down the offset is set by the move handlers (跟手),
+    // so the spring must not fight the hand mid-drag.
+    if (!_tabDragging &&
+        (_navSlideDx.abs() > 0.01 || _navSlideVel.abs() > 0.1)) {
+      final sr = _stepLift(_navSlideDx, _navSlideVel, 0, dt, 200, 26);
+      _navSlideDx = sr.$1;
+      _navSlideVel = sr.$2;
+      _navSlideNotifier.value = _navSlideDx;
     }
 
     // 3) The lift. The pill is raised for the whole journey and comes
@@ -858,11 +1087,16 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
     // mid-deformation or mid-fade.
     final bool motionSettled = _deviation.abs() < 0.0005;
     final bool handoverSettled = _handover >= 1.0;
+    // The whole-bar slide-follow must spring all the way back to centre
+    // before the ticker may stop — otherwise the bar freezes off-centre.
+    final bool slideSettled =
+        _navSlideDx.abs() <= 0.01 && _navSlideVel.abs() <= 0.1;
     if (!_travelActive &&
         !_tabDragging &&
         liftSettled &&
         motionSettled &&
-        handoverSettled) {
+        handoverSettled &&
+        slideSettled) {
       _pillMotion.stop();
       _deviation = 0;
       // Held until here, not dropped at the end of the travel: the
@@ -922,7 +1156,8 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
       _barLeft +
           layout.padding +
           frac * layout.cellWidth +
-          layout.pillWidth / 2,
+          layout.pillWidth / 2 +
+          _navSlideDx,
       _pillCenter.dy,
     );
   }
@@ -932,6 +1167,7 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
     return LayoutBuilder(builder: (context, constraints) {
       final parentWidth = constraints.maxWidth;
       final parentHeight = constraints.maxHeight;
+      _parentHeight = parentHeight;
 
       // Resolve the bar's placement.
       final centeredLeft = (parentWidth - _layout.width) / 2;
@@ -966,9 +1202,13 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
 
       // The pill's centre in the outer view's coordinates. Horizontally
       // it rides its cell; vertically the centre never moves, since the
-      // morph is symmetric about the bar's row.
-      final double pillCX =
-          _barLeft + layout.padding + pillFrac * cellW + layout.pillWidth / 2;
+      // morph is symmetric about the bar's row. [_navSlideDx] shifts the
+      // whole bar (pill included) with the sliding finger (酷安式跟手).
+      final double pillCX = _barLeft +
+          layout.padding +
+          pillFrac * cellW +
+          layout.pillWidth / 2 +
+          _navSlideDx;
       final double pillCY = parentHeight -
           (_effBottomMargin + layout.padding + layout.cellHeight / 2);
       // Hand the row's Y to the ticker, which re-derives X itself each
@@ -1059,132 +1299,164 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
                 )
               : null;
 
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          // OUTER view: captures the inner stack and composites the
-          // moving glass pill + the developer's outer lenses on top.
-          LiquidGlassView.withPositionedLenses(
-            controller: _outerViewController,
-            pixelRatio: widget.pixelRatio,
-            useSync: widget.useSync,
-            // Only capture while there is something to composite — which is
-            // now only while the glass pill is actually mounted.
-            realTimeCapture: glassMounted || widget.outerNeedsRealtime,
-            refreshRate: LiquidGlassRefreshRate.deviceRefreshRate,
-            useImpellerBackdrop: widget.useImpellerBackdrop,
-            backgroundWidget: _buildInner(
-              layout: layout,
-              pillFrac: hlFrac,
-              pillW: hlW,
-              pillH: hlH,
-              pillGlass: glassPresence,
-              magnifier: magnifierPill,
-            ),
-            children: [
-              // Stable, role-based keys so each outer lens keeps its own
-              // `State`. The pill no longer lives in this list, so the
-              // list's length is now invariant.
-              for (int i = 0; i < widget.outerLenses.length; i++)
-                widget.outerLenses[i].key != null
-                    ? widget.outerLenses[i]
-                    : widget.outerLenses[i]
-                        .copyWith(key: ValueKey('lg-nav-outer-$i')),
-            ],
-            // The pill is a lens WIDGET now, in the view's `child:` slot —
-            // the only place an externally-driven deformation can be
-            // rendered (a positioned `LiquidGlass` can only deform from
-            // its own internal touch driver). It refracts the same
-            // capture the positioned pill did: this view's background,
-            // which is the inner stack.
-            child: Stack(
-              fit: StackFit.expand,
+      // q 弹（实验）：手指按下只放大导航栏区域（胶囊 + 静态 pill 尺寸缩放），
+      // 页面背景不放大——整屏双管道捕获层不能整体 Transform。胶囊/pill 用
+      // 【尺寸缩放】（Impeller 上 Transform 包裹镜头会切断 backdrop 采样链
+      // 导致渲染空白），由 ListenableBuilder 独立驱动，不触发管道 rebuild。
+      return Listener(
+        onPointerDown: _onPressPointerDown,
+        onPointerUp: _onPressPointerUp,
+        onPointerCancel: _onPressPointerUp,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // OUTER view: captures the inner stack and composites the
+            // moving glass pill + the developer's outer lenses on top.
+            LiquidGlassView.withPositionedLenses(
+              controller: _outerViewController,
+              pixelRatio: widget.pixelRatio,
+              useSync: widget.useSync,
+              // Only capture while there is something to composite — which is
+              // now only while the glass pill is actually mounted.
+              realTimeCapture: glassMounted || widget.outerNeedsRealtime,
+              refreshRate: LiquidGlassRefreshRate.deviceRefreshRate,
+              useImpellerBackdrop: widget.useImpellerBackdrop,
+              backgroundWidget: _buildInner(
+                layout: layout,
+                pillFrac: hlFrac,
+                pillW: hlW,
+                pillH: hlH,
+                pillGlass: glassPresence,
+                magnifier: magnifierPill,
+                barCX: _barLeft + layout.width / 2,
+                barCY: parentHeight - _effBottomMargin - layout.height / 2,
+              ),
               children: [
-                if (glassMounted)
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: LiquidGlassNavBarMotionPill(
-                        center: Offset(pillCX, pillCY),
-                        active: _lifted,
-                        // The bar owns the size as well as the squash;
-                        // the pill's own morph spring stays out of it.
-                        morphProgress: morphProgress,
-                        envelopeSize: envelopeSize,
-                        restSize: pillRest,
-                        activeSize: pillLifted,
-                        style: _pillStyle(),
-                        restStyle: widget.restStyle,
-                        // The bar owns the model; the pill just draws it.
-                        deviation: dev,
-                        glassPresence: glassPresence,
-                        shadow: widget.pillShadow,
-                        honorBackdropAlpha: false,
-                      ),
-                    ),
-                  )
-                // Flat: the same rect the glass just vacated, painted as a
-                // plain fill. Placed from the pill's own centre rather than
-                // re-derived from the committed index, so the two can never
-                // disagree by a pixel at the hand-off.
-                else if (widget.showSelectionPill)
-                  Positioned(
-                    key: const ValueKey('lg-motion-nav-pill-static'),
-                    left: pillCX - pillRest.width / 2,
-                    top: pillCY - pillRest.height / 2,
-                    child: LiquidGlassBottomNavPillStatic(
-                      width: pillRest.width,
-                      height: pillRest.height,
-                      color: widget.restStyle.appearance.color,
-                      shape: widget.restStyle.shape,
-                    ),
-                  ),
-                if (widget.outerChild != null) widget.outerChild!,
+                // Stable, role-based keys so each outer lens keeps its own
+                // `State`. The pill no longer lives in this list, so the
+                // list's length is now invariant.
+                for (int i = 0; i < widget.outerLenses.length; i++)
+                  widget.outerLenses[i].key != null
+                      ? widget.outerLenses[i]
+                      : widget.outerLenses[i]
+                          .copyWith(key: ValueKey('lg-nav-outer-$i')),
               ],
+              // The pill is a lens WIDGET now, in the view's `child:` slot —
+              // the only place an externally-driven deformation can be
+              // rendered (a positioned `LiquidGlass` can only deform from
+              // its own internal touch driver). It refracts the same
+              // capture the positioned pill did: this view's background,
+              // which is the inner stack.
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (glassMounted)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: LiquidGlassNavBarMotionPill(
+                          center: Offset(pillCX, pillCY),
+                          active: _lifted,
+                          // The bar owns the size as well as the squash;
+                          // the pill's own morph spring stays out of it.
+                          morphProgress: morphProgress,
+                          envelopeSize: envelopeSize,
+                          restSize: pillRest,
+                          activeSize: pillLifted,
+                          style: _pillStyle(),
+                          restStyle: widget.restStyle,
+                          // The bar owns the model; the pill just draws it.
+                          deviation: dev,
+                          glassPresence: glassPresence,
+                          shadow: widget.pillShadow,
+                          honorBackdropAlpha: false,
+                        ),
+                      ),
+                    )
+                  // Flat: the same rect the glass just vacated, painted as a
+                  // plain fill. Placed from the pill's own centre rather than
+                  // re-derived from the committed index, so the two can never
+                  // disagree by a pixel at the hand-off.
+                  //
+                  // q 弹：静态 pill 用【尺寸缩放】而非 Transform——Impeller 上
+                  // Transform 包裹镜头会切断 backdrop 采样链导致渲染空白；
+                  // 尺寸变化不影响采样，且由 ListenableBuilder 独立驱动动画，
+                  // 不触发整棵捕获管道 rebuild。
+                  else if (widget.showSelectionPill)
+                    ListenableBuilder(
+                      listenable: _pressController,
+                      builder: (context, _) {
+                        final double s =
+                            widget.pressScale == null ? 1.0 : _pressScale.value;
+                        final double pW = pillRest.width * s;
+                        final double pH = pillRest.height * s;
+                        return Positioned(
+                          key: const ValueKey('lg-motion-nav-pill-static'),
+                          left: pillCX - pW / 2,
+                          top: pillCY - pH / 2,
+                          child: LiquidGlassBottomNavPillStatic(
+                            width: pW,
+                            height: pH,
+                            color: widget.restStyle.appearance.color,
+                            shape: widget.restStyle.shape,
+                          ),
+                        );
+                      },
+                    ),
+                  if (widget.outerChild != null) widget.outerChild!,
+                ],
+              ),
             ),
-          ),
-          // Unified gesture overlay: a quick tap on any cell selects it;
-          // a press-and-hold lifts the pill to drag.
-          Positioned(
-            key: const ValueKey('lg-animated-nav-gesture-overlay'),
-            left: _barLeft + layout.padding,
-            bottom: _effBottomMargin + layout.padding,
-            width: layout.width - 2 * layout.padding,
-            height: layout.cellHeight,
-            child: RawGestureDetector(
-              behavior: HitTestBehavior.opaque,
-              gestures: {
-                TapGestureRecognizer:
-                    GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
-                  () => TapGestureRecognizer(),
-                  (instance) => instance.onTapUp = _onTabBarTapUp,
-                ),
-                LongPressGestureRecognizer:
-                    GestureRecognizerFactoryWithHandlers<
-                        LongPressGestureRecognizer>(
-                  () => LongPressGestureRecognizer(
-                    duration: widget.longPressDuration,
+            // Unified gesture overlay: a quick tap on any cell selects it;
+            // a press-and-hold lifts the pill to drag. The long-press
+            // recognizer resolves its duration per tab on each pointer down
+            // (see [_PerTabLongPressGestureRecognizer]), so e.g. the "我的"
+            // tab can require 500ms while the others grab at the default
+            // 100ms; a slide inside the window still hands to the pan.
+            Positioned(
+              key: const ValueKey('lg-animated-nav-gesture-overlay'),
+              left: _barLeft + layout.padding,
+              bottom: _effBottomMargin + layout.padding,
+              width: layout.width - 2 * layout.padding,
+              height: layout.cellHeight,
+              child: RawGestureDetector(
+                behavior: HitTestBehavior.opaque,
+                gestures: {
+                  TapGestureRecognizer: GestureRecognizerFactoryWithHandlers<
+                      TapGestureRecognizer>(
+                    () => TapGestureRecognizer(),
+                    (instance) => instance.onTapUp = _onTabBarTapUp,
                   ),
-                  (instance) => instance
-                    ..onLongPressStart = _onTabPillLongPressStart
-                    ..onLongPressMoveUpdate = _onTabPillLongPressMoveUpdate
-                    ..onLongPressEnd = _onTabPillLongPressEnd
-                    ..onLongPressCancel = _onTabPillLongPressCancel,
-                ),
-                if (widget.directDragSwitch)
-                  PanGestureRecognizer:
+                  _PerTabLongPressGestureRecognizer:
                       GestureRecognizerFactoryWithHandlers<
-                          PanGestureRecognizer>(
-                    () => PanGestureRecognizer(),
+                          _PerTabLongPressGestureRecognizer>(
+                    () => _PerTabLongPressGestureRecognizer(
+                      defaultDuration: widget.longPressDuration,
+                      durationByIndex: widget.longPressDurationByIndex,
+                      resolveTabIndex: (globalDx) => _xToTabFrac(globalDx)
+                          .round()
+                          .clamp(0, _layout.itemCount - 1),
+                    ),
                     (instance) => instance
-                      ..onStart = _onPanStart
-                      ..onUpdate = _onPanUpdate
-                      ..onEnd = _onPanEnd
-                      ..onCancel = _onPanCancel,
+                      ..onLongPressStart = _onTabPillLongPressStart
+                      ..onLongPressMoveUpdate = _onTabPillLongPressMoveUpdate
+                      ..onLongPressEnd = _onTabPillLongPressEnd
+                      ..onLongPressCancel = _onTabPillLongPressCancel,
                   ),
-              },
+                  if (widget.directDragSwitch)
+                    PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<
+                        PanGestureRecognizer>(
+                      () => PanGestureRecognizer(),
+                      (instance) => instance
+                        ..onStart = _onPanStart
+                        ..onUpdate = _onPanUpdate
+                        ..onEnd = _onPanEnd
+                        ..onCancel = _onPanCancel,
+                    ),
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     });
   }
@@ -1212,9 +1484,8 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
       ),
       // On Impeller the under-pill magnifier lens owns the magnification;
       // the glass pill on top must not compound it (m² in the middle).
-      refraction: _useImpeller
-          ? refraction.copyWith(magnification: 1)
-          : refraction,
+      refraction:
+          _useImpeller ? refraction.copyWith(magnification: 1) : refraction,
     );
   }
 
@@ -1222,7 +1493,8 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
   /// this end of the morph, stripped of everything visible — no rim, no
   /// glint. [base] mirrors the pill's own shape resolution ([fallbackRadius]
   /// is the capsule radius used when the host authored no shape).
-  LiquidGlassShape _magnifierShape(LiquidGlassShape? base, double fallbackRadius) {
+  LiquidGlassShape _magnifierShape(
+      LiquidGlassShape? base, double fallbackRadius) {
     final s = base;
     if (s == null) {
       return LiquidGlassShape(
@@ -1282,6 +1554,8 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
     double? pillH,
     double pillGlass = 0,
     Widget? magnifier,
+    required double barCX,
+    required double barCY,
   }) {
     final Widget background = widget.backgroundColor == null
         ? widget.body
@@ -1340,16 +1614,34 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
           // same [_barLeft]/[_effBottomMargin] the shell, the gesture
           // overlay and the pill already use, so the four can never
           // disagree by a pixel.
+          //
+          // q 弹：胶囊用【尺寸缩放】（宽高按 pressScale 变化，left/bottom
+          // 反向补偿保持中心不动），不用 Transform——Impeller 上 Transform
+          // 包裹镜头会切断 backdrop 采样链导致渲染空白；ListenableBuilder
+          // 独立驱动动画，不触发捕获管道 rebuild。
           child: Stack(
             children: [
-              Positioned(
-                left: _barLeft,
-                bottom: _effBottomMargin,
-                width: layout.width,
-                height: layout.height,
-                child: IgnorePointer(
-                  child: LiquidGlassLens(style: capsuleStyle),
-                ),
+              ListenableBuilder(
+                listenable: Listenable.merge(
+                    [_pressController, _navSlideNotifier]),
+                builder: (context, _) {
+                  final double s = widget.pressScale == null
+                      ? 1.0
+                      : _pressScale.value;
+                  final double scaledW = layout.width * s;
+                  final double scaledH = layout.height * s;
+                  return Positioned(
+                    left: _barLeft +
+                        _navSlideDx -
+                        (scaledW - layout.width) / 2,
+                    bottom: _effBottomMargin - (scaledH - layout.height) / 2,
+                    width: scaledW,
+                    height: scaledH,
+                    child: IgnorePointer(
+                      child: LiquidGlassLens(style: capsuleStyle),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -1360,22 +1652,42 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
         // icons keep their size.
         if (magnifier != null) magnifier,
         // Cosmetic only — taps are owned by the outer gesture overlay.
-        IgnorePointer(
-          child: Material(
-            type: MaterialType.transparency,
-            child: LiquidGlassAnimatedBottomNavBarShell(
-              items: widget.items,
-              selectedIndex: _tabIndexCommitted,
-              itemStyle: widget.itemStyle,
-              layout: layout,
-              left: _barLeft,
-              bottom: _effBottomMargin,
-              highlightFrac: pillFrac,
-              highlightWidth: pillW,
-              highlightHeight: pillH,
-              underGlass: pillGlass,
-            ),
-          ),
+        // q 弹：图标壳是纯绘制（无 BackdropFilter/镜头采样），可安全用
+        // Transform 绕栏中心缩放，让图标 + 文案与胶囊一起放大（Impeller 上
+        // Transform 只对镜头类组件有 backdrop 采样问题）。
+        ListenableBuilder(
+          listenable: Listenable.merge([_pressController, _navSlideNotifier]),
+          builder: (context, _) {
+            final double s =
+                widget.pressScale == null ? 1.0 : _pressScale.value;
+            // 整栏跟手：图标壳在按压缩放后整体平移 _navSlideDx，与胶囊 /
+            // pill 的偏移一致——滑动时图标 + 文案跟胶囊一起轻微移动
+            // （纯绘制无镜头采样，平移安全）。
+            return Transform(
+              transform: Matrix4.identity()
+                ..translate(barCX, barCY)
+                ..scale(s, s, 1.0)
+                ..translate(-barCX, -barCY)
+                ..translate(_navSlideDx, 0),
+              child: IgnorePointer(
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: LiquidGlassAnimatedBottomNavBarShell(
+                    items: widget.items,
+                    selectedIndex: _tabIndexCommitted,
+                    itemStyle: widget.itemStyle,
+                    layout: layout,
+                    left: _barLeft,
+                    bottom: _effBottomMargin,
+                    highlightFrac: pillFrac,
+                    highlightWidth: pillW,
+                    highlightHeight: pillH,
+                    underGlass: pillGlass,
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ],
     );

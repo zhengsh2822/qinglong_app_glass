@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/selector_sheet.dart';
+import 'package:qinglong_app/base/ui/upload_pill_button.dart';
 import 'package:qinglong_app/base/ui/tree/models/script_data.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/others/scripts/script_code_detail_page.dart';
@@ -185,68 +186,27 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
   }
 
   Widget addWidget(BuildContext context) {
-    final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
-    final Color accent = isCyber
-        ? CyberColors.cyan
-        : ref.watch(themeProvider).primaryColor;
-    final Color iconColor = isCyber
-        ? CyberColors.titleWhite
-        : ref.watch(themeProvider).themeColor.titleColor();
-    return Container(
-      margin: const EdgeInsets.only(top: 10),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          showMoreOperate(
-            context,
-            [
-              CupertinoSheer(
-                title: "远程地址",
-                onTap: () {
-                  fromRemote(context);
-                },
-              ),
-              addDivider(),
-              CupertinoSheer(
-                title: "本地上传",
-                onTap: () {
-                  pickLocalFile();
-                },
-              )
-            ],
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-          decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: accent.withValues(alpha: 0.45), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: accent.withValues(alpha: 0.2),
-                blurRadius: 6,
-                spreadRadius: 0.3,
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(CupertinoIcons.add, size: 18, color: accent),
-              const SizedBox(width: 4),
-              Text(
-                "上传",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: iconColor,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return UploadPillButton(
+      onTap: () {
+        showMoreOperate(
+          context,
+          [
+            CupertinoSheer(
+              title: "远程地址",
+              onTap: () {
+                fromRemote(context);
+              },
+            ),
+            addDivider(),
+            CupertinoSheer(
+              title: "本地上传",
+              onTap: () {
+                pickLocalFile();
+              },
+            )
+          ],
+        );
+      },
     );
   }
 

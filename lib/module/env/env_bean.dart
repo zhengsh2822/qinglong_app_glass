@@ -57,4 +57,14 @@ class EnvBean {
   static EnvBean jsonConversion(Map<String, dynamic> json) {
     return EnvBean.fromJson(json);
   }
+
+  /// 搜索匹配（大小写不敏感）：关键词为空永远命中；命中 name/value/remarks
+  /// 任一字段即算匹配。所有列表过滤共用此方法，避免各页面重复实现遗漏转小写。
+  bool matchSearch(String keyword) {
+    if (keyword.isEmpty) return true;
+    final kw = keyword.toLowerCase();
+    return (name?.toLowerCase().contains(kw) ?? false) ||
+        (value?.toLowerCase().contains(kw) ?? false) ||
+        (remarks?.toLowerCase().contains(kw) ?? false);
+  }
 }

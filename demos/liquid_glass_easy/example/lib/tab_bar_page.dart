@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 
 /// Standalone entry point so this demo can be launched directly with:
@@ -160,6 +161,65 @@ class _TabBarPageState extends State<TabBarPage> {
   /// 文案沿用主项目任务页：全部 / 运行中 / 未使用 / 已禁用
   static const _topTabs = ['全部', '运行中', '未使用', '已禁用'];
 
+  /// 长按 Library(3) 0.5s 弹账号面板（实验：模拟主项目"我的"弹窗）。
+  void _showAccountSheet() {
+    final Color brand = _cyber ? _cyberCyan : _kBrand;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        decoration: BoxDecoration(
+          color: (_cyber ? const Color(0xFF1A1A24) : Colors.white)
+              .withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: (_cyber ? Colors.white : Colors.black)
+                    .withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: brand,
+                  child:
+                      const Icon(Icons.person, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    '实验账号面板',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              '长按 Library 满 0.5s 触发（其余 tab 0.1s 抓取拖拽 + 按压缩放）',
+              style: TextStyle(fontSize: 12.5, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Fill the phone width with a small edge margin, while keeping the four
@@ -184,7 +244,8 @@ class _TabBarPageState extends State<TabBarPage> {
       // The safe-area inset is folded in via bottomInset below.
       margin: const EdgeInsets.only(bottom: _bottom),
       style: LiquidGlassStyle(
-        shape: _cyber ? _cyberShape(_barHeight / 2) : _glassShape(_barHeight / 2),
+        shape:
+            _cyber ? _cyberShape(_barHeight / 2) : _glassShape(_barHeight / 2),
         appearance: _cyber
             ? const LiquidGlassAppearance(
                 color: Color(0x8C12121A), // 赛博：半透明深色（对齐苹果半透明结构）
@@ -222,6 +283,27 @@ class _TabBarPageState extends State<TabBarPage> {
           ),
         ),
       ),
+      // ── 实验：q 弹 + 按 tab 长按识别 ──────────────────────────
+      // q 弹：手指按下（点按/长按/拖动）导航栏区域放大，松开 elasticOut 弹回。
+      // 放大幅度：0.04 → 0.032 → 0.0256（再缩小 20%）。
+      pressScale: 1.0256,
+      // 长按识别：其余 tab 默认 0.1s 抓取拖拽；仅 Library(3) 0.5s 弹窗
+      longPressDuration: const Duration(milliseconds: 100),
+      longPressDurationByIndex: const {3: Duration(milliseconds: 500)},
+      // 长按"我的"：先消费长按（不抓 pill），滑动则转抓取放大镜；松手
+      // 且未滑动才确认弹窗（onLongTapTriggered）——修复"长按我的滑动
+      // 仍弹窗"的 bug。
+      onLongTapItem: (i) {
+        if (i == 3) {
+          HapticFeedback.mediumImpact();
+          return true;
+        }
+        return false;
+      },
+      onLongTapTriggered: (i) {
+        if (i == 3) _showAccountSheet();
+      },
+      directDragSwitch: true,
     );
     final Widget bottomPipeline = bottomBar.buildGlassPillBar(
       body: _OnAirFeed(title: _titles[_index], cyber: _cyber),
@@ -378,8 +460,7 @@ class _OnAirFeed extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: brand,
                       boxShadow: [
-                        BoxShadow(
-                            color: brand, blurRadius: 8, spreadRadius: 1),
+                        BoxShadow(color: brand, blurRadius: 8, spreadRadius: 1),
                       ],
                     ),
                   ),
@@ -414,8 +495,7 @@ class _OnAirFeed extends StatelessWidget {
           height: 46,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border:
-                Border.all(color: ink.withValues(alpha: 0.12), width: 1.4),
+            border: Border.all(color: ink.withValues(alpha: 0.12), width: 1.4),
             image: const DecorationImage(
               image: NetworkImage('https://picsum.photos/seed/dj/120/120'),
               fit: BoxFit.cover,

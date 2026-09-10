@@ -1,25 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 
+import 'tab_bar_page.dart' show TabBarPage;
+
 // =============================================================
-// Liquid Glass Easy — headline example: lens over image, blended.
+// Liquid Glass Easy — 本 demo 默认入口：底部液态玻璃导航栏实验页。
 //
-// A photo fills the screen and a few draggable glass shapes float on top, fused
-// by a LiquidGlassBlender: drag any two together and they merge into one liquid
-// surface (metaball), then pull apart as you separate them.
-//
-// Wrapped in LiquidGlassView so it refracts on BOTH backends — the live backdrop
-// on Impeller, the captured backgroundWidget on Skia.
-//
-// -------------------------------------------------------------------------
-// Want the full set of demos shown in the package README (control center,
-// slider, toggle, nav bar, corner styles)? They live next to this file in
-// example/lib/. Run the gallery with:
-//
-//     flutter run -t lib/gallery.dart
+// 评估对象：q 弹按压缩放 + 长按识别（我的 0.5s / 其余 0.1s）+ 整栏跟手滑动
+// （酷安式）。官方 LensImagePage 展示页已弃用为默认入口（如需查看可
+// `flutter run -t lib/main.dart` 临时改回）。
 // -------------------------------------------------------------------------
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // 预编译液态玻璃 shader：LiquidGlassLens 首次渲染即走完整 shader 路径，
+  // 避免首帧走 frosted fallback（fallback 仅模糊 + 细边框，无折射、无外圈
+  // 高光 —— "顶部 tab 外圈高光丢失"的根源之一）。
+  await LiquidGlassShaders.ensureLoaded();
   runApp(const MyApp());
 }
 
@@ -30,11 +27,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(useMaterial3: true),
-      home: const LensImagePage(),
+      theme: ThemeData(
+        brightness: Brightness.light,
+        useMaterial3: true,
+        scaffoldBackgroundColor: Colors.transparent,
+      ),
+      home: const TabBarPage(),
     );
   }
 }
+
 
 /// A page showcasing the blend over a photographic background.
 class LensImagePage extends StatefulWidget {

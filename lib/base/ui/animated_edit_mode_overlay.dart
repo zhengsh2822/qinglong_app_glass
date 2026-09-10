@@ -7,8 +7,8 @@ import 'package:qinglong_app/base/theme.dart';
 /// 用于编辑模式下底部"运行/停止/启用/禁用/置顶/删除"等功能页的弹出展示。
 ///
 /// 特性：
-/// - **从底部向上弹出动画**：进场使用 `Curves.easeOutCubic`，300ms
-/// - **退场动画**：向下滑出，`Curves.easeOutCubic`，300ms（与进场一致，末尾减速更可见）
+/// - **从底部向上弹出动画**：进场使用 `Curves.easeOutCubic`，260ms
+/// - **退场动画**：向下滑出，`Curves.easeOutCubic`，260ms（与进场一致，末尾减速更可见）
 /// - **进出均可打断**：进场过程中再次调用 [hide] 会从当前进度开始退场；
 ///   退场过程中再次调用 [show] 会从当前进度开始进场。底层依赖
 ///   `AnimationController.forward()` / `reverse()`，它们本身支持从当前值中断续动画。
@@ -113,10 +113,10 @@ class _AnimatedOverlayHostState extends ConsumerState<_AnimatedOverlayHost>
     widget.owner._host = this;
     _controller = AnimationController(
       vsync: this,
-      // 进场 220ms：弹出更干脆利落，避免 300ms 显得拖沓
-      duration: const Duration(milliseconds: 220),
+      // 进场 260ms：干脆利落，进出动画保持一致
+      duration: const Duration(milliseconds: 260),
       // 退场时长与进场一致，避免退场太快看不出来
-      reverseDuration: const Duration(milliseconds: 220),
+      reverseDuration: const Duration(milliseconds: 260),
     );
     // 从屏幕底部滑入
     _slideOffset = Tween<Offset>(
