@@ -15,6 +15,7 @@ import 'package:qinglong_app/base/ui/selector_sheet.dart';
 import 'package:qinglong_app/base/ui/upload_pill_button.dart';
 import 'package:qinglong_app/base/ui/tree/models/script_data.dart';
 import 'package:qinglong_app/main.dart';
+import 'package:qinglong_app/base/ui/script_image_preview_page.dart';
 import 'package:qinglong_app/module/others/scripts/script_code_detail_page.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -261,6 +262,18 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
     return GestureDetector(
       onTap: () async {
         try {
+          // 图片文件直接本地预览，不走文本读取（二进制 readAsString 会抛异常）
+          if (isImageFileName(getFileName())) {
+            Navigator.of(context).push(
+              CupertinoPageRoute(
+                builder: (context) => ScriptImagePreviewPage(
+                  fileName: getFileName(),
+                  localPath: file!.path,
+                ),
+              ),
+            );
+            return;
+          }
           String content = await file!.readAsString();
           Navigator.of(context).push(
             CupertinoPageRoute(
