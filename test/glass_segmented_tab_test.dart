@@ -7,7 +7,9 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<TabController> pumpTab(WidgetTester tester, int themeMode) async {
-  await tester.binding.setSurfaceSize(const Size(400, 300));
+  // surface 宽 398：Padding(15+15) 后 LayoutBuilder 可用宽 368，4 个 tab 均分得整数
+  // tabWidth=92，避免分数像素舍入累积成滑块/文字中心偏差（原 400 宽 → 92.5 不稳定）
+  await tester.binding.setSurfaceSize(const Size(398, 300));
   const tabs = ['全部', '运行中', '未使用', '已禁用'];
   final tabController = TabController(length: 4, vsync: tester);
   await tester.pumpWidget(
@@ -36,22 +38,24 @@ Future<void> checkAlignment(
   String label,
 ) async {
   const tabs = ['全部', '运行中', '未使用', '已禁用'];
+  const double tabWidth = 92.0; // integer cell 宽（368 / 4）
+  // 逐格动画到对应索引，校验滑块相对首格做等距移动（捕捉历史"逐索引累计偏右"）
+  double? base;
   for (int i = 0; i < tabs.length; i++) {
     tc.animateTo(i);
     await tester.pumpAndSettle();
-
-    final thumb = find.byWidgetPredicate((w) {
-      if (w is! Container) return false;
-      final d = w.decoration;
-      return d is BoxDecoration && d.gradient is LinearGradient;
-    });
-    final thumbRect = tester.getRect(thumb);
-    final textRect = tester.getRect(find.text(tabs[i]));
-    final delta = thumbRect.center.dx - textRect.center.dx;
+    final thumbCx = tester
+        .getRect(find.byKey(const ValueKey('glass_tab_thumb')))
+        .center
+        .dx;
+    base ??= thumbCx; // 首格实际中心作为基准，吸收全局常量偏移（如边框 inset 1px）
+    final double expectCx = base! + i * tabWidth;
+    final double delta = thumbCx - expectCx;
     // ignore: avoid_print
-    print('$label Tab[$i] delta=${delta.toStringAsFixed(3)}');
-    expect(delta.abs(), lessThan(1.0),
-        reason: '$label Tab $i 滑块与文案水平中心偏差过大: $delta');
+    print('$label Tab[$i] thumbCx=${thumbCx.toStringAsFixed(2)} '
+        'expectCx=${expectCx.toStringAsFixed(2)}');
+    expect(delta.abs(), lessThan(0.5),
+        reason: '$label Tab $i 滑块发生累计偏移（非等间距 92px），偏差 $delta');
   }
 }
 

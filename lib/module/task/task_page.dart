@@ -20,6 +20,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/pauseable_timer_mixin.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/module/task/add_task_page.dart';
@@ -49,10 +50,14 @@ class TaskPage extends ConsumerStatefulWidget {
 
 class TaskPageState extends ConsumerState<TaskPage>
     with TickerProviderStateMixin, WidgetsBindingObserver,
-        AutomaticKeepAliveClientMixin {
+        AutomaticKeepAliveClientMixin, PauseableTimerMixin<TaskPage> {
   // PageView 底部 tab 场景保活：切走不销毁，保留滚动位置与页内状态
   @override
   bool get wantKeepAlive => true;
+
+  /// 运行中状态轮询间隔：仅在"当前在任务页 + 存在运行中任务"时 3 秒刷新一次，
+  /// 无运行中 / 切走页面 / 退后台 立即停止（见 _pollRunning）。
+  static const Duration _runningPollInterval = Duration(seconds: 3);
 
   /// 全局字重（build 顶部统一 watch，供 helper/通知 builder 使用，避免非 build 上下文 watch 问题）
   FontWeight _globalFw = FontWeight.w400;
@@ -127,6 +132,11 @@ class TaskPageState extends ConsumerState<TaskPage>
     _tabController!.addListener(_onInnerTabChanged);
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // 启动"运行中状态"轻量轮询：只有在当前确为任务页且有运行中任务时才开销，
+    // 否则立即自我停止（见 _pollRunning）
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) startPauseableTimer(_runningPollInterval, _pollRunning);
+    });
     searchText.addListener(() {
       _searchDebounce?.cancel();
       _searchDebounce = Timer(const Duration(milliseconds: 300), () {
@@ -135,6 +145,33 @@ class TaskPageState extends ConsumerState<TaskPage>
     });
     // 监听全局 tab 切换信号，重置 Slidable 状态
     SlidableCloseNotifier.listenable.addListener(_onSlidableClose);
+  }
+
+  /// 运行中状态轮询回调：仅当"当前在任务页 + 有运行中任务"时才继续轮询，
+  /// 否则停止。数据更新走 viewModel.pollRunning（运行中集合无变化则零刷新）。
+  void _pollRunning() {
+    if (!mounted) return;
+    // 不在任务页（底部 tab 切走）→ 停止轮询
+    final int homeIdx = ref.read<int>(
+      SingleAccountPageState.ofHomeIndexProvider(context)(
+        getProviderName(context),
+      ),
+    );
+    if (homeIdx != 0) {
+      stopPauseableTimer();
+      return;
+    }
+    final notifier = ref.read(
+      SingleAccountPageState.ofTaskProvider(context)(
+        getProviderName(context),
+      ).notifier,
+    );
+    // 没有运行中任务 → 停止轮询（空闲零开销）
+    if (notifier.running.isEmpty) {
+      stopPauseableTimer();
+      return;
+    }
+    notifier.pollRunning(context);
   }
 
   int _lastInnerTabIndex = 0;
@@ -574,6 +611,7 @@ class TaskPageState extends ConsumerState<TaskPage>
     _tabController?.removeListener(_onInnerTabChanged);
     SlidableCloseNotifier.listenable.removeListener(_onSlidableClose);
     WidgetsBinding.instance.removeObserver(this);
+    cancelPauseableTimer();
     _editModeOverlay?.dispose();
     searchText.dispose();
     _scrollController.dispose();

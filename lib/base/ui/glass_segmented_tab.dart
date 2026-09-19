@@ -8,7 +8,11 @@ import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/blur_effect.dart';
+import 'package:qinglong_app/base/ui/blur_effect.dart' show blurEffectProvider;
+
+/// 顶部 Tab 大胶囊的毛玻璃模糊强度（独立于共享 kDefaultBlurSigma，本次由
+/// 20 → 10，与底部导航 shader 的 2 区分，视觉更柔和但不糊成一团）。
+const double _kTopTabBlurSigma = 10.0;
 
 /// 顶部 Tab —— 液态玻璃风格（v5：手势状态机移植自 top_tab_demo v6，视觉与 API 不变）
 ///
@@ -686,6 +690,7 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
                       alignment: Alignment.center,
                       transform: Matrix4.identity()..scale(sx, sy),
                       child: Container(
+                        key: const ValueKey('glass_tab_thumb'),
                         decoration: BoxDecoration(
                           color: widget.thumbColor,
                           borderRadius: BorderRadius.circular(17.5),
@@ -744,8 +749,8 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
                 borderRadius: BorderRadius.circular(22),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(
-                    sigmaX: kDefaultBlurSigma,
-                    sigmaY: kDefaultBlurSigma,
+                    sigmaX: _kTopTabBlurSigma,
+                    sigmaY: _kTopTabBlurSigma,
                   ),
                   child: capsuleBody,
                 ),
