@@ -475,12 +475,12 @@ class HomePageState extends ConsumerState<HomePage> {
         shape: isCyber ? cyberShape(30) : glassShape(30),
         appearance: isCyber
             ? const LiquidGlassAppearance(
-                color: Color(0x8C12121A), // 赛博：半透明深色（对齐苹果半透明结构）
+                color: Color(0xB312121A), // 赛博：半透明深色 70%（对齐苹果半透明结构）
                 blur: LiquidGlassBlur(sigmaX: 2, sigmaY: 2),
                 shadow: LiquidGlassShadow(blur: 9, opacity: 0.2),
               )
             : const LiquidGlassAppearance(
-                color: Color(0x8FFFFFFF),
+                color: Color(0xB3FFFFFF), // 苹果浅色背景 70%
                 blur: LiquidGlassBlur(sigmaX: 2, sigmaY: 2),
                 // 苹果浅色背景：阴影加深，避免大胶囊与背景融为一体
                 shadow: LiquidGlassShadow(blur: 9, opacity: 0.22),
