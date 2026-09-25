@@ -29,7 +29,6 @@
 ### 定时任务
 
 - 任务列表卡片化展示，支持左/右滑动操作（启用/禁用、收藏、运行、编辑、删除等）
-- 切换底部导航 Tab 时自动收起所有展开的滑动卡片（全局 `SlidableCloseNotifier` 通知器 + `ValueKey` 重建机制）
 - 任务详情、即时日志、历史日志查看
 - 日志支持长按选择复制，并启用 iOS 风格文本选择放大镜
 
@@ -47,20 +46,16 @@
 
 ### 脚本管理
 
-- 树形目录展示，顶部常驻胶囊形搜索栏（圆角 24），300ms 防抖递归过滤文件名/目录名
-- 脚本查看/编辑页：点击右上角搜索图标弹出搜索卡片，支持 `/re/flags` 正则语法，200ms 防抖
-- 搜索卡片含上一个（chevron_up）/下一个（chevron_down）/关闭（xmark）按钮
-- 通过 `WebView.runJavaScript` 注入 `appSearch/appSearchNext/appSearchPrev` 函数，使用 CodeMirror `getSearchCursor` + `markText` 高亮匹配
-- CSS 类 `.cm-app-search-match` / `.cm-app-search-current` 区分普通匹配与当前匹配
-- 代码高亮基于 `flutter_highlight`，支持 90+ 主题
-- 代码区 `SelectableText.rich` 同样启用 iOS 风格放大镜
+- 树形目录展示，顶部常驻胶囊形搜索栏，过滤文件名/目录名
+- 脚本查看/编辑页：点击右上角搜索图标弹出搜索卡片，支持正则语法
+- 搜索卡片含上一个/下一个/关闭按钮
+- 代码区启用 iOS 风格放大镜
 
 ### 京东助手（独立模块）
 
 - 独立青龙面板登录，自动从应用设置获取 clientId/clientSecret
 - Cookie 上传前校验 pt_key/pt_pin
 - 账号与青龙配置备份/恢复
-- 添加/编辑/删除账号弹窗统一使用 `_showBlurDialog` 模糊展开动画与卡片样式（三主题一致）
 
 ### 其他功能
 
