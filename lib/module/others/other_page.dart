@@ -20,7 +20,9 @@ import 'package:qinglong_app/base/ui/other_page_card.dart';
 import 'package:qinglong_app/module/in_app_purchase_page.dart';
 import 'package:qinglong_app/module/others/backup_page.dart';
 import 'package:qinglong_app/module/others/change_account_page.dart';
+import 'package:qinglong_app/module/others/client_ip_page.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_setting_page.dart';
+import 'package:qinglong_app/module/others/storage_retention_page.dart';
 import 'package:qinglong_app/module/others/sort_account_page.dart';
 import 'package:qinglong_app/module/others/text_size_page.dart';
 import 'package:qinglong_app/module/others/update_password_page.dart';
@@ -686,6 +688,29 @@ class OtherPageState extends ConsumerState<OtherPage>
                             Navigator.of(context).push(
                               CupertinoPageRoute(
                                 builder: (context) => const BackupPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildFeatureButton(
+                          title: "IP 与代理",
+                          icon: CupertinoIcons.arrow_left_right_circle,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (context) => const ClientIpPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildFeatureButton(
+                          title: "存储清理",
+                          icon: CupertinoIcons.trash,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder:
+                                    (context) => const StorageRetentionPage(),
                               ),
                             );
                           },

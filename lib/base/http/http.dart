@@ -712,6 +712,28 @@ class Http {
         lower.contains('<script');
   }
 
+  /// API 接口在面板上不存在时的统一提示。
+  ///
+  /// 青龙 Express 对未匹配的路径会落到 `app.get('*')` 的前端 SPA 兜底，
+  /// 返回 HTTP 200 + index.html。若面板的版本号（/ql/version.yaml）与实际
+  /// 运行代码不一致（更新未生效/部分更新），新接口就会这样"假装成功"。
+  static const String _apiNotExistMessage =
+      "接口不存在：面板返回网页而非数据，请确认面板已真正更新到对应版本";
+
+  /// 判断该响应是否属于 API 命名空间（/api 或 /open）。
+  ///
+  /// 青龙对 API 路径从不返回 HTML：正常走接口、异常返回 401/4xx JSON。
+  /// 因此 API 路径出现 200 + HTML 只能是"路由不存在"的 SPA 兜底，
+  /// 与 token 过期无关，重登再多次也不会成功。
+  static bool _isApiRequest(Response<dynamic> response) {
+    try {
+      final path = response.requestOptions.uri.path;
+      return path.startsWith('/api/') || path.startsWith('/open/');
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// 判断本地是否有足够凭证进行静默刷新
   bool _canSilentRelogin() {
     final userInfo = getIt<UserInfoViewModel>(
@@ -789,10 +811,38 @@ class Http {
     }
   }
 
+  /// 判断 401 是否为 OpenAPI 权限不足（而非 token 过期）。
+  ///
+  /// 青龙对 `/open/*` 的应用 scope 校验失败时，返回的是 UnauthorizedError →
+  /// HTTP 401 + `{code:401, message:'暂无权限'}`，与 token 过期同为 401。
+  /// 权限不足重登多少次都没用，必须与过期区分，否则会误弹"是否重新登录"。
+  static bool _isScopeDenied(dynamic data) {
+    dynamic decoded = data;
+    if (decoded is String) {
+      try {
+        decoded = jsonDecode(decoded);
+      } catch (_) {
+        return false;
+      }
+    }
+    if (decoded is! Map) return false;
+    final message = decoded["message"]?.toString() ?? "";
+    return message.contains("暂无权限");
+  }
+
   HttpResponse<T> exceptionHandler<T>(DioException e, String path) {
     try {
       logger.e(e);
       if (e.response?.statusCode == 401 && !Url.inWhiteList(path)) {
+        // OpenAPI 应用 scope 不足：不触发静默刷新（重登也无法获得权限），
+        // 直接返回明确提示引导用户去「应用设置」勾选对应权限
+        if (_isScopeDenied(e.response?.data)) {
+          return HttpResponse<T>(
+            success: false,
+            message: "暂无权限：请在「应用设置」中为该应用勾选对应权限",
+            code: 401,
+          );
+        }
         // 401 统一标记 needRelogin，由 get/post/put/delete 触发静默刷新
         return HttpResponse<T>(
           success: false,
@@ -873,6 +923,14 @@ class Http {
             data = jsonDecode(data);
           } catch (_) {
             if (_isHtmlResponse(data)) {
+              // API 路径返回 HTML = 前端 SPA 兜底（接口不存在），不是登录过期
+              if (_isApiRequest(response)) {
+                return HttpResponse<T>(
+                  success: false,
+                  code: 404,
+                  message: _apiNotExistMessage,
+                );
+              }
               return HttpResponse<T>(
                 success: false,
                 code: -1000,
@@ -941,6 +999,14 @@ class Http {
         // catch 分支也检测 HTML：jsonDecode 抛异常时，原始数据可能是 HTML 登录页
         final rawData = response.data;
         if (_isHtmlResponse(rawData)) {
+          // API 路径返回 HTML = 前端 SPA 兜底（接口不存在），不是登录过期
+          if (_isApiRequest(response)) {
+            return HttpResponse<T>(
+              success: false,
+              code: 404,
+              message: _apiNotExistMessage,
+            );
+          }
           return HttpResponse<T>(
             success: false,
             code: -1000,

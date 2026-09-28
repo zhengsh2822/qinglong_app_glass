@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:qinglong_app/module/config/config_detail_page.dart';
 import 'package:qinglong_app/module/config/config_edit_page.dart';
 import 'package:qinglong_app/module/dashboard/dashboard_page.dart';
+import 'package:qinglong_app/module/dashboard/dashboard_task_result_page.dart';
 import 'package:qinglong_app/module/env/add_env_page.dart';
 import 'package:qinglong_app/module/env/env_bean.dart';
 import 'package:qinglong_app/module/env/env_detail_page.dart';
@@ -53,6 +54,7 @@ class Routes {
   static const String routeTheme = "/theme";
   static const String routeICloud = "/icloud";
   static const String routeDashboard = "/dashboard";
+  static const String routeDashboardTaskResult = "/dashboard/taskResult";
   static const String routeJdck = "/jdck";
 
   static const String routeIcloudFile = "/icloudfile";
@@ -74,6 +76,13 @@ class Routes {
         return CupertinoPageRoute(builder: (context) => const SubscribePage());
       case routeDashboard:
         return CupertinoPageRoute(builder: (context) => const DashboardPage());
+      case routeDashboardTaskResult:
+        return CupertinoPageRoute(
+          builder:
+              (context) => DashboardTaskResultPage(
+                isSuccess: (settings.arguments as bool?) ?? true,
+              ),
+        );
       case routeSetting:
         return CupertinoPageRoute(builder: (context) => const SettingPage());
       case routeIcloudFile:

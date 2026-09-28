@@ -13,12 +13,15 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/module/task/add_task_page.dart';
+import 'package:qinglong_app/module/task/cron_instances_page.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_log_page.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 import 'package:qinglong_app/utils/utils.dart';
 import 'package:timezone/standalone.dart';
 
 import '../../../base/cron_parse.dart';
+import '../../home/system_bean.dart';
+import '../../../main.dart';
 
 class TaskDetailPage extends ConsumerStatefulWidget {
   final TaskBean taskBean;
@@ -204,6 +207,28 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
                           },
                         ),
                       ),
+                      Visibility(
+                        visible: _supportCronInstances(),
+                        child: TaskDetailCell(
+                          title: "运行实例",
+                          suffixIcon: Icon(
+                            CupertinoIcons.right_chevron,
+                            size: 16,
+                            color: ref.watch(themeProvider).themeColor.descColor(),
+                          ),
+                          desc: "查看历史运行实例",
+                          taped: () {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (context) => CronInstancesPage(
+                                  cronId: widget.taskBean.sId ?? "",
+                                  cronName: widget.taskBean.name ?? "",
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                       TaskDetailCell(
                         title: "运行状态",
                         desc: widget.taskBean.status == 0 ? "正在运行" : "空闲",
@@ -369,6 +394,18 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
         );
     isPin = !isPin;
     setState(() {});
+  }
+
+  /// 是否支持「历史运行实例」（青龙 2.22.0 及以上新增）
+  bool _supportCronInstances() {
+    try {
+      return getIt<SystemBean>(
+        instanceName:
+            (SingleAccountPageState.of(context)?.index ?? 0).toString(),
+      ).isUpperVersion2_22_0();
+    } catch (e) {
+      return false;
+    }
   }
 
   void delTask(BuildContext context1, WidgetRef ref) {

@@ -7,12 +7,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/http/api.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
+import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/log_entry_button.dart';
 import 'package:qinglong_app/module/home/system_bean.dart';
+import 'package:qinglong_app/module/task/intime_log/intime_log_page.dart';
 
 import '../../main.dart';
 
@@ -246,9 +249,25 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildContent(bool isCyber) {
+    final double gap = AppleColors.spaceMd;
+    // 性能：用 ListView 替代 Column + SingleChildScrollView。
+    // ListView 会为每个子项自动加 RepaintBoundary，滚动时只重绘新进入视口的项；
+    // 原先整页每帧重绘（7 张卡片的 BoxShadow + 趋势图每帧 TextPainter 文本布局）
+    // 是仪表盘滑动掉帧的主因。
+    final List<Widget> cards = [
+      _buildVersionCard(isCyber),
+      if (_overview != null) _buildOverviewCard(isCyber),
+      if (_trend.isNotEmpty) _buildTrendCard(isCyber),
+      if (_topTime.isNotEmpty) _buildTopTimeCard(isCyber),
+      if (_topCount.isNotEmpty) _buildTopCountCard(isCyber),
+      if (_labels.isNotEmpty) _buildLabelsCard(isCyber),
+      if (_runtime != null) _buildRuntimeCard(isCyber),
+      if (_system != null) _buildSystemCard(isCyber),
+    ];
+
     return RefreshIndicator(
       onRefresh: _loadData,
-      child: SingleChildScrollView(
+      child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.only(
           left: AppleColors.spaceMd,
@@ -256,40 +275,9 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
           top: AppleColors.spaceMd,
           bottom: MediaQuery.of(context).viewPadding.bottom + 30,
         ),
-        child: Column(
-          children: [
-            _buildVersionCard(isCyber),
-            const SizedBox(height: AppleColors.spaceMd),
-            if (_overview != null) ...[
-              _buildOverviewCard(isCyber),
-              const SizedBox(height: AppleColors.spaceMd),
-            ],
-            if (_trend.isNotEmpty) ...[
-              _buildTrendCard(isCyber),
-              const SizedBox(height: AppleColors.spaceMd),
-            ],
-            if (_topTime.isNotEmpty) ...[
-              _buildTopTimeCard(isCyber),
-              const SizedBox(height: AppleColors.spaceMd),
-            ],
-            if (_topCount.isNotEmpty) ...[
-              _buildTopCountCard(isCyber),
-              const SizedBox(height: AppleColors.spaceMd),
-            ],
-            if (_labels.isNotEmpty) ...[
-              _buildLabelsCard(isCyber),
-              const SizedBox(height: AppleColors.spaceMd),
-            ],
-            if (_runtime != null) ...[
-              _buildRuntimeCard(isCyber),
-              const SizedBox(height: AppleColors.spaceMd),
-            ],
-            if (_system != null) ...[
-              _buildSystemCard(isCyber),
-              const SizedBox(height: AppleColors.spaceMd),
-            ],
-          ],
-        ),
+        itemCount: cards.length,
+        separatorBuilder: (_, _) => SizedBox(height: gap),
+        itemBuilder: (context, index) => cards[index],
       ),
     );
   }
@@ -403,6 +391,11 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                 '今日成功',
                 '$todaySuccess',
                 CyberColors.neonGreen,
+                // 与网页版一致：点击查看今日成功任务明细
+                onTap: () => Navigator.of(context).pushNamed(
+                  Routes.routeDashboardTaskResult,
+                  arguments: true,
+                ),
               ),
             ),
             Expanded(
@@ -411,6 +404,11 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                 '今日失败',
                 '$todayFail',
                 CyberColors.neonRed,
+                // 与网页版一致：点击查看今日失败任务明细
+                onTap: () => Navigator.of(context).pushNamed(
+                  Routes.routeDashboardTaskResult,
+                  arguments: false,
+                ),
               ),
             ),
           ],
@@ -441,24 +439,18 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
-  // 近 7 日趋势卡片（折线图）
+  // 近 7 日趋势卡片（折线图，支持点按/横向拖动查看某日明细）
   Widget _buildTrendCard(bool isCyber) {
     return _buildSectionCard(
       isCyber: isCyber,
       title: '近 7 日趋势',
       icon: CupertinoIcons.graph_circle,
       children: [
-        SizedBox(
-          height: 160,
-          child: CustomPaint(
-            size: Size.infinite,
-            painter: _TrendChartPainter(
-              data: _trend,
-              isCyber: isCyber,
-              primaryColor: ref.watch(themeProvider).primaryColor,
-              descColor: ref.watch(themeProvider).themeColor.descColor(),
-            ),
-          ),
+        _TrendChart(
+          data: _trend,
+          isCyber: isCyber,
+          primaryColor: ref.watch(themeProvider).primaryColor,
+          descColor: ref.watch(themeProvider).themeColor.descColor(),
         ),
       ],
     );
@@ -606,10 +598,11 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
           const SizedBox(height: 8),
           ...running.take(5).map((item) {
             final m = item as Map<String, dynamic>;
+            final id = (m['id'] as num?)?.toInt() ?? 0;
             final name = m['name']?.toString() ?? '-';
             final pid = m['pid']?.toString() ?? '-';
             final elapsed = (m['elapsed'] as num?)?.toInt() ?? 0;
-            return _buildRunningTask(isCyber, name, pid, elapsed);
+            return _buildRunningTask(isCyber, id, name, pid, elapsed);
           }),
         ],
         if (idleTasks.isNotEmpty) ...[
@@ -672,7 +665,13 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
-  Widget _buildRunningTask(bool isCyber, String name, String pid, int elapsed) {
+  Widget _buildRunningTask(
+    bool isCyber,
+    int id,
+    String name,
+    String pid,
+    int elapsed,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -717,7 +716,24 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                   ref.watch(themeProvider).themeColor.descColor(),
             ),
           ),
+          const SizedBox(width: 10),
+          // 与网页版一致：运行中任务可直接查看最新日志
+          LogEntryButton(
+            label: '日志',
+            fontSize: 11,
+            onTap: () => _openLog(id, name),
+          ),
         ],
+      ),
+    );
+  }
+
+  /// 打开该任务的最新日志（复用实时日志页）
+  void _openLog(int id, String name) {
+    if (id <= 0) return;
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (context) => InTimeLogPage('$id', true, name),
       ),
     );
   }
@@ -957,17 +973,33 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
-  // 统计单元格
-  Widget _buildStatCell(bool isCyber, String label, String value, Color color) {
-    return Column(
+  // 统计单元格（onTap 非空时可点击，标签右侧显示小箭头提示）
+  Widget _buildStatCell(
+    bool isCyber,
+    String label,
+    String value,
+    Color color, {
+    VoidCallback? onTap,
+  }) {
+    final Color descColor = ref.watch(themeProvider).themeColor.descColor();
+    final Widget content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: isCyber ? 12 : 13,
-            color: ref.watch(themeProvider).themeColor.descColor(),
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: isCyber ? 12 : 13,
+                color: descColor,
+              ),
+            ),
+            if (onTap != null) ...[
+              const SizedBox(width: 2),
+              Icon(CupertinoIcons.chevron_right, size: 10, color: descColor),
+            ],
+          ],
         ),
         const SizedBox(height: 4),
         Text(
@@ -979,6 +1011,13 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
           ),
         ),
       ],
+    );
+
+    if (onTap == null) return content;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: content,
     );
   }
 
@@ -1142,6 +1181,199 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
   }
 }
 
+/// 近 7 日趋势折线图 + 点按浮层明细（对齐青龙网页版 hover 提示）
+///
+/// 交互：点按某一列显示该日「总执行/成功/失败」浮层；再点同一列关闭；
+/// 横向拖动可连续查看。选中态由本组件自持，避免拖动时整页 setState 重建。
+class _TrendChart extends StatefulWidget {
+  final List<Map<String, dynamic>> data;
+  final bool isCyber;
+  final Color primaryColor;
+  final Color descColor;
+
+  const _TrendChart({
+    required this.data,
+    required this.isCyber,
+    required this.primaryColor,
+    required this.descColor,
+  });
+
+  @override
+  State<_TrendChart> createState() => _TrendChartState();
+}
+
+class _TrendChartState extends State<_TrendChart> {
+  /// 图表高度（与浮层定位、其下坐标轴留白配合）
+  static const double _height = 160;
+
+  /// 与 _TrendChartPainter 布局保持一致：左侧 36px 给 y 轴刻度，右侧留 4px
+  static const double _chartLeft = 36.0;
+  static const double _chartRightPad = 4.0;
+
+  /// 选中的列下标（null 表示未选中，不显示浮层）
+  int? _selected;
+
+  int _indexAt(double dx, double width) {
+    final int count = widget.data.length;
+    final double chartWidth = width - _chartRightPad - _chartLeft;
+    if (count <= 1 || chartWidth <= 0) return 0;
+    final double stepX = chartWidth / (count - 1);
+    return ((dx - _chartLeft) / stepX).round().clamp(0, count - 1);
+  }
+
+  /// 点按：命中同一列则关闭浮层，便于查看完整图表
+  void _onTap(double dx, double width) {
+    if (widget.data.isEmpty) return;
+    final int index = _indexAt(dx, width);
+    setState(() => _selected = (_selected == index) ? null : index);
+  }
+
+  /// 拖动：只跟随，不做开关切换
+  void _onDrag(double dx, double width) {
+    if (widget.data.isEmpty) return;
+    final int index = _indexAt(dx, width);
+    if (index == _selected) return;
+    setState(() => _selected = index);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: _height,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final double width = constraints.maxWidth;
+          final int? selected = _selected;
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (details) => _onTap(details.localPosition.dx, width),
+            onHorizontalDragStart: (details) =>
+                _onDrag(details.localPosition.dx, width),
+            onHorizontalDragUpdate: (details) =>
+                _onDrag(details.localPosition.dx, width),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                RepaintBoundary(
+                  child: CustomPaint(
+                    size: Size.infinite,
+                    painter: _TrendChartPainter(
+                      data: widget.data,
+                      isCyber: widget.isCyber,
+                      primaryColor: widget.primaryColor,
+                      descColor: widget.descColor,
+                      selectedIndex: selected,
+                    ),
+                  ),
+                ),
+                if (selected != null && selected < widget.data.length)
+                  _buildTooltip(width, selected),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// 浮层明细：日期 + 总执行/成功/失败（与网页版一致）
+  Widget _buildTooltip(double width, int index) {
+    final Map<String, dynamic> row = widget.data[index];
+    final int count = widget.data.length;
+    final double chartWidth = width - _chartRightPad - _chartLeft;
+    final double pointX = count > 1
+        ? _chartLeft + chartWidth / (count - 1) * index
+        : _chartLeft + chartWidth / 2;
+
+    const double tipWidth = 118;
+    // 默认放在指示线右侧，右侧放不下则翻到左侧
+    double left = pointX + 10;
+    if (left + tipWidth > width - _chartRightPad) {
+      left = pointX - 10 - tipWidth;
+    }
+    left = left.clamp(0.0, (width - tipWidth).clamp(0.0, double.infinity));
+
+    final Color successColor = widget.isCyber
+        ? CyberColors.neonGreen
+        : AppColors.success;
+    final Color failColor =
+        widget.isCyber ? CyberColors.neonRed : AppColors.danger;
+
+    return Positioned(
+      left: left,
+      top: 4,
+      child: IgnorePointer(
+        child: Container(
+          width: tipWidth,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: widget.isCyber ? const Color(0xFF0E1620) : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: widget.isCyber
+                  ? widget.primaryColor.withValues(alpha: 0.45)
+                  : const Color(0x1F000000),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(
+                  alpha: widget.isCyber ? 0.5 : 0.12,
+                ),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                row['date']?.toString() ?? '',
+                style: TextStyle(fontSize: 11, color: widget.descColor),
+              ),
+              const SizedBox(height: 2),
+              _tooltipRow('总执行', row['total'], widget.primaryColor),
+              _tooltipRow('成功', row['success'], successColor),
+              _tooltipRow('失败', row['fail'], failColor),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _tooltipRow(String label, dynamic value, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 11, color: widget.descColor),
+            ),
+          ),
+          Text(
+            '${value ?? 0}',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: widget.isCyber ? Colors.white : AppleColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// 近 7 日趋势折线图（纯 CustomPaint 绘制，避免引入 fl_chart 依赖）
 class _TrendChartPainter extends CustomPainter {
   final List<Map<String, dynamic>> data;
@@ -1149,11 +1381,15 @@ class _TrendChartPainter extends CustomPainter {
   final Color primaryColor;
   final Color descColor;
 
+  /// 选中的列下标（null = 无选中，不画指示线与强调点）
+  final int? selectedIndex;
+
   _TrendChartPainter({
     required this.data,
     required this.isCyber,
     required this.primaryColor,
     required this.descColor,
+    this.selectedIndex,
   });
 
   @override
@@ -1176,6 +1412,14 @@ class _TrendChartPainter extends CustomPainter {
     }
 
     if (values.isEmpty) return;
+
+    // 成功/失败序列：虚线绘制与选中列强调点共用，避免重复遍历
+    final success = <double>[];
+    final fail = <double>[];
+    for (final row in data) {
+      success.add((row['success'] as num?)?.toDouble() ?? 0);
+      fail.add((row['fail'] as num?)?.toDouble() ?? 0);
+    }
 
     final maxV = values.reduce(math.max);
     final minV = 0.0;
@@ -1267,12 +1511,6 @@ class _TrendChartPainter extends CustomPainter {
       );
 
       // 成功/失败 虚线（如果数据存在）
-      final success = <double>[];
-      final fail = <double>[];
-      for (final row in data) {
-        success.add((row['success'] as num?)?.toDouble() ?? 0);
-        fail.add((row['fail'] as num?)?.toDouble() ?? 0);
-      }
       void drawDash(List<double> list, Color c) {
         final p = Path();
         for (var i = 0; i < list.length; i++) {
@@ -1325,12 +1563,46 @@ class _TrendChartPainter extends CustomPainter {
         tp.paint(canvas, Offset(x - tp.width / 2, chartBottom + 6));
       }
     }
+
+    // 选中列：竖向指示线 + 三个数据点强调（对应浮层里的 总执行/成功/失败）
+    final int? selected = selectedIndex;
+    if (selected != null && selected >= 0 && selected < values.length) {
+      final double stepX = values.length > 1
+          ? chartWidth / (values.length - 1)
+          : 0;
+      final double x = values.length > 1
+          ? chartLeft + stepX * selected
+          : chartLeft + chartWidth / 2;
+
+      canvas.drawLine(
+        Offset(x, chartTop),
+        Offset(x, chartBottom),
+        Paint()
+          ..color = color.withValues(alpha: 0.55)
+          ..strokeWidth = 1,
+      );
+
+      void mark(double value, Color c) {
+        final double y = chartTop + chartHeight * (1 - value / yMax);
+        canvas.drawCircle(Offset(x, y), 4.5, Paint()..color = c);
+        canvas.drawCircle(
+          Offset(x, y),
+          2,
+          Paint()..color = isCyber ? const Color(0xFF1A1A2E) : Colors.white,
+        );
+      }
+
+      mark(values[selected], color);
+      if (selected < success.length) mark(success[selected], successColor);
+      if (selected < fail.length) mark(fail[selected], failColor);
+    }
   }
 
   @override
   bool shouldRepaint(covariant _TrendChartPainter old) {
     return old.data != data ||
         old.isCyber != isCyber ||
-        old.primaryColor != primaryColor;
+        old.primaryColor != primaryColor ||
+        old.selectedIndex != selectedIndex;
   }
 }
