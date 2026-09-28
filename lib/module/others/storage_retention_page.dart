@@ -86,12 +86,14 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
     if (raw == null || raw.isEmpty) return null;
     try {
       final decoded = jsonDecode(raw);
-      if (decoded is Map<String, dynamic>) {
-        final data = decoded['data'];
-        if (data is Map<String, dynamic>) return data;
-        return decoded;
-      }
-      return null;
+      if (decoded is! Map) return null;
+      final data = decoded['data'] ?? decoded;
+      if (data is! Map) return null;
+      // GET /system/config 的字段在 info 下（runningInstanceRetentionDays /
+      // cronStatRetentionDays 与「日志清理时间」logRemoveFrequency 同层）；
+      // preview/cleanup 的返回没有 info，直接取 data
+      final info = data['info'];
+      return (info is Map ? info : data).cast<String, dynamic>();
     } catch (_) {
       return null;
     }
