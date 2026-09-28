@@ -879,21 +879,48 @@ class Http {
             code: responseData["code"] ?? 0,
           );
         } else {
+          // 非 JSON 响应体（空串 / HTML 兜底页）：服务端没给可读 message，
+          // 按状态码兜底，避免把 Dio 原始异常文本抛给用户
           return HttpResponse(
             success: false,
-            message: e.message ?? responseData.toString(),
+            message: _readableMessageByStatus(
+              e.response?.statusCode,
+              e.message,
+            ),
             code: e.response?.statusCode ?? 0,
           );
         }
       } else {
         return HttpResponse(
           success: false,
-          message: e.message,
+          message: _readableMessageByStatus(e.response?.statusCode, e.message),
           code: e.response?.statusCode ?? 0,
         );
       }
     } catch (e) {
       return HttpResponse(success: false, message: e.toString(), code: 400);
+    }
+  }
+
+  /// 响应体不是 JSON（拿不到服务端 message）时，按 HTTP 状态码给出可读提示。
+  ///
+  /// 典型场景：新接口在面板上不存在时 Express 返回 404，响应体为 HTML/空串，
+  /// 若直接透传 `e.message` 用户会看到
+  /// "This exception was thrown because the response has a status code of 404..."。
+  static String _readableMessageByStatus(int? status, String? fallback) {
+    switch (status) {
+      case 404:
+        return _apiNotExistMessage;
+      case 403:
+        return "暂无权限（403）";
+      case 500:
+        return "服务器错误（500）";
+      case 502:
+      case 503:
+      case 504:
+        return "面板服务不可用（$status），请确认面板进程已启动";
+      default:
+        return fallback ?? "网络请求失败";
     }
   }
 
