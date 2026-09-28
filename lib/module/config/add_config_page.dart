@@ -16,6 +16,7 @@ import 'package:qinglong_app/base/ui/upload_pill_button.dart';
 import 'package:qinglong_app/module/others/scripts/script_download_page.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/utils/file_picker_utils.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
 import '../../main.dart';
@@ -197,9 +198,9 @@ class _AddConfigPageState extends ConsumerState<AddConfigPage> {
   }
 
   void pickLocalFile() async {
-    dynamic result = await Future.value(null);
-    if (result != null && result.files.isNotEmpty && result.files.single.path != null) {
-      file = File(result.files.single.path!);
+    final result = await FilePickerUtils.pickFile();
+    if (result != null && result.path != null) {
+      file = File(result.path!);
 
       if (file == null) return;
       _nameController.text = getFileName();
