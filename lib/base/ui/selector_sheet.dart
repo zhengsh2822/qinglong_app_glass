@@ -65,6 +65,10 @@ Future<void> showSelectorSheet<T>({
       : container.read(themeProvider).primaryColor;
   final Color dividerColor =
       isCyber ? const Color(0x22FFFFFF) : const Color(0xFFE5E5EA);
+  // 弹窗卡片内文案跟随全局字体粗细（与列表卡片统一）
+  final FontWeight globalFw = FontWeight(
+    container.read(textWeightProvider),
+  );
 
   await showModalBottomSheet<void>(
     context: context,
@@ -99,7 +103,7 @@ Future<void> showSelectorSheet<T>({
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: globalFw,
                             color: isCyber
                                 ? CyberColors.cyan
                                 : AppleColors.textPrimary,
@@ -140,6 +144,7 @@ Future<void> showSelectorSheet<T>({
                         subTextColor: subTextColor,
                         dividerColor: dividerColor,
                         accent: accent,
+                        globalFw: globalFw,
                         showDivider: index != options.length - 1,
                         onTap: () {
                           Navigator.of(ctx).pop();
@@ -166,6 +171,7 @@ class _SelectorRow<T> extends StatelessWidget {
   final Color subTextColor;
   final Color dividerColor;
   final Color accent;
+  final FontWeight globalFw;
   final bool showDivider;
   final VoidCallback onTap;
 
@@ -177,6 +183,7 @@ class _SelectorRow<T> extends StatelessWidget {
     required this.subTextColor,
     required this.dividerColor,
     required this.accent,
+    required this.globalFw,
     required this.showDivider,
     required this.onTap,
   });
@@ -233,9 +240,8 @@ class _SelectorRow<T> extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 15,
-                            fontWeight: selected
-                                ? FontWeight.w600
-                                : FontWeight.w400,
+                            // 选项文案跟随全局字体粗细（选中态仅靠颜色/对勾区分）
+                            fontWeight: globalFw,
                             color: selected ? accent : mainTextColor,
                           ),
                         ),

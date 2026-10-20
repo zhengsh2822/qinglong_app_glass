@@ -589,7 +589,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       "历史账号",
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        // 弹窗卡片标题跟随全局字体粗细
+                        fontWeight: FontWeight(ref.read(textWeightProvider)),
                         color:
                             isCyber
                                 ? CyberColors.cyan
