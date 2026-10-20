@@ -64,7 +64,8 @@ class CupertinoSheer extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 16,
                     color: danger ? actionColor : textColor,
-                    fontWeight: FontWeight.w500,
+                    // 跟随全局字体粗细（四档 400/500/600/700），与列表卡片统一
+                    fontWeight: FontWeight(ref.watch(textWeightProvider)),
                   ),
                 ),
               ),
@@ -149,6 +150,10 @@ Widget _buildSheet(
       isCyber ? CyberColors.titleWhite : const Color(0xFF1A1A1A);
   final Color dividerColor =
       isCyber ? const Color(0x22FFFFFF) : const Color(0xFFE5E5EA);
+  // 弹层内所有文案跟随全局字体粗细（与 CupertinoSheer 操作项一致）
+  final FontWeight globalFw = FontWeight(
+    ProviderScope.containerOf(context).read(textWeightProvider),
+  );
 
   return SafeArea(
     top: false,
@@ -194,7 +199,7 @@ Widget _buildSheet(
                     '取消',
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: globalFw,
                       color: textColor,
                     ),
                   ),

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
+import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
@@ -177,15 +178,18 @@ class CyberGhostButton extends StatelessWidget {
           border: border,
         ),
         child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 15,
-              fontWeight: primary || danger ? FontWeight.w600 : FontWeight.w500,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 15,
+                // 弹窗卡片按钮跟随全局字体粗细（原来固定 w600/w500 会无视设置）
+                fontWeight: FontWeight(
+                  ProviderScope.containerOf(context).read(textWeightProvider),
+                ),
+              ),
             ),
           ),
-        ),
       ),
     );
 
@@ -248,7 +252,10 @@ Future<bool?> showEditTaskDialog(
                 style: TextStyle(
                   color: CyberColors.cyan,
                   fontSize: 17,
-                  fontWeight: FontWeight.w600,
+                  // 标题跟随全局字体粗细（弹窗卡片统一）
+                  fontWeight: FontWeight(
+                    ProviderScope.containerOf(context).read(textWeightProvider),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -360,7 +367,10 @@ Future<bool?> showCyberConfirmDialog(
               style: TextStyle(
                 color: danger ? CyberColors.neonRed : CyberColors.cyan,
                 fontSize: 17,
-                fontWeight: FontWeight.w600,
+                // 标题跟随全局字体粗细（弹窗卡片统一）
+                fontWeight: FontWeight(
+                  ProviderScope.containerOf(context).read(textWeightProvider),
+                ),
               ),
             ),
             const SizedBox(height: 12),

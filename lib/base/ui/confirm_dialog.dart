@@ -77,7 +77,10 @@ class DialogButton extends StatelessWidget {
               style: TextStyle(
                 color: textColor,
                 fontSize: 15,
-                fontWeight: primary || danger ? FontWeight.w600 : FontWeight.w500,
+                // 弹窗卡片按钮跟随全局字体粗细（原来固定 w600/w500 会无视设置）
+                fontWeight: FontWeight(
+                  ProviderScope.containerOf(context).read(textWeightProvider),
+                ),
               ),
             ),
           ),
@@ -373,7 +376,10 @@ Future<bool?> showConfirmDialog(
                 style: TextStyle(
                   color: theme.titleColor,
                   fontSize: 17,
-                  fontWeight: FontWeight.w600,
+                  // 标题跟随全局字体粗细（弹窗卡片统一）
+                  fontWeight: FontWeight(
+                    ProviderScope.containerOf(context).read(textWeightProvider),
+                  ),
                   letterSpacing: 0.3,
                 ),
               ),
@@ -451,7 +457,10 @@ Future<String?> showInputDialog(
                 style: TextStyle(
                   color: theme.titleColor,
                   fontSize: 17,
-                  fontWeight: FontWeight.w600,
+                  // 标题跟随全局字体粗细（弹窗卡片统一）
+                  fontWeight: FontWeight(
+                    ProviderScope.containerOf(context).read(textWeightProvider),
+                  ),
                   letterSpacing: 0.3,
                 ),
               ),
@@ -664,7 +673,10 @@ class _FrequencyDialogContentState extends State<_FrequencyDialogContent> {
             style: TextStyle(
               color: widget.theme.titleColor,
               fontSize: 17,
-              fontWeight: FontWeight.w600,
+              // 标题跟随全局字体粗细（弹窗卡片统一）
+              fontWeight: FontWeight(
+                ProviderScope.containerOf(context).read(textWeightProvider),
+              ),
               letterSpacing: 0.3,
             ),
           ),

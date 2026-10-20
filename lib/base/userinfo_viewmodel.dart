@@ -38,8 +38,12 @@ class UserInfoViewModel {
     _passWord = null;
     _alias = null;
     _useSecertLogined = false;
-    // 清理该账号在 getIt 中的所有单例,避免内存堆积
-    _unregisterAccountSingletons(index);
+    // 释放该账号的 Http 缓存/连接池后，把槽位重置为"全新空账号"状态。
+    // 关键：不能只 unregister 不重建 —— MultiAccountPage 的 IndexedStack 会保活
+    // 各账号页，而 SingleAccountPage.findLoginInfo 只在 initState 注册一次；
+    // 删除账号后若槽位单例缺失，任何 getIt(instanceName: index) 查询都会抛异常，
+    // 表现为账号列表页红屏、且只能重启 App 恢复（历史 bug，2026-10-19 实机复现）。
+    _resetAccountSlot(index);
   }
 
   void exitLoginFocus(int index) {
@@ -47,11 +51,15 @@ class UserInfoViewModel {
     updateToken(index, _host, _token, _useSecertLogined, _alias);
   }
 
-  /// 清理指定账号在 getIt 中注册的所有单例
-  /// 用于删除账号场景,避免多账号反复操作导致内存堆积
-  static void _unregisterAccountSingletons(int index) {
+  /// 把指定账号槽位重置为全新空账号
+  ///
+  /// 先释放旧单例（清理内存/连接池），再按 SingleAccountPage.findLoginInfo
+  /// 的"空账号"分支重新注册，保证槽位随时可被查询与复用：
+  /// [UserInfoViewModel]（空）/ [Url] / [SystemBean]（默认版本）。
+  /// Http 不预注册 —— 与首次使用一致，登录时由 registerHttp(host) 创建。
+  /// GlobalKey 不 unregister（框架会随 widget 卸载自动处理）。
+  static void _resetAccountSlot(int index) {
     final name = index.toString();
-    // Http 先调 clear 释放缓存和连接池,再 unregister
     if (getIt.isRegistered<Http>(instanceName: name)) {
       getIt<Http>(instanceName: name).clear();
       getIt.unregister<Http>(instanceName: name);
@@ -68,7 +76,12 @@ class UserInfoViewModel {
     if (getIt.isRegistered<ICloudUtils>(instanceName: name)) {
       getIt.unregister<ICloudUtils>(instanceName: name);
     }
-    // GlobalKey 不 unregister(框架会随 widget 卸载自动处理)
+    getIt.registerSingleton(UserInfoViewModel(), instanceName: name);
+    getIt.registerSingleton(Url(index), instanceName: name);
+    getIt.registerSingleton(
+      SystemBean(version: "2.13.0", fromAutoGet: false),
+      instanceName: name,
+    );
   }
 
   void updateToken(
