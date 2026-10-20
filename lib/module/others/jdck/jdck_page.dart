@@ -15,6 +15,7 @@ import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/utils/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -247,7 +248,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
     if (_qlToken == null || _qlToken!.isEmpty) return;
     setState(() => _qlChecking = true);
     try {
-      final address = _normalizeAddress(_qlAddressController.text);
+      final address = Utils.normalizeHost(_qlAddressController.text);
       final response = await _dio.get(
         '$address/open/envs?searchValue=',
         options: Options(headers: {'Authorization': 'Bearer $_qlToken'}),
@@ -297,7 +298,12 @@ class _JdckPageState extends ConsumerState<JdckPage> {
 
     setState(() => _qlChecking = true);
     try {
-      final normalizedAddr = _normalizeAddress(address);
+      final normalizedAddr = Utils.normalizeHost(address);
+      // 回写归一化后的地址（补 scheme / 裸 IPv6 补方括号），本地保存也用同一形式
+      if (normalizedAddr.isNotEmpty &&
+          normalizedAddr != _qlAddressController.text) {
+        _qlAddressController.text = normalizedAddr;
+      }
       final encodedClientId = Uri.encodeComponent(clientId);
       final encodedClientSecret = Uri.encodeComponent(clientSecret);
       final response = await _dio.get(
@@ -320,7 +326,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
 
       // 保存配置
       final prefs = await _getPrefs();
-      await prefs.setString(_spQlAddress, address);
+      await prefs.setString(_spQlAddress, normalizedAddr);
       await prefs.setString(_spQlClientId, clientId);
       await prefs.setString(_spQlClientSecret, clientSecret);
       await prefs.setString(_spQlToken, token);
@@ -351,12 +357,6 @@ class _JdckPageState extends ConsumerState<JdckPage> {
       });
       '已退出青龙面板登录'.toast();
     }
-  }
-
-  String _normalizeAddress(String addr) {
-    var a = addr.trim();
-    if (a.endsWith('/')) a = a.substring(0, a.length - 1);
-    return a;
   }
 
   void _injectSmsCode(String code) {
@@ -494,7 +494,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
   /// 使用独立登录的token调用/open/envs接口
   Future<void> _updateCookie(String cookie) async {
     try {
-      final address = _normalizeAddress(_qlAddressController.text);
+      final address = Utils.normalizeHost(_qlAddressController.text);
       final headers = {
         'Authorization': 'Bearer $_qlToken',
         'Content-Type': 'application/json',
@@ -847,7 +847,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                     _buildDialogTextField(
                       controller: _qlAddressController,
                       label: '面板地址',
-                      hint: 'http://ip:5700',
+                      hint: 'http://ip:5700（支持 IPv6）',
                       textColor: textColor,
                       subTextColor: subTextColor,
                     ),
@@ -1565,7 +1565,10 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                           }
                           if (data['qlInfo'] != null) {
                             final ql = data['qlInfo'] as Map<String, dynamic>;
-                            final address = ql['address'] ?? '';
+                            // 备份里的地址可能是旧格式（缺 scheme / 裸 IPv6），恢复时统一归一化
+                            final address = Utils.normalizeHost(
+                              (ql['address'] ?? '').toString(),
+                            );
                             final clientId = ql['clientId'] ?? '';
                             final clientSecret = ql['clientSecret'] ?? '';
                             final token = ql['token'];

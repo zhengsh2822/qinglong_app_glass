@@ -266,7 +266,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           isCyber,
           label: '域名',
           controller: _hostController,
-          hint: 'http://1.1.1.1:5700',
+          hint: 'http://1.1.1.1:5700（支持 IPv6）',
         ),
         const SizedBox(height: 16),
         _buildField(
@@ -466,20 +466,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ),
                 onPressed: () async {
-                  // 自动补全 http:// 前缀
-                  // 用户输入 192.168.31.109:5700 时自动补成 http://192.168.31.109:5700
-                  final host = _hostController.text.trim();
-                  if (host.isNotEmpty &&
-                      !host.startsWith("http://") &&
-                      !host.startsWith("https://")) {
-                    _hostController.text = "http://$host";
+                  // 规范化面板地址：自动补 http:// 前缀 + 裸 IPv6 自动补方括号
+                  // 如 192.168.31.109:5700 → http://192.168.31.109:5700
+                  //    240e:1a2b::1:5700   → http://[240e:1a2b::1]:5700
+                  final host = Utils.normalizeHost(_hostController.text);
+                  if (host.isNotEmpty && host != _hostController.text) {
+                    // 回写输入框，保证历史账号/重新注册用的都是规范化后的地址
+                    _hostController.text = host;
                     _hostController.selection = TextSelection.fromPosition(
-                      TextPosition(offset: _hostController.text.length),
+                      TextPosition(offset: host.length),
                     );
                   }
                   SingleAccountPageState.of(
                     context,
-                  )?.registerHttp(_hostController.text);
+                  )?.registerHttp(host);
                   SingleAccountPageState.ofHttp(context)?.pushedLoginPage =
                       false;
                   Utils.hideKeyBoard(context);
