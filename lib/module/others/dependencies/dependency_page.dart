@@ -21,6 +21,7 @@ import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/base/ui/enable_widget.dart';
 import 'package:qinglong_app/base/ui/running_widget.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
+import 'package:qinglong_app/base/ui/spring_depth_page_track.dart';
 import 'package:qinglong_app/module/others/dependencies/add_dependency_page.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_viewmodel.dart';
@@ -59,6 +60,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
 
     _tabController = TabController(length: types.length, vsync: this);
     _tabController!.addListener(_onInnerTabChanged);
+    _tabTravel.value = _tabController!.index.toDouble();
     searchText.addListener(() {
       _searchDebounce?.cancel();
       _searchDebounce = Timer(const Duration(milliseconds: 300), () {
@@ -69,15 +71,18 @@ class DependcyPageState extends ConsumerState<DependencyPage>
   }
 
   int _lastInnerTabIndex = 0;
+
+  /// 顶部分段滑块的连续位置（滑块弹簧是唯一物理源，页面景深轨道跟随）
+  final ValueNotifier<double> _tabTravel = ValueNotifier<double>(0);
+
   void _onInnerTabChanged() {
-    // 仅在 tab 动画结束后再重置 Slidable 状态，避免在动画过程中重建
-    // TabBarView 导致的页面切换动画被中断（页面瞬间切换，没有滑动效果）
-    if (_tabController!.index != _lastInnerTabIndex &&
-        !_tabController!.indexIsChanging) {
+    // 轨道切换需要立即拿到新目标页（景深豁免/层级/TickerMode），index 一变就 setState；
+    // Slidable 关闭走 SlidableCloseNotifier 信号（原 TabBarView 动画中断问题已不存在，
+    // 不再用 _slidableResetKey 重建子树的方式，页面滚动位置得以保留）
+    if (_tabController!.index != _lastInnerTabIndex) {
       _lastInnerTabIndex = _tabController!.index;
-      setState(() {
-        _slidableResetKey++;
-      });
+      SlidableCloseNotifier.notify();
+      setState(() {});
     }
   }
 
@@ -320,6 +325,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                           ],
                           tabController: _tabController!,
                           editMode: editMode,
+                          travelListenable: _tabTravel,
                         ),
                       ),
                     ),
@@ -336,9 +342,9 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                         types[_tabController!.index].name,
                       );
                     },
-                    child: TabBarView(
-                      controller: _tabController,
-                      physics: const NeverScrollableScrollPhysics(),
+                    child: SpringDepthPageTrack(
+                      position: _tabTravel,
+                      current: _tabController!.index,
                       children:
                           types.map((e) {
                             List<DependencyBean> list;
@@ -640,6 +646,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
     SlidableCloseNotifier.listenable.removeListener(_onSlidableClose);
     searchText.dispose();
     controller?.dispose();
+    _tabTravel.dispose();
     _tabController?.dispose();
     _editModeOverlay?.dispose();
     super.dispose();

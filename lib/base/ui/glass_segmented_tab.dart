@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart' show blurEffectProvider;
+import 'package:qinglong_app/base/ui/spring_sheet.dart';
 
 /// 顶部 Tab 大胶囊的毛玻璃模糊强度（独立于共享 kDefaultBlurSigma，本次由
 /// 20 → 10，与底部导航 shader 的 2 区分，视觉更柔和但不糊成一团）。
@@ -38,11 +39,17 @@ class GlassSegmentedTab extends ConsumerStatefulWidget {
   final TabController tabController;
   final bool editMode;
 
+  /// 每帧外发滑块连续绘制位置（frac，拖拽时=跟手值，其余=弹簧值）。
+  /// 宿主据此驱动整页景深切换（页面与滑块同一物理，天然同步）。
+  /// 由宿主持有并 dispose；滑块只写不 dispose。
+  final ValueNotifier<double>? travelListenable;
+
   const GlassSegmentedTab({
     super.key,
     required this.tabs,
     required this.tabController,
     this.editMode = false,
+    this.travelListenable,
   });
 
   @override
@@ -112,6 +119,7 @@ class _GlassSegmentedTabState extends ConsumerState<GlassSegmentedTab> {
               child: _LiquidTabBarSlider(
                 tabs: widget.tabs,
                 tabController: widget.tabController,
+                travelListenable: widget.travelListenable,
                 bgColor: bgColor,
                 bgBorder: bgBorder,
                 thumbColor: thumbColor,
@@ -137,6 +145,7 @@ enum _Phase { idle, down, longPress, drag }
 class _LiquidTabBarSlider extends StatefulWidget {
   final List<String> tabs;
   final TabController tabController;
+  final ValueNotifier<double>? travelListenable;
   final Color bgColor;
   final Border? bgBorder;
   final Color thumbColor;
@@ -151,6 +160,7 @@ class _LiquidTabBarSlider extends StatefulWidget {
   const _LiquidTabBarSlider({
     required this.tabs,
     required this.tabController,
+    required this.travelListenable,
     required this.bgColor,
     required this.bgBorder,
     required this.thumbColor,
@@ -212,9 +222,11 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
   static const double _touchSlop = 10.0; // 触摸 slop：累计位移超过才算拖动
   static const double _flingVelocity = 1000.0; // fling 速度阈值（px/s）
   static const double _velocityWindow = 0.12; // 松手速度采样窗口（秒）
-  // 弹簧参数（liquid_glass_demo 调好的 travel spring）
-  static const double _travelStiffness = 280;
-  static const double _travelDamping = 31.4;
+  // 弹簧参数：统一弹簧规格，与弹窗卡片共用 SpringSheetSpec.open（全局唯一，
+  // ζ≈0.74 过冲≈3%，页面级不得单独调参，避免与弹窗/底部导航手感割裂）
+  // （final 而非 const：SpringDescription 属性不能进 const 表达式）
+  static final double _travelStiffness = SpringSheetSpec.open.stiffness;
+  static final double _travelDamping = SpringSheetSpec.open.damping;
   // 加速度模型参数（liquid_glass_demo nav pill 调好的参数）
   static const double _sampleWindow = 0.3;
   static const double _sensitivity = 0.00007;
@@ -234,6 +246,12 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
     _travelTarget = _travelPos;
     widget.tabController.addListener(_onControllerChanged);
     _ticker = createTicker(_onTick);
+    _emitTravel();
+  }
+
+  /// 外发滑块连续绘制位置（页面景深切换跟随用，每帧同步一次）
+  void _emitTravel() {
+    widget.travelListenable?.value = _dragging ? _dragFollow : _travelPos;
   }
 
   @override
@@ -247,6 +265,7 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
       _travelTarget = _travelPos;
       _travelVel = 0;
       _travelActive = false;
+      _emitTravel();
     }
   }
 
@@ -409,6 +428,7 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
     _dragTarget = (_fracFromLocal(dx) + _grabOffsetFrac)
         .clamp(0.0, (_count - 1).toDouble());
     _setStateSafe();
+    _emitTravel();
   }
 
   /// CANCEL：安全回滚到选中菜单 + 全量清理
@@ -417,6 +437,7 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
     final double from = _dragging ? _dragFollow : _travelPos;
     _resetGestureState();
     _startSpring(_selectedIndex.toDouble(), from: from);
+    _emitTravel();
   }
 
   /// 每次手势开始/结束：清零全部手势状态（计时器、速度、锁定标志、按下态），零残留
@@ -429,14 +450,15 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
     _velSamples.clear();
   }
 
-  /// 唯一选择入口（单一数据源）：selectedIndex 变更 → 弹簧目标 + TabController 页面联动。
+  /// 唯一选择入口（单一数据源）：selectedIndex 变更 → 弹簧目标 + 页面联动。
   /// [from] 指定弹簧起点（拖动松手用跟手位置，其余默认当前视觉位置）；
-  /// 动画被打断时直接以新目标为准（覆盖 _travelTarget 即可）。
+  /// 动画被打断时以新目标为准并继承当前速度（与 demo/底部导航一致，连点改道连续）。
   void _select(int next, {double? from}) {
     final bool changed = _selectedIndex != next;
     _selectedIndex = next;
     _startSpring(next.toDouble(),
-        from: from ?? (_dragging ? _dragFollow : _travelPos));
+        from: from ?? (_dragging ? _dragFollow : _travelPos),
+        inheritVelocity: true);
     if (widget.tabController.index != next) {
       widget.tabController.animateTo(
         next,
@@ -447,19 +469,23 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
     if (!changed) {
       _log('SELECT → same index $next (spring refresh only)');
     }
+    _emitTravel();
   }
 
-  /// 弹簧奔向目标（纯可视化；保留欠阻尼过冲 + 果冻变形采样）
-  void _startSpring(double targetFrac, {required double from}) {
+  /// 弹簧奔向目标（纯可视化；保留欠阻尼过冲 + 果冻变形采样）。
+  /// [inheritVelocity] 打断改道时继承当前速度（拖拽松手/取消回滚传 false 保持原语义）。
+  void _startSpring(double targetFrac,
+      {required double from, bool inheritVelocity = false}) {
     _dragging = false;
     _travelActive = true;
     _travelPos = from;
-    _travelVel = 0;
+    if (!inheritVelocity) _travelVel = 0;
     _travelTarget = targetFrac;
     final span = _travelTarget - _travelPos;
     _travelSign = span.abs() < 1e-6 ? 0 : span.sign;
     _startTicker();
     _setStateSafe();
+    _emitTravel();
   }
 
   /// 外部同步专用：只改弹簧目标、不清速度（页面拖动下滑块平滑追目标，无二次弹跳）
@@ -471,6 +497,7 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
     if (span.abs() >= 1e-6) _travelSign = span.sign;
     _startTicker();
     _setStateSafe();
+    _emitTravel();
   }
 
   /// 松手速度（px/s）：速度窗内首尾斜率
@@ -572,6 +599,7 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
       _ticker?.stop();
     }
 
+    _emitTravel();
     if (mounted) setState(() {});
   }
 
@@ -800,11 +828,13 @@ class GlassSegmentedTabDelegate extends SliverPersistentHeaderDelegate {
   final List<String> tabs;
   final TabController tabController;
   final bool editMode;
+  final ValueNotifier<double>? travelListenable;
 
   const GlassSegmentedTabDelegate({
     required this.tabs,
     required this.tabController,
     this.editMode = false,
+    this.travelListenable,
   });
 
   @override
@@ -817,6 +847,7 @@ class GlassSegmentedTabDelegate extends SliverPersistentHeaderDelegate {
       tabs: tabs,
       tabController: tabController,
       editMode: editMode,
+      travelListenable: travelListenable,
     );
   }
 
@@ -830,6 +861,7 @@ class GlassSegmentedTabDelegate extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(covariant GlassSegmentedTabDelegate oldDelegate) {
     return tabs != oldDelegate.tabs ||
         tabController != oldDelegate.tabController ||
-        editMode != oldDelegate.editMode;
+        editMode != oldDelegate.editMode ||
+        travelListenable != oldDelegate.travelListenable;
   }
 }

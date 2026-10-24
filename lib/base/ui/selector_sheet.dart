@@ -5,6 +5,7 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glow_sheet.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
+import 'package:qinglong_app/base/ui/spring_sheet.dart';
 
 /// 通用弹窗选择器（参考 push_setting_page 的"选择通知方式"）
 ///
@@ -70,12 +71,8 @@ Future<void> showSelectorSheet<T>({
     container.read(textWeightProvider),
   );
 
-  await showModalBottomSheet<void>(
+  await showSpringSheet<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.5),
-    isScrollControlled: true,
-    enableDrag: true,
     builder: (ctx) {
       return SafeArea(
         top: false,

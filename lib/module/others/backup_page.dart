@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
 import 'package:qinglong_app/base/ui/selectable_chip.dart';
+import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/file_picker_utils.dart';
 import 'package:qinglong_app/utils/icloud_utils.dart';
@@ -422,9 +423,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
   /// 选择恢复来源：最近备份 / 从文件管理器选择
   Future<String?> _showRestoreSourceSheet() async {
-    return showModalBottomSheet<String>(
+    return showSpringSheet<String>(
       context: context,
-      backgroundColor: Colors.transparent,
       builder: (context) {
         final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
         final bool blurEnabled = ref.watch(blurEffectProvider);
@@ -544,9 +544,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   Future<void> _showBackupResultSheet(String savePath,
       {required bool isSuccess}) async {
     if (!mounted) return;
-    await showModalBottomSheet<void>(
+    await showSpringSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
       builder: (context) {
         final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
         final bool blurEnabled = ref.watch(blurEffectProvider);
@@ -691,10 +690,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
   /// 文件选择 BottomSheet（85% 高度，确保长文件名显示完整）
   Future<String?> _showFileSelectSheet(List<File> files) async {
-    return showModalBottomSheet<String>(
+    return showSpringSheet<String>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) {
         final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
         final bool blurEnabled = ref.watch(blurEffectProvider);

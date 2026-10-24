@@ -23,6 +23,7 @@ import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/pauseable_timer_mixin.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
+import 'package:qinglong_app/base/ui/spring_depth_page_track.dart';
 import 'package:qinglong_app/module/task/add_task_page.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_log_page.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
@@ -130,6 +131,7 @@ class TaskPageState extends ConsumerState<TaskPage>
   void initState() {
     _tabController = TabController(length: 4, vsync: this);
     _tabController!.addListener(_onInnerTabChanged);
+    _tabTravel.value = _tabController!.index.toDouble();
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // 启动"运行中状态"轻量轮询：只有在当前确为任务页且有运行中任务时才开销，
@@ -175,15 +177,18 @@ class TaskPageState extends ConsumerState<TaskPage>
   }
 
   int _lastInnerTabIndex = 0;
+
+  /// 顶部分段滑块的连续位置（滑块弹簧是唯一物理源，页面景深轨道跟随）
+  final ValueNotifier<double> _tabTravel = ValueNotifier<double>(0);
+
   void _onInnerTabChanged() {
-    // 仅在 tab 动画结束后再重置 Slidable 状态，避免在动画过程中重建
-    // TabBarView 导致的页面切换动画被中断（页面瞬间切换，没有滑动效果）
-    if (_tabController!.index != _lastInnerTabIndex &&
-        !_tabController!.indexIsChanging) {
+    // 轨道切换需要立即拿到新目标页（景深豁免/层级/TickerMode），index 一变就 setState；
+    // Slidable 关闭走 SlidableCloseNotifier 信号（原 TabBarView 动画中断问题已不存在，
+    // 不再用 _slidableResetKey 重建子树的方式，页面滚动位置得以保留）
+    if (_tabController!.index != _lastInnerTabIndex) {
       _lastInnerTabIndex = _tabController!.index;
-      setState(() {
-        _slidableResetKey++;
-      });
+      SlidableCloseNotifier.notify();
+      setState(() {});
     }
   }
 
@@ -515,6 +520,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                                     ],
                                     tabController: _tabController!,
                                     editMode: editMode,
+                                    travelListenable: _tabTravel,
                                   ),
                                 ),
                               ),
@@ -532,9 +538,10 @@ class TaskPageState extends ConsumerState<TaskPage>
                               key: ValueKey(
                                 'task_tab_slidable_${_slidableResetKey}',
                               ),
-                              child: TabBarView(
-                                controller: _tabController,
-                                physics: const NeverScrollableScrollPhysics(),
+                              // 弹簧景深轨道（B 方案）：页面跟随顶部滑块弹簧
+                              child: SpringDepthPageTrack(
+                                position: _tabTravel,
+                                current: _tabController!.index,
                                 children: [
                                   body(model, model.list, ref, true),
                                   body(model, model.running, ref, false),
@@ -615,6 +622,7 @@ class TaskPageState extends ConsumerState<TaskPage>
     _editModeOverlay?.dispose();
     searchText.dispose();
     _scrollController.dispose();
+    _tabTravel.dispose();
     _tabController?.dispose();
     super.dispose();
   }

@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/hsl_color_picker.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
+import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
@@ -132,10 +133,8 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
     final Color initialColor =
         (isPrimary ? _primaryCustom : _secondaryCustom) ?? defaultColor;
 
-    showModalBottomSheet(
+    showSpringSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder: (ctx) {
         return _ColorPickerSheet(
           initialColor: initialColor,

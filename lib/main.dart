@@ -258,6 +258,8 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final baseTheme = ref.watch<ThemeViewModel>(themeProvider).currentTheme;
     final theme = _withGlobalFontWeight(baseTheme, textFontWeight);
+    // 主题圆形扩散期间：立即应用新主题，避免与扩散遮罩叠加成双重过渡
+    final bool themeRevealActive = ref.watch(themeRevealActiveProvider);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: "青龙客户端",
@@ -294,7 +296,10 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
               behavior: const ScrollPhysicsConfig(),
               child: AnimatedTheme(
                 data: theme,
-                duration: const Duration(milliseconds: 600),
+                duration:
+                    themeRevealActive
+                        ? Duration.zero
+                        : const Duration(milliseconds: 600),
                 curve: Curves.easeInOutCubic,
                 child: child ?? Container(),
               ),
