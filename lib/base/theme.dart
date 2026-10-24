@@ -20,6 +20,14 @@ final StateProvider<int> textWeightProvider = StateProvider<int>((ref) {
   return SpUtil.getInt(spTextFontWeight, defValue: 400);
 });
 
+/// 主题扩散动画进行中标记
+///
+/// 扩散遮罩自身完成视觉过渡，期间主框架 AnimatedTheme 需立即应用新主题
+/// （duration = 0），避免再做 600ms 颜色插值造成双重过渡。
+final StateProvider<bool> themeRevealActiveProvider = StateProvider<bool>(
+  (ref) => false,
+);
+
 Color whiteColor = const Color(0xfff1f1f1);
 
 int modeLight = 0;
@@ -223,18 +231,19 @@ class ThemeViewModel extends ChangeNotifier {
     changeThemeReal(_themeMode, false);
   }
 
+  /// 跟随系统时应使用的主题：暗色 → 赛博；亮色 → VIP 白色 / 普通浅色
+  int get systemThemeMode {
+    if (PlatformDispatcher.instance.platformBrightness == Brightness.dark) {
+      return modeCyber;
+    }
+    return SpUtil.getInt(spVIP, defValue: typeNormal) != typeNormal
+        ? modeWhite
+        : modeLight;
+  }
+
   void changeThemeWithSystemStatus([bool must = true]) {
     if (SpUtil.getBool(spThemeFollowSystem, defValue: false) == false) return;
-    var brightness = PlatformDispatcher.instance.platformBrightness;
-    int theme;
-    if (brightness == Brightness.dark) {
-      theme = modeCyber;
-    } else {
-      theme =
-          SpUtil.getInt(spVIP, defValue: typeNormal) != typeNormal
-              ? modeWhite
-              : modeLight;
-    }
+    final int theme = systemThemeMode;
     if (!must && _themeMode == theme) return;
     changeThemeReal(theme);
   }
@@ -293,6 +302,15 @@ class ThemeViewModel extends ChangeNotifier {
   }
 
   get themeMode => _themeMode;
+
+  /// 立即切换主题（无 600ms 颜色插值），供圆形扩散动画使用
+  ///
+  /// 与 [changeTheme] 的区别：直接落最终色并通知，视觉过渡交由扩散遮罩完成。
+  void changeThemeInstant(int themeMode) {
+    if (_themeMode == themeMode) return;
+    changeThemeReal(themeMode, false);
+    notifyListeners();
+  }
 
   ThemeData getWhiteTheme() {
     return ThemeData.light().copyWith(

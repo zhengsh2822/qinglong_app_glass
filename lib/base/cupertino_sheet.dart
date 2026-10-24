@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glow_sheet.dart';
-
-const double _sheetBarrierDim = 0.65;
+import 'package:qinglong_app/base/ui/spring_sheet.dart';
 
 /// 底部操作弹层操作项
 ///
@@ -102,39 +101,11 @@ void showMoreOperate(BuildContext context, List<Widget> list) {
       ProviderScope.containerOf(context).read(themeProvider).themeMode ==
       modeCyber;
 
-  if (isCyber) {
-    _showCyberMoreOperate(context, list);
-    return;
-  }
-
-  _showAppleMoreOperate(context, list);
-}
-
-void _showAppleMoreOperate(BuildContext context, List<Widget> list) {
-  // 用 showModalBottomSheet（enableDrag 支持顶部横条上下拖动关闭/改变弹窗）
-  showModalBottomSheet<void>(
+  // 统一走弹簧弹层：弹出 / 关闭 / 拖拽松手 / 中途打断
+  // 与其它底部弹层共用同一组数值（见 SpringSheetSpec），不再各页各写
+  showSpringSheet<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: _sheetBarrierDim),
-    isScrollControlled: true,
-    enableDrag: true,
-    builder: (ctx) {
-      return _buildSheet(ctx, list, isCyber: false);
-    },
-  );
-}
-
-void _showCyberMoreOperate(BuildContext context, List<Widget> list) {
-  // 用 showModalBottomSheet（enableDrag 支持顶部横条上下拖动关闭/改变弹窗）
-  showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: _sheetBarrierDim),
-    isScrollControlled: true,
-    enableDrag: true,
-    builder: (ctx) {
-      return _buildSheet(ctx, list, isCyber: true);
-    },
+    builder: (ctx) => _buildSheet(ctx, list, isCyber: isCyber),
   );
 }
 
@@ -184,23 +155,25 @@ Widget _buildSheet(
             ),
           ),
           const SizedBox(height: 10),
-          // 取消按钮（独立胶囊，与列表分离）
-          GlowSheetContainer(
-            isCyber: isCyber,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(18),
-                onTap: () => Navigator.of(context).pop(),
-                child: Container(
-                  height: 50,
-                  alignment: Alignment.center,
-                  child: Text(
-                    '取消',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: globalFw,
-                      color: textColor,
+          // 取消按钮（独立胶囊，与列表分离）；SpringSheetTrailing 让它比主卡片略滞后
+          SpringSheetTrailing(
+            child: GlowSheetContainer(
+              isCyber: isCyber,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    height: 50,
+                    alignment: Alignment.center,
+                    child: Text(
+                      '取消',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: globalFw,
+                        color: textColor,
+                      ),
                     ),
                   ),
                 ),

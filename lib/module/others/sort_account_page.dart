@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
+import 'package:qinglong_app/base/ui/elastic_reorder_list.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
@@ -97,14 +98,27 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 30, top: 10),
-        child: ReorderableListView(
+        child: ElasticReorderList<TokenBean>(
+          items: list,
+          // 拖拽组件要求每一项 key 唯一：多个账号登录同一 host 或存在未登录
+          // 账号时 host 可能重复，用 ValueKey(e.host) 会重复 → 卡片错乱。
+          // 改用 ObjectKey(e) 以对象引用唯一性为 key（重排时引用不变，key 稳定）。
+          itemKey: (TokenBean e) => ObjectKey(e),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          // 长按拖动时：保持卡片原始样式（选中状态 = 未选中状态）
-          // 用户需求：不要出现浮起方块/阴影/缩放，圆角卡片以外的背景全透明。
-          // 因此 proxyDecorator 直接返回 child 原样，不做任何包装，
-          // 这样 ReorderableListView 默认的浮起 Material 阴影不会叠加。
-          proxyDecorator: (child, index, animation) => child,
+          autoScroll: false,
+          itemBuilder: (BuildContext context, TokenBean e, int index) {
+            return CapsuleGlowCard(
+              isCyber: isCyber,
+              isPinned: false,
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(18),
+                child: buildCell(e),
+              ),
+            );
+          },
           onReorder: (int oldIndex, int newIndex) {
             setState(() {
               //交换数据
@@ -115,33 +129,6 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
               list.insert(newIndex, item);
             });
           },
-          children:
-              list
-                  .map(
-                    (e) => ReorderableDelayedDragStartListener(
-                      // ReorderableListView 强制要求卡片 key 唯一：多个账号登录同一
-                      // host（同样登录账号）或存在未登录账号时，host 可能重复，
-                      // 用 ValueKey(e.host) 会导致 key 重复 → 卡片只显示一部分、
-                      // 长按自动下移/跳动、拖动不稳。改用 ObjectKey(e) 以对象引用
-                      // 唯一性为 key（重排时对象引用不变，key 保持稳定）。
-                      key: ObjectKey(e),
-                      index: list.indexOf(e),
-                      child: CapsuleGlowCard(
-                        isCyber: isCyber,
-                        isPinned: false,
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(18),
-                          child: buildCell(e),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
         ),
       ),
     );

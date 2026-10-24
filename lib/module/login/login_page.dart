@@ -14,6 +14,7 @@ import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/in_app_purchase_page.dart';
@@ -540,10 +541,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   /// 历史账号底部弹窗（卡片圆角统一 18px）
   void _showHistoryAccountsSheet(bool isCyber) {
-    showModalBottomSheet(
+    showSpringSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder: (sheetContext) {
         final accounts = getIt<MultiAccountUserInfoViewModel>().historyAccounts;
         final sheetBg =
