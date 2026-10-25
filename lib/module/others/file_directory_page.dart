@@ -8,6 +8,7 @@ import 'package:qinglong_app/utils/extension.dart';
 
 import '../../base/theme.dart';
 import 'scripts/script_code_detail_page.dart';
+import '../../base/ui/container_page_route.dart';
 
 class FileDirectoryPage extends ConsumerStatefulWidget {
   final String path;
@@ -44,7 +45,7 @@ class _FileDirectoryPageState extends ConsumerState<FileDirectoryPage> {
             onTap: () async {
               if (isDirectly) {
                 Navigator.of(context).push(
-                  CupertinoPageRoute(
+                  ContainerPageRoute(
                     builder: (context) => FileDirectoryPage(
                       path: paths[index],
                     ),
@@ -54,7 +55,7 @@ class _FileDirectoryPageState extends ConsumerState<FileDirectoryPage> {
                 try {
                   String content = await File(paths[index]).readAsString();
                   Navigator.of(context).push(
-                    CupertinoPageRoute(
+                    ContainerPageRoute(
                       builder: (context) => ScriptCodeDetailPage(
                         title: paths[index].replaceAll(widget.path, "").replaceAll("/", ""),
                         content: content,

@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/log_entry_button.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_log_page.dart';
+import '../../base/ui/container_page_route.dart';
 
 /// 今日成功 / 今日失败 任务明细页
 ///
@@ -83,7 +84,7 @@ class DashboardTaskResultPageState extends ConsumerState<DashboardTaskResultPage
   /// 打开该任务的最新日志（复用实时日志页）
   void _openLog(int id, String name, String command) {
     Navigator.of(context).push(
-      CupertinoPageRoute(
+      ContainerPageRoute(
         builder: (context) => InTimeLogPage('$id', true, name, command: command),
       ),
     );

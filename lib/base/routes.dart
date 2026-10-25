@@ -28,6 +28,7 @@ import 'package:qinglong_app/module/subscribe/subscribe_detail_page.dart';
 import 'package:qinglong_app/module/subscribe/subscribe_page.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 import 'package:qinglong_app/module/task/task_detail/task_detail_page.dart';
+import 'package:qinglong_app/base/ui/container_page_route.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
 class Routes {
@@ -62,47 +63,47 @@ class Routes {
   static Route<dynamic>? generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case routeHomePage:
-        return CupertinoPageRoute(builder: (context) => const HomePage());
+        return ContainerPageRoute(builder: (context) => const HomePage());
       case routeLogin:
-        return MaterialPageRoute(
+        return ContainerPageRoute(
           builder:
               (context) => LoginPage(
                 fromAddNewAccount: (settings.arguments as bool?) ?? false,
               ),
         );
       case routeICloud:
-        return CupertinoPageRoute(builder: (context) => const IcloudPage());
+        return ContainerPageRoute(builder: (context) => const IcloudPage());
       case routeSubscribeList:
-        return CupertinoPageRoute(builder: (context) => const SubscribePage());
+        return ContainerPageRoute(builder: (context) => const SubscribePage());
       case routeDashboard:
-        return CupertinoPageRoute(builder: (context) => const DashboardPage());
+        return ContainerPageRoute(builder: (context) => const DashboardPage());
       case routeDashboardTaskResult:
-        return CupertinoPageRoute(
+        return ContainerPageRoute(
           builder:
               (context) => DashboardTaskResultPage(
                 isSuccess: (settings.arguments as bool?) ?? true,
               ),
         );
       case routeSetting:
-        return CupertinoPageRoute(builder: (context) => const SettingPage());
+        return ContainerPageRoute(builder: (context) => const SettingPage());
       case routeIcloudFile:
-        return CupertinoPageRoute(builder: (context) => const IcloudFilePage());
+        return ContainerPageRoute(builder: (context) => const IcloudFilePage());
 
       case routeAddDependency:
-        return CupertinoPageRoute(
+        return ContainerPageRoute(
           builder: (context) => const AddDependencyPage(),
         );
       case routeAddEnv:
         if (settings.arguments != null) {
-          return CupertinoPageRoute(
+          return ContainerPageRoute(
             builder:
                 (context) => AddEnvPage(envBean: settings.arguments as EnvBean),
           );
         } else {
-          return CupertinoPageRoute(builder: (context) => const AddEnvPage());
+          return ContainerPageRoute(builder: (context) => const AddEnvPage());
         }
       case routeConfigEdit:
-        return CupertinoPageRoute(
+        return ContainerPageRoute(
           builder:
               (context) => ConfigEditPage(
                 (settings.arguments as Map)["title"],
@@ -110,7 +111,7 @@ class Routes {
               ),
         );
       case routeConfigDetail:
-        return CupertinoPageRoute(
+        return ContainerPageRoute(
           builder:
               (context) => ConfigDetailPage(
                 bean: (settings.arguments as Map)["bean"],
@@ -118,24 +119,24 @@ class Routes {
               ),
         );
       case routeLoginLog:
-        return CupertinoPageRoute(builder: (context) => const LoginLogPage());
+        return ContainerPageRoute(builder: (context) => const LoginLogPage());
       case routeTaskLog:
         if (settings.arguments != null) {
-          return CupertinoPageRoute(
+          return ContainerPageRoute(
             builder:
                 (context) => TaskLogPage(
                   searchText: (settings.arguments as Map)["search"],
                 ),
           );
         } else {
-          return CupertinoPageRoute(builder: (context) => TaskLogPage());
+          return ContainerPageRoute(builder: (context) => TaskLogPage());
         }
       case routeScript:
-        return CupertinoPageRoute(builder: (context) => const ScriptPage());
+        return ContainerPageRoute(builder: (context) => const ScriptPage());
       case routeDependency:
-        return CupertinoPageRoute(builder: (context) => const DependencyPage());
+        return ContainerPageRoute(builder: (context) => const DependencyPage());
       case routeScriptDetail:
-        return CupertinoPageRoute(
+        return ContainerPageRoute(
           builder:
               (context) => ScriptDetailPage(
                 title: (settings.arguments as Map)["title"],
@@ -143,28 +144,28 @@ class Routes {
               ),
         );
       case routeTaskDetail:
-        return CupertinoPageRoute(
+        return ContainerPageRoute(
           builder: (context) => TaskDetailPage(settings.arguments as TaskBean),
         );
       case routeSubscribeDetail:
-        return CupertinoPageRoute(
+        return ContainerPageRoute(
           builder:
               (context) => SubscribeDetailPage(
                 settings.arguments as Map<String, dynamic>,
               ),
         );
       case routeEnvDetail:
-        return CupertinoPageRoute(
+        return ContainerPageRoute(
           builder: (context) => EnvDetailPage(settings.arguments as EnvBean),
         );
       case routeUpdatePassword:
-        return CupertinoPageRoute(
+        return ContainerPageRoute(
           builder: (context) => const UpdatePasswordPage(),
         );
       case routeAbout:
-        return CupertinoPageRoute(builder: (context) => const AboutPage());
+        return ContainerPageRoute(builder: (context) => const AboutPage());
       case routeScriptUpdate:
-        return CupertinoPageRoute(
+        return ContainerPageRoute(
           builder:
               (context) => ScriptEditPage(
                 (settings.arguments as Map)["title"],
@@ -173,7 +174,7 @@ class Routes {
               ),
         );
       case routeScriptAdd:
-        return CupertinoPageRoute(
+        return ContainerPageRoute(
           builder:
               (context) => ScriptAddPage(
                 (settings.arguments as Map)["title"],
@@ -181,7 +182,7 @@ class Routes {
               ),
         );
       case routeJdck:
-        return CupertinoPageRoute(builder: (context) => const JdckPage());
+        return ContainerPageRoute(builder: (context) => const JdckPage());
     }
 
     return null;

@@ -20,10 +20,14 @@ import 'package:qinglong_app/base/ui/running_widget.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_subscribe_log_page.dart';
+import 'package:qinglong_app/base/ui/card_transition_source.dart';
 import 'package:qinglong_app/module/task/task_viewmodel.dart';
+import 'package:qinglong_app/module/subscribe/subscribe_detail_page.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
 import 'subscribe_viewmodel.dart';
+import '../../base/ui/container_page_route.dart';
+import 'package:qinglong_app/base/ui/content_entrance.dart';
 
 class SubscribePage extends ConsumerStatefulWidget {
   const SubscribePage({Key? key}) : super(key: key);
@@ -115,7 +119,7 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
             onTap: () {
               Navigator.of(context)
                   .push(
-                    CupertinoPageRoute(
+                    ContainerPageRoute(
                       builder:
                           (context) => const AddSubscribePage(taskBean: {}),
                     ),
@@ -141,7 +145,11 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
       ),
       body: BaseStateWidget<SubscribeViewModel>(
         builder: (ref, model, child) {
-          return body(model, getListByType(model), ref);
+          return ContentEntrance(
+            // LOADING→CONTENT 切换时内容柔和进场（首次挂载播放一次）：
+            // 淡入 + 轻微上移归位，替换"加载完成直接闪现"的生硬切换
+            child: body(model, getListByType(model), ref),
+          );
         },
         model: SingleAccountPageState.ofSubscribeProvider(context)(
           getProviderName(context),
@@ -291,7 +299,7 @@ class TaskItemCell extends StatelessWidget {
                 onTap: () {
                   Navigator.of(context)
                       .push(
-                        CupertinoPageRoute(
+                        ContainerPageRoute(
                           builder:
                               (context) => AddSubscribePage(taskBean: bean),
                         ),
@@ -409,7 +417,7 @@ class TaskItemCell extends StatelessWidget {
                 onTap: () {
                   Navigator.of(context)
                       .push(
-                        CupertinoPageRoute(
+                        ContainerPageRoute(
                           builder:
                               (context) => AddSubscribePage(taskBean: bean),
                         ),
@@ -502,111 +510,111 @@ class TaskItemCell extends StatelessWidget {
   }
 
   /// 卡片主体内容（赛博/非赛博共用）
+  /// 卡片共享展开：点击卡片 → 卡片内容隐藏 → 容器从卡片矩形展开订阅详情页；
+  /// 卡片外壳保持可见，收回时无缝衔接
   Widget _buildCardChild(BuildContext context, {required bool isCyber}) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () {
-          Navigator.of(
-            context,
-          ).pushNamed(Routes.routeSubscribeDetail, arguments: bean);
-        },
+    return CardTransitionSource(
+      child: Material(
+        color: Colors.transparent,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),
           child: Container(
             width: MediaQuery.of(context).size.width,
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-            child: Column(
-                mainAxisSize: MainAxisSize.min,
+            child: _buildSubscribeContent(context),
+          ),
+        ),
+      ),
+      sourceBuilder:
+          (ctx) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+            child: _buildSubscribeContent(ctx),
+          ),
+      pageBuilder: (context) => SubscribeDetailPage(bean),
+    );
+  }
+
+  /// 订阅卡片内容列（真实卡片与共享转场源共用，两处布局必须一致）
+  Widget _buildSubscribeContent(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            ConstrainedBox(
-                              constraints: BoxConstraints.loose(
-                                Size.fromWidth(
-                                  MediaQuery.of(context).size.width / 2,
-                                ),
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: Text(
-                                  bean["name"] ?? "",
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    overflow: TextOverflow.ellipsis,
-                                    color: ref
-                                        .watch(themeProvider)
-                                        .themeColor
-                                        .titleColor(),
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 7),
-                            bean["status"] == 0
-                                ? const RunningWidget()
-                                : const SizedBox.shrink(),
-                            const SizedBox(width: 7),
-                            (bean["is_disabled"] ?? 0) == 1
-                                ? const StatusWidget(
-                                  title: "已禁用",
-                                  color: Color(0xffFB5858),
-                                )
-                                : const SizedBox.shrink(),
-                          ],
+                  ConstrainedBox(
+                    constraints: BoxConstraints.loose(
+                      Size.fromWidth(MediaQuery.of(context).size.width / 2),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Text(
+                        bean["name"] ?? "",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          overflow: TextOverflow.ellipsis,
+                          color:
+                              ref
+                                  .watch(themeProvider)
+                                  .themeColor
+                                  .titleColor(),
+                          fontSize: 16,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Material(
-                    color: Colors.transparent,
-                    child: Text(
-                      bean["schedule"] ?? "",
-                      maxLines: 1,
-                      style: TextStyle(
-                        overflow: TextOverflow.ellipsis,
-                        color: ref
-                            .watch(themeProvider)
-                            .themeColor
-                            .descColor(),
-                        fontSize: 12,
-                      ),
                     ),
                   ),
-                  const SizedBox(height: 5),
-                  Material(
-                    color: Colors.transparent,
-                    child: Text(
-                      bean["url"] ?? "",
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        overflow: TextOverflow.ellipsis,
-                        color: ref
-                            .watch(themeProvider)
-                            .themeColor
-                            .descColor(),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
+                  const SizedBox(width: 7),
+                  bean["status"] == 0
+                      ? const RunningWidget()
+                      : const SizedBox.shrink(),
+                  const SizedBox(width: 7),
+                  (bean["is_disabled"] ?? 0) == 1
+                      ? const StatusWidget(
+                        title: "已禁用",
+                        color: Color(0xffFB5858),
+                      )
+                      : const SizedBox.shrink(),
                 ],
               ),
             ),
+          ],
         ),
-      ),
+        const SizedBox(height: 5),
+        Material(
+          color: Colors.transparent,
+          child: Text(
+            bean["schedule"] ?? "",
+            maxLines: 1,
+            style: TextStyle(
+              overflow: TextOverflow.ellipsis,
+              color: ref.watch(themeProvider).themeColor.descColor(),
+              fontSize: 12,
+            ),
+          ),
+        ),
+        const SizedBox(height: 5),
+        Material(
+          color: Colors.transparent,
+          child: Text(
+            bean["url"] ?? "",
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              overflow: TextOverflow.ellipsis,
+              color: ref.watch(themeProvider).themeColor.descColor(),
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -637,7 +645,7 @@ class TaskItemCell extends StatelessWidget {
 
   logCron(BuildContext context, WidgetRef ref) {
     Navigator.of(context).push(
-      CupertinoPageRoute(
+      ContainerPageRoute(
         builder:
             (context) =>
                 InTimeSubscribeLogPage(bean["id"], true, bean["name"] ?? ""),

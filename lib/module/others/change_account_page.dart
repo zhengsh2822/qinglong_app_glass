@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
+import 'package:qinglong_app/base/single_account_page.dart';
+import 'package:qinglong_app/utils/ql_debug_log.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
@@ -13,6 +15,9 @@ import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
+import 'package:qinglong_app/base/ui/container_transform_route.dart';
+import 'package:qinglong_app/module/login/login_page.dart';
+import 'package:qinglong_app/base/ui/shared_page_entrance.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -20,13 +25,21 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 import '../../main.dart';
 
 class ChangeAccountPage extends ConsumerStatefulWidget {
-  const ChangeAccountPage({Key? key}) : super(key: key);
+  /// 共享容器转场的路由动画（标题点击进入时传入）；
+  /// 普通入口（空）保持原样，不做分段入场。
+  final Animation<double>? animation;
+
+  const ChangeAccountPage({Key? key, this.animation}) : super(key: key);
 
   @override
   _ChangeAccountPageState createState() => _ChangeAccountPageState();
 }
 
 class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
+  /// 添加账号卡片：共享转场源矩形
+  final GlobalKey _addAccountKey = GlobalKey();
+  bool _addAccountOpening = false;
+
   @override
   void initState() {
     super.initState();
@@ -67,91 +80,118 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     }
     final int itemCount = usedSlots.length + (freeSlot == null ? 0 : 1);
     final bool isCyber = _isCyber;
+    final Animation<double>? entrance = widget.animation;
+
+    // 共享容器转场自带整页底色，不能再叠 CyberBackground/主题底色；
+    // 其它入口（animation 为空）保持原背景。
+    // 不做错峰入场（曾出现文案/图标重复错位重叠，用户要求移除），
+    // 转场期间内容直接随容器展开呈现。
     final Widget scaffold = Scaffold(
-      backgroundColor: isCyber ? CyberColors.bg : null,
+      backgroundColor:
+          entrance != null
+              ? Colors.transparent
+              : (isCyber ? CyberColors.bg : null),
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value:
             (ref.watch(themeProvider).themeMode == modeDark || isCyber)
                 ? SystemUiOverlayStyle.light
                 : SystemUiOverlayStyle.dark,
-        child: SingleChildScrollView(
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: kToolbarHeight,
-                      ),
-                      child: Icon(
-                        CupertinoIcons.clear_thick,
-                        size: 24,
-                        color: isCyber ? CyberColors.cyan : null,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  "轻触账号以切换身份使用",
-                  style: TextStyle(
-                    color:
-                        isCyber
-                            ? Colors.blueGrey
-                            : ref.watch(themeProvider).themeColor.descColor(),
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 0),
-                  child: ListView.separated(
-                    padding: const EdgeInsets.only(bottom: 30),
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      if (index >= usedSlots.length) {
-                        return addAccount(context, freeSlot!);
-                      }
-
-                      final int slot = usedSlots[index];
-                      final userInfo = getIt<UserInfoViewModel>(
-                        instanceName: slot.toString(),
-                      );
-                      return GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          context
-                              .findAncestorStateOfType<MultiAccountPageState>()
-                              ?.updateIndex(slot);
-                          Navigator.of(context).pop();
-                        },
-                        child: _buildAccountCard(userInfo, slot, isCyber),
-                      );
-                    },
-                    separatorBuilder: (_, __) => const SizedBox(height: 4),
-                    itemCount: itemCount,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        child: _buildBody(
+          context,
+          usedSlots,
+          freeSlot,
+          itemCount,
+          isCyber,
         ),
       ),
     );
-    if (isCyber) {
+    if (isCyber && entrance == null) {
       return CyberBackground(child: scaffold);
     }
     return scaffold;
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    List<int> usedSlots,
+    int? freeSlot,
+    int itemCount,
+    bool isCyber,
+  ) {
+    return SingleChildScrollView(
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              alignment: Alignment.topLeft,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(context).pop();
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: kToolbarHeight,
+                  ),
+                  child: Icon(
+                    CupertinoIcons.clear_thick,
+                    size: 24,
+                    color: isCyber ? CyberColors.cyan : null,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "轻触账号以切换身份使用",
+              style: TextStyle(
+                color:
+                    isCyber
+                        ? Colors.blueGrey
+                        : ref.watch(themeProvider).themeColor.descColor(),
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 0),
+              child: ListView.separated(
+                padding: const EdgeInsets.only(bottom: 30),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  Widget item;
+                  if (index >= usedSlots.length) {
+                    item = addAccount(context, freeSlot!);
+                  } else {
+                    final int slot = usedSlots[index];
+                    final userInfo = getIt<UserInfoViewModel>(
+                      instanceName: slot.toString(),
+                    );
+                    item = GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        context
+                            .findAncestorStateOfType<MultiAccountPageState>()
+                            ?.updateIndex(slot);
+                        Navigator.of(context).pop();
+                      },
+                      child: _buildAccountCard(userInfo, slot, isCyber),
+                    );
+                  }
+                  return item;
+                },
+                separatorBuilder: (_, __) => const SizedBox(height: 4),
+                itemCount: itemCount,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// 构建账号卡片（赛博/非赛博统一布局，仅颜色不同）
@@ -328,27 +368,88 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     );
   }
 
+  /// 添加账号：从卡片共享展开到登录页（同导航器，返回时收回卡片）
+  void _openAddAccountPage(int index, Color accentColor) {
+    final RenderBox? box =
+        _addAccountKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) {
+      // 兜底：保持原行为（切到空槽位回首页进登录）
+      context
+          .findAncestorStateOfType<MultiAccountPageState>()
+          ?.updateIndex(index);
+      Navigator.of(context).pop();
+      return;
+    }
+
+    final Rect rect = box.localToGlobal(Offset.zero) & box.size;
+    // 几何诊断日志（debug 构建，release 零开销）：核对捕获矩形与可视内容盒
+    QlDebugLog.write(
+      'QLLOG AddAccount open rect=$rect size=${box.size} opening=true',
+    );
+
+    HapticFeedback.lightImpact();
+    setState(() => _addAccountOpening = true);
+
+    Navigator.of(context)
+        .push(
+          ContainerTransformRoute(
+            sourceRect: rect,
+            sourceChild: _buildAddAccountContent(accentColor),
+            sourceRadius: 18,
+            sourceBlurSigma: 0,
+            sourceHighlightOpacity: 0,
+            sourceBorderColor: Colors.transparent,
+            pageBackground: Theme.of(context).scaffoldBackgroundColor,
+            pageBuilder:
+                (context, animation) => AccountIndexScope(
+                  index: index,
+                  child: SharedPageEntrance(
+                    animation: animation,
+                    child: LoginPage(
+                      fromAddNewAccount: true,
+                      targetAccountIndex: index,
+                    ),
+                  ),
+                ),
+          ),
+        )
+        .whenComplete(() {
+          if (mounted) {
+            setState(() => _addAccountOpening = false);
+          }
+        });
+  }
+
   /// 添加账号按钮（赛博/非赛博统一布局）
+  ///
+  /// 结构与列表页 CardTransitionSource 同款（真机验证过的模式）：
+  /// 卡片壳（CapsuleGlowCard）保持可见，只隐藏/恢复**卡内内容**；
+  /// _addAccountKey 压在内容盒上（不含壳的 margin）——捕获矩形与源内容
+  /// 像素级对齐。若 key 包在含 margin 的卡片外层，矩形会比可视卡片
+  /// 左偏 16/上偏 6/宽 32，源内容整体错位、收回时与真卡瞬间同屏重叠
+  /// （曾出现的「文案图标重复错位」根因）。
   Widget addAccount(BuildContext context, int index) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     // 提示色统一走 primaryColor（赛博模式下返回 cyan），参与主题切换颜色过渡
     final accentColor = ref.watch(themeProvider).primaryColor;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        context.findAncestorStateOfType<MultiAccountPageState>()?.updateIndex(
-          index,
-        );
-        Navigator.of(context).pop();
-      },
-      child: CapsuleGlowCard(
-        isCyber: isCyber,
-        isPinned: false,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-          child: _buildAddAccountContent(accentColor),
+    return CapsuleGlowCard(
+      isCyber: isCyber,
+      isPinned: false,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: GestureDetector(
+          key: _addAccountKey,
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _openAddAccountPage(index, accentColor),
+          child: IgnorePointer(
+            ignoring: _addAccountOpening,
+            child: Opacity(
+              opacity: _addAccountOpening ? 0 : 1,
+              child: _buildAddAccountContent(accentColor),
+            ),
+          ),
         ),
       ),
     );

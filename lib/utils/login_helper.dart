@@ -93,7 +93,7 @@ class LoginHelper {
     String password,
   ) {
     SingleAccountPageState.ofUserInfo(context).updateToken(
-      SingleAccountPageState.of(context)?.index ?? 0,
+      SingleAccountPageState.ofIndex(context),
       host,
       response.bean?.token ?? "",
       false,

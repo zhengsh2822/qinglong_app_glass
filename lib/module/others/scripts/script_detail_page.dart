@@ -31,6 +31,7 @@ import '../../../main.dart';
 import '../../config/config_detail_page.dart';
 import '../../home/system_bean.dart';
 import 'script_upload_page.dart';
+import '../../../base/ui/container_page_route.dart';
 
 class ScriptDetailPage extends ConsumerStatefulWidget {
   final String title;
@@ -72,7 +73,7 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
           );
 
           Navigator.of(context).push(
-            CupertinoPageRoute(
+            ContainerPageRoute(
               builder:
                   (context) => AddTaskPage(
                     taskBean: TaskBean(

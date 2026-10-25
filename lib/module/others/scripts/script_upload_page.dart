@@ -13,6 +13,7 @@ import 'package:path/path.dart';
 import 'package:qinglong_app/module/task/add_task_page.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import '../../../base/ui/container_page_route.dart';
 
 class ScriptUploadPage extends ConsumerStatefulWidget {
   const ScriptUploadPage({
@@ -134,7 +135,7 @@ class ScriptUploadPageState extends ConsumerState<ScriptUploadPage> {
           String? cron = getCronString(content, _nameController.text);
           Navigator.of(context)
               .push(
-            CupertinoPageRoute(
+            ContainerPageRoute(
               builder: (context) => AddTaskPage(
                 taskBean: TaskBean(
                   name: _nameController.text,

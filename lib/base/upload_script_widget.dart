@@ -24,6 +24,7 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 import '../module/others/scripts/script_download_page.dart';
 import '../module/subscribe/add_subscribe_page.dart';
 import 'single_account_page.dart';
+import '../base/ui/container_page_route.dart';
 
 typedef StringCallBack = void Function(String? name);
 typedef CronCallBack = void Function(String? name);
@@ -232,7 +233,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
   void fromRemote(BuildContext context) {
     Navigator.of(context)
         .push(
-      CupertinoPageRoute(
+      ContainerPageRoute(
         builder: (context) => const ScriptDownloadPage(),
       ),
     )
@@ -265,7 +266,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
           // 图片文件直接本地预览，不走文本读取（二进制 readAsString 会抛异常）
           if (isImageFileName(getFileName())) {
             Navigator.of(context).push(
-              CupertinoPageRoute(
+              ContainerPageRoute(
                 builder: (context) => ScriptImagePreviewPage(
                   fileName: getFileName(),
                   localPath: file!.path,
@@ -276,7 +277,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
           }
           String content = await file!.readAsString();
           Navigator.of(context).push(
-            CupertinoPageRoute(
+            ContainerPageRoute(
               builder: (context) => ScriptCodeDetailPage(
                 title: getFileName(),
                 content: content,

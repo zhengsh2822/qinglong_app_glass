@@ -20,6 +20,8 @@ import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/elastic_reorder_list.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
+import 'package:qinglong_app/base/ui/card_transition_source.dart';
+import 'package:qinglong_app/module/env/env_detail_page.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/base/ui/sort_nav_button.dart';
 import 'package:qinglong_app/base/ui/sort_triangle.dart';
@@ -32,6 +34,7 @@ import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
 import '../../base/ui/enable_widget.dart';
+import '../../base/ui/container_page_route.dart';
 
 class EnvPage extends ConsumerStatefulWidget {
   const EnvPage({Key? key}) : super(key: key);
@@ -321,7 +324,7 @@ class EnvPageState extends ConsumerState<EnvPage>
                 }
                 Navigator.of(context)
                     .push(
-                      CupertinoPageRoute(
+                      ContainerPageRoute(
                         builder: (context) => const AddEnvPage(),
                       ),
                     )
@@ -673,15 +676,9 @@ class EnvItemCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     final Widget cardContent = InkWell(
-      onTap: () {
-        if (editMode) {
-          checkedCallback(bean.sId ?? "");
-        } else {
-          Navigator.of(
-            context,
-          ).pushNamed(Routes.routeEnvDetail, arguments: bean);
-        }
-      },
+      // 非编辑模式由外层 CardTransitionSource 接管点击（内层 onTap
+      // 为 null 不参与手势仲裁），编辑模式保留勾选行为
+      onTap: editMode ? () => checkedCallback(bean.sId ?? "") : null,
       child: Row(
         children: [
           AnimatedSize(
@@ -918,7 +915,7 @@ class EnvItemCell extends StatelessWidget {
               onTap: () {
                 Navigator.of(context)
                     .push(
-                      CupertinoPageRoute(
+                      ContainerPageRoute(
                         builder: (context) => AddEnvPage(envBean: bean),
                       ),
                     )
@@ -997,7 +994,7 @@ class EnvItemCell extends StatelessWidget {
                 onTap: () {
                   Navigator.of(context)
                       .push(
-                        CupertinoPageRoute(
+                        ContainerPageRoute(
                           builder: (context) => AddEnvPage(envBean: bean),
                         ),
                       )
@@ -1046,9 +1043,16 @@ class EnvItemCell extends StatelessWidget {
     bool isCyber,
     Widget cardContent,
   ) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-      child: Material(color: Colors.transparent, child: cardContent),
+    // 卡片共享展开：点击 → 内容隐藏 → 容器从卡片矩形展开变量详情页；
+    // 卡片外壳（CapsuleGlowCard）保持可见，收回时无缝衔接。
+    // cardContent 为无状态配置（无 GlobalKey），child 与 source 复用同一实例安全
+    return CardTransitionSource(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
+        child: Material(color: Colors.transparent, child: cardContent),
+      ),
+      sourceBuilder: (ctx) => cardContent,
+      pageBuilder: (context) => EnvDetailPage(bean),
     );
   }
 
@@ -1057,7 +1061,7 @@ class EnvItemCell extends StatelessWidget {
     HapticFeedback.mediumImpact();
     Navigator.of(context)
         .push(
-          CupertinoPageRoute(
+          ContainerPageRoute(
             builder: (context) => AddEnvPage(envBean: bean, isCopy: true),
           ),
         )
