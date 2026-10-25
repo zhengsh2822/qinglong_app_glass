@@ -44,6 +44,10 @@ class _QlAppBarState extends ConsumerState<QlAppBar> {
   final GlobalKey _titleKey = GlobalKey();
   bool _opening = false;
 
+  /// 标题槽内捕获的 DefaultTextStyle（= AppBar 标题样式）；
+  /// 共享转场的幽灵标题必须用同款样式，否则字号/字重不一致产生错位感
+  TextStyle? _titleStyle;
+
   void _openAccountPage() {
     if (_opening) return;
     if (!widget.canClick2Vip) return;
@@ -65,7 +69,10 @@ class _QlAppBarState extends ConsumerState<QlAppBar> {
     }
 
     final Rect rect = box.localToGlobal(Offset.zero) & box.size;
-    final TextStyle style = DefaultTextStyle.of(context).style;
+    // 必须用标题槽内捕获的样式（_titleStyle），
+    // 外层 context 的 DefaultTextStyle 是正文字体（字号/字重都不对）
+    final TextStyle style =
+        _titleStyle ?? DefaultTextStyle.of(context).style;
 
     HapticFeedback.lightImpact();
     setState(() => _opening = true);
@@ -122,19 +129,43 @@ class _QlAppBarState extends ConsumerState<QlAppBar> {
       leading: widget.canBack ? back : null,
       leadingWidth: widget.leadingWidth,
       automaticallyImplyLeading: widget.canBack,
-      // 标题区域整体作为账号页共享转场的源（含左右空白）：
-      // 点击 → 容器从标题矩形展开成账号页，返回时收回标题
-      title: GestureDetector(
-        key: _titleKey,
-        onTap: _openAccountPage,
-        behavior: HitTestBehavior.opaque,
-        child: Text(widget.title),
+      // 标题收缩包裹（文字本身）：centerTitle 在整个工具栏宽度上居中标题。
+      // 若做成全宽触发区，无限宽组件无法被居中——文字会在不对称空隙里
+      // 居中导致标题偏移。空白区域的账号页触发由 flexibleSpace 手势层承担。
+      title: Builder(
+        builder: (titleContext) {
+          final TextStyle style = DefaultTextStyle.of(titleContext).style;
+          _titleStyle = style;
+          return GestureDetector(
+            key: _titleKey,
+            behavior: HitTestBehavior.opaque,
+            onTap: _openAccountPage,
+            // 转场期间隐藏真标题（与幽灵标题同款式同位置，只留一份）
+            child: Opacity(
+              opacity: _opening ? 0 : 1,
+              child: Text(
+                widget.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: style,
+              ),
+            ),
+          );
+        },
       ),
       centerTitle: true,
       // titleSpacing 默认 16 会吃中间区 32px：360 逻辑宽设备上 env 页标题被截断成"环境…"，
       // 收窄至 4 给标题让出空间（标题与左右按钮实际间隙由各页 leading/actions 间距控制）
       titleSpacing: 4,
       actions: [...?widget.actions],
+      // AppBar 空白区域（状态栏下沿、标题两侧）也统一触发账号页：
+      // flexibleSpace 在 toolbar 下层，返回键/标题/actions 命中时优先响应，
+      // 仅空白处落到这里
+      flexibleSpace: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _openAccountPage,
+        child: const SizedBox.expand(),
+      ),
     );
 
     final themeMode = ref.watch(themeProvider).themeMode;

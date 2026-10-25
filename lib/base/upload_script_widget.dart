@@ -11,7 +11,8 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
-import 'package:qinglong_app/base/ui/selector_sheet.dart';
+import 'package:qinglong_app/base/ui/other_page_card.dart';
+import 'package:qinglong_app/base/ui/selector_card.dart';
 import 'package:qinglong_app/base/ui/upload_pill_button.dart';
 import 'package:qinglong_app/base/ui/tree/models/script_data.dart';
 import 'package:qinglong_app/main.dart';
@@ -60,7 +61,8 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
 
   void init() async {
     isLoading = true;
-    HttpResponse<List<ScriptData>> response = await SingleAccountPageState.ofApi(context).scripts();
+    HttpResponse<List<ScriptData>> response =
+        await SingleAccountPageState.ofApi(context).scripts();
 
     if (response.success) {
       if (response.bean == null || response.bean!.isEmpty) {
@@ -113,49 +115,47 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TitleWidget(
-          widget.onlyShowName ? "父目录" : "脚本目录",
-        ),
-        const SizedBox(
-          height: 10,
-        ),
+        TitleWidget(widget.onlyShowName ? "父目录" : "脚本目录"),
+        const SizedBox(height: 10),
         isLoading
             ? const Center(child: LoadingWidget())
             // 改用弹窗选择器（参考 push_setting_page 的"选择通知方式"）
             // 替代原生的 DropdownButtonFormField，更符合 iOS / 赛博风格
-            : SelectorFieldCard(
-                hintText: "请选择脚本目录",
-                currentValue: scriptPath,
-                emptyHint: "根目录",
-                onTap: () async {
-                  final options = <SelectorOption<String>>[
-                    const SelectorOption<String>(
-                      value: "",
-                      label: "根目录",
-                    ),
-                    ...paths.where((e) => e != null).map(
-                          (e) => SelectorOption<String>(
-                            value: e!,
-                            label: e,
-                          ),
-                        ),
-                  ];
-                  await showSelectorSheet<String>(
-                    context: context,
-                    title: "选择脚本目录",
-                    options: options,
-                    selectedValue: scriptPath,
-                    onSelected: (value) {
-                      scriptPath = value;
+            : OtherPageCard(
+              margin: EdgeInsets.zero,
+              padding: EdgeInsets.zero,
+              // 统一高光卡壳：SelectorCard 透明背景由卡壳提供底色
+              // （与 push_setting / task_log 同款外观）
+              child: SelectorCard(
+                title: scriptPath.isEmpty ? "根目录" : scriptPath,
+                subtitle: widget.onlyShowName ? "父目录" : "脚本目录",
+                items: [
+                  SelectorCardItem(
+                    title: "根目录",
+                    selected: scriptPath.isEmpty,
+                    onTap: () {
+                      scriptPath = "";
                       widget.nameCallBack(fileName);
                       setState(() {});
                     },
-                  );
-                },
+                  ),
+                  ...paths
+                      .where((e) => e != null)
+                      .map(
+                        (e) => SelectorCardItem(
+                          title: e!,
+                          selected: scriptPath == e,
+                          onTap: () {
+                            scriptPath = e!;
+                            widget.nameCallBack(fileName);
+                            setState(() {});
+                          },
+                        ),
+                      ),
+                ],
               ),
-        const SizedBox(
-          height: 30,
-        ),
+            ),
+        const SizedBox(height: 30),
         Visibility(
           visible: !widget.onlyShowName,
           child: RichText(
@@ -171,9 +171,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
         ),
         Visibility(
           visible: !widget.onlyShowName,
-          child: const SizedBox(
-            height: 10,
-          ),
+          child: const SizedBox(height: 10),
         ),
         Visibility(
           visible: !widget.onlyShowName,
@@ -190,24 +188,21 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
   Widget addWidget(BuildContext context) {
     return UploadPillButton(
       onTap: () {
-        showMoreOperate(
-          context,
-          [
-            CupertinoSheer(
-              title: "远程地址",
-              onTap: () {
-                fromRemote(context);
-              },
-            ),
-            addDivider(),
-            CupertinoSheer(
-              title: "本地上传",
-              onTap: () {
-                pickLocalFile();
-              },
-            )
-          ],
-        );
+        showMoreOperate(context, [
+          CupertinoSheer(
+            title: "远程地址",
+            onTap: () {
+              fromRemote(context);
+            },
+          ),
+          addDivider(),
+          CupertinoSheer(
+            title: "本地上传",
+            onTap: () {
+              pickLocalFile();
+            },
+          ),
+        ]);
       },
     );
   }
@@ -233,30 +228,28 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
   void fromRemote(BuildContext context) {
     Navigator.of(context)
         .push(
-      ContainerPageRoute(
-        builder: (context) => const ScriptDownloadPage(),
-      ),
-    )
+          ContainerPageRoute(builder: (context) => const ScriptDownloadPage()),
+        )
         .then((value) {
-      if (value != null) {
-        Map<String, String> data = value;
+          if (value != null) {
+            Map<String, String> data = value;
 
-        fileName = data["name"] ?? "";
-        String path = data["path"] ?? "";
-        file = File(path);
-        if (file == null) return;
-        if (file!.lengthSync() > 5242880) {
-          file = null;
-          "最大支持上传5M的文件".toast();
-          return;
-        }
+            fileName = data["name"] ?? "";
+            String path = data["path"] ?? "";
+            file = File(path);
+            if (file == null) return;
+            if (file!.lengthSync() > 5242880) {
+              file = null;
+              "最大支持上传5M的文件".toast();
+              return;
+            }
 
-        widget.nameCallBack(getFileName());
-        setState(() {});
-      } else {
-        fileName = null;
-      }
-    });
+            widget.nameCallBack(getFileName());
+            setState(() {});
+          } else {
+            fileName = null;
+          }
+        });
   }
 
   Widget addedWidget(BuildContext context) {
@@ -267,10 +260,11 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
           if (isImageFileName(getFileName())) {
             Navigator.of(context).push(
               ContainerPageRoute(
-                builder: (context) => ScriptImagePreviewPage(
-                  fileName: getFileName(),
-                  localPath: file!.path,
-                ),
+                builder:
+                    (context) => ScriptImagePreviewPage(
+                      fileName: getFileName(),
+                      localPath: file!.path,
+                    ),
               ),
             );
             return;
@@ -278,10 +272,11 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
           String content = await file!.readAsString();
           Navigator.of(context).push(
             ContainerPageRoute(
-              builder: (context) => ScriptCodeDetailPage(
-                title: getFileName(),
-                content: content,
-              ),
+              builder:
+                  (context) => ScriptCodeDetailPage(
+                    title: getFileName(),
+                    content: content,
+                  ),
             ),
           );
         } catch (e) {
@@ -291,19 +286,11 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
       behavior: HitTestBehavior.opaque,
       child: Container(
         height: 80,
-        padding: const EdgeInsets.symmetric(
-          vertical: 10,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            Image.asset(
-              getIconBySuffix(),
-              width: 50,
-              fit: BoxFit.cover,
-            ),
-            const SizedBox(
-              width: 15,
-            ),
+            Image.asset(getIconBySuffix(), width: 50, fit: BoxFit.cover),
+            const SizedBox(width: 15),
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -318,9 +305,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
                       fontSize: 16,
                     ),
                   ),
-                  const SizedBox(
-                    height: 5,
-                  ),
+                  const SizedBox(height: 5),
                   Text(
                     getFileSize(file!.path, 2),
                     style: TextStyle(

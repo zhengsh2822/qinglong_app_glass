@@ -13,6 +13,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
+import 'package:qinglong_app/base/ui/selector_card.dart';
 import 'package:qinglong_app/base/ui/settings_widgets.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -27,13 +28,10 @@ class PushSettingPage extends ConsumerStatefulWidget {
 }
 
 class _PushSettingPageState extends ConsumerState<PushSettingPage> {
-  // 通知方式展开卡控制器：选中选项后收起
-  final ExpansionTileController _expansionController =
-      ExpansionTileController();
-
   List<PushBean> list = [];
 
   PushBean? current;
+
   bool loading = true;
 
   @override
@@ -79,99 +77,43 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                           style: TextStyle(
                             fontSize: 14,
                             // 小节标题跟随主字体色（非顶部 AppBar 大标题）
-                            color: ref
-                                .watch(themeProvider)
-                                .themeColor
-                                .titleColor(),
+                            color:
+                                ref
+                                    .watch(themeProvider)
+                                    .themeColor
+                                    .titleColor(),
                           ),
                         ),
                         const SizedBox(height: 10),
-                        // 通知方式选择 — 卡内展开/收起（与任务日志文件夹卡同款，
-                        // 替换原底部弹窗选择器）：选中即收起，下方表单字段联动
+                        // 通知方式选择 — 统一卡内展开选择器（B 方案）
                         OtherPageCard(
                           margin: EdgeInsets.zero,
                           padding: EdgeInsets.zero,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(18),
-                            child: ExpansionTile(
-                              controller: _expansionController,
-                              iconColor: isCyber ? CyberColors.cyan : null,
-                              collapsedIconColor:
-                                  isCyber ? CyberColors.cyan : null,
-                              title: Text(
+                          child: SelectorCard(
+                            title:
                                 current != null
                                     ? getNameByKey(current!.name)
                                     : "请选择",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  // 通知方案文案跟随自定义字体颜色
-                                  // 赛博走 _customCyberPrimaryOf，非赛博走 _customThemePrimaryOf
-                                  color: ref
-                                      .watch(themeProvider)
-                                      .themeColor
-                                      .titleColor(),
-                                ),
-                              ),
-                              subtitle: Text(
-                                "通知方式",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: ref
-                                      .watch(themeProvider)
-                                      .themeColor
-                                      .descColor(),
-                                ),
-                              ),
-                              children: list
-                                  .map(
-                                    (bean) => ListTile(
-                                      onTap: () {
-                                        setState(() {
-                                          current = bean;
-                                        });
-                                        // 选中即收起（下方表单字段联动切换）
-                                        _expansionController.collapse();
-                                      },
-                                      title: Text(
-                                        getNameByKey(bean.name),
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: ref
-                                              .watch(themeProvider)
-                                              .themeColor
-                                              .titleColor(),
-                                        ),
+                            subtitle: "通知方式",
+                            collapseOnSelect: true,
+                            items:
+                                list
+                                    .map(
+                                      (bean) => SelectorCardItem(
+                                        title: getNameByKey(bean.name),
+                                        subtitle:
+                                            bean.children.isEmpty
+                                                ? "已关闭通知"
+                                                : "\${bean.children.length} 项配置",
+                                        selected: current?.key == bean.key,
+                                        onTap: () {
+                                          setState(() {
+                                            current = bean;
+                                          });
+                                        },
                                       ),
-                                      subtitle: Text(
-                                        bean.children.isEmpty
-                                            ? "已关闭通知"
-                                            : "${bean.children.length} 项配置",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: ref
-                                              .watch(themeProvider)
-                                              .themeColor
-                                              .descColor(),
-                                        ),
-                                      ),
-                                      trailing:
-                                          current?.key == bean.key
-                                          ? Icon(
-                                              CupertinoIcons
-                                                  .checkmark_alt_circle,
-                                              size: 20,
-                                              color:
-                                                  isCyber
-                                                      ? CyberColors.cyan
-                                                      : ref
-                                                          .watch(themeProvider)
-                                                          .primaryColor,
-                                            )
-                                          : null,
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
+                                    )
+                                    .toList(),
                           ),
                         ),
                         Column(
@@ -240,6 +182,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
     );
     return isCyber ? CyberBackground(child: scaffold) : scaffold;
   }
+
   void initData() {
     var pushSetting = {
       "gotify": [

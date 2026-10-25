@@ -1,44 +1,82 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+
 import 'package:flutter/material.dart';
+
 import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/services.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:get/get.dart';
+
 import 'package:intl/intl.dart';
+
 import 'package:qinglong_app/base/app_colors.dart';
+
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
+
 import 'package:qinglong_app/base/routes.dart';
+
 import 'package:qinglong_app/base/single_account_page.dart';
+
 import 'package:qinglong_app/base/sp_const.dart';
+
 import 'package:qinglong_app/base/theme.dart';
+
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
+
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
+
 import 'package:qinglong_app/base/ui/other_page_card.dart';
+import 'package:qinglong_app/base/ui/card_transition_source.dart';
+
 import 'package:qinglong_app/module/in_app_purchase_page.dart';
+
 import 'package:qinglong_app/module/others/backup_page.dart';
+
 import 'package:qinglong_app/module/others/change_account_page.dart';
+
 import 'package:qinglong_app/module/others/client_ip_page.dart';
+
 import 'package:qinglong_app/module/others/dependencies/dependency_setting_page.dart';
+
 import 'package:qinglong_app/module/others/storage_retention_page.dart';
+
 import 'package:qinglong_app/module/others/sort_account_page.dart';
+
 import 'package:qinglong_app/module/others/text_size_page.dart';
+
 import 'package:qinglong_app/module/others/update_password_page.dart';
+
 import 'package:qinglong_app/utils/extension.dart';
+
 import 'package:qinglong_app/utils/floating_clock_service.dart';
+
 import 'package:qinglong_app/utils/icloud_utils.dart';
+
 import 'package:qinglong_app/utils/sp_utils.dart';
+
 import 'package:path/path.dart' as ints;
 
 import '../../main.dart';
+
 import '../appkey/appkey_page.dart';
+
 import '../home/system_bean.dart';
+
 import '../push_setting_page.dart';
+
 import '../scan_page.dart';
+
 import '../task/task_page.dart';
+
 import '../update_max_account_page.dart';
+
 import '../../base/ui/container_page_route.dart';
 
 class OtherPage extends ConsumerStatefulWidget {
@@ -51,31 +89,40 @@ class OtherPage extends ConsumerStatefulWidget {
 class OtherPageState extends ConsumerState<OtherPage>
     with LazyLoadState<OtherPage>, AutomaticKeepAliveClientMixin {
   // PageView 底部 tab 场景保活：切走不销毁，保留滚动位置与页内状态
+
   @override
   bool get wantKeepAlive => true;
 
   /// 全局字重（build 顶部统一 watch，供 helper 方法使用，避免 helper 内 watch 不触发重建）
+
   FontWeight _featureFw = FontWeight.w400;
 
   var toggleValue = false;
+
   String? userIcon;
+
   String userName = "青龙客户端";
+
   var desc = "欢迎使用青龙客户端".obs;
+
   Map<String, dynamic> poetData = {};
 
   @override
   void initState() {
     super.initState();
+
     delLogsByExperiedDate();
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+
     super.dispose();
   }
 
   final ScrollController _scrollController = ScrollController();
+
   GlobalKey<RefreshIndicatorState> refreshKey = GlobalKey();
 
   Future<void> move2Top() async {
@@ -92,41 +139,65 @@ class OtherPageState extends ConsumerState<OtherPage>
   Future<void> scrollToTop() async {
     _scrollController.animateTo(
       0,
+
       duration: const Duration(milliseconds: 200),
+
       curve: Curves.linear,
     );
   }
 
   /// 长按修改账号名称（别名）
+
   void _editAlias() {
     final userInfo = SingleAccountPageState.ofUserInfo(context);
+
     final currentIndex = SingleAccountPageState.of(context)?.index ?? 0;
+
     final currentAlias = userInfo.alias ?? "";
+
     showInputDialog(
       context,
+
       title: '修改名称',
+
       hintText: '请输入名称',
+
       initialValue: currentAlias,
+
       inputFormatters: [LengthLimitingTextInputFormatter(20)],
     ).then((newAlias) {
       if (newAlias == null) return;
+
       final trimmed = newAlias.trim();
+
       if (trimmed == currentAlias) return;
+
       final alias = trimmed.isEmpty ? null : trimmed;
+
       // 更新内存中的 UserInfoViewModel（含 tokenBeans 持久化）
+
       userInfo.updateToken(
         currentIndex,
+
         userInfo.host,
+
         userInfo.token,
+
         userInfo.useSecretLogined,
+
         alias,
       );
+
       // 同步持久化到 tokenBeans 和 historyAccounts，确保重启后不丢失
+
       getIt<MultiAccountUserInfoViewModel>().updateAliasForHost(
         userInfo.host,
+
         alias,
       );
+
       "名称已更新".toast();
+
       setState(() {});
     });
   }
@@ -134,248 +205,71 @@ class OtherPageState extends ConsumerState<OtherPage>
   @override
   Widget build(BuildContext context) {
     super.build(context); // keepAlive 保活（AutomaticKeepAliveClientMixin）
+
     final _ = ref.watch(themeProvider);
+
     _featureFw = FontWeight(ref.watch(textWeightProvider));
+
     final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
+
     Widget body = RefreshIndicator(
       key: refreshKey,
+
       onRefresh: () async {
         await loadPoet();
       },
+
       child: SizedBox(
         width: MediaQuery.of(context).size.width,
+
         height: MediaQuery.of(context).size.height,
+
         child: SingleChildScrollView(
           controller: _scrollController,
+
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top,
+
             bottom:
                 MediaQuery.of(context).viewPadding.bottom +
                 kBottomNavigationBarHeight +
                 50,
           ),
+
           child: Column(
             children: [
               // 顶部用户信息卡片（替代原 250px 色块，与下方卡片样式统一）
               OtherPageCard(
                 margin: const EdgeInsets.fromLTRB(
                   AppleColors.spaceMd,
+
                   AppleColors.spaceMd,
+
                   AppleColors.spaceMd,
+
                   0,
                 ),
+
                 padding: const EdgeInsets.fromLTRB(15, 20, 15, 15),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        if (SpUtil.getInt(spVIP, defValue: typeNormal) ==
-                            typeNormal) {
-                          Navigator.of(context).push(
-                            ContainerPageRoute(
-                              builder:
-                                  (context) => const InAppPurchasePage(
-                                    fromDirectly: true,
-                                  ),
-                            ),
-                          );
-                          return;
-                        } else {
-                          if (SpUtil.getBool(
-                            spSingleInstance,
-                            defValue: false,
-                          )) {
-                            return;
-                          }
-                          Navigator.of(context).push(
-                            PageRouteBuilder(
-                              pageBuilder:
-                                  (context, animation1, animation2) =>
-                                      const ChangeAccountPage(),
-                              transitionDuration: Duration.zero,
-                              reverseTransitionDuration: Duration.zero,
-                            ),
-                          );
-                        }
-                      },
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child:
-                                (userIcon != null && userIcon!.isNotEmpty)
-                                    ? Image.network(
-                                      userIcon!,
-                                      width: 60,
-                                      height: 60,
-                                      errorBuilder: (_, __, ___) {
-                                        return Image.asset(
-                                          getImageByVIPLogo(),
-                                          width: 60,
-                                          height: 60,
-                                        );
-                                      },
-                                    )
-                                    : Image.asset(
-                                      getImageByVIPLogo(),
-                                      width: 60,
-                                      height: 60,
-                                    ),
-                          ),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 5),
-                                GestureDetector(
-                                  onLongPress: () => _editAlias(),
-                                  child: Text(
-                                    (SingleAccountPageState.ofUserInfo(
-                                                  context,
-                                                ).alias ==
-                                                null ||
-                                            SingleAccountPageState.ofUserInfo(
-                                              context,
-                                            ).alias!.isEmpty)
-                                        ? userName
-                                        : SingleAccountPageState.ofUserInfo(
-                                          context,
-                                        ).alias!,
-                                    maxLines: 1,
-                                    style: TextStyle(
-                                      // 服务器名称/账号别名：跟随自定义字体颜色设置
-                                      // 赛博模式走 _customCyberPrimaryOf（spCyberPrimary），
-                                      // 非赛博模式走 _customThemePrimaryOf（spThemePrimary）
-                                      color: ref
-                                          .watch(themeProvider)
-                                          .themeColor
-                                          .titleColor(),
-                                      fontSize: 18,
-                                      fontWeight: FontWeight(
-                                        ref.watch(textWeightProvider),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Obx(
-                                  () => GestureDetector(
-                                    behavior: HitTestBehavior.opaque,
-                                    onTap: () {
-                                      // 与官方青龙一致：点击诗句随机更换一句新诗
-                                      // 不再跳转 PoetPage（其 data 取值逻辑有误会抛异常）
-                                      loadPoet();
-                                    },
-                                    child: Text(
-                                      desc.value,
-                                      style: TextStyle(
-                                        // 随机语句：跟随次字体色（赛博/非赛博都走 descColor）
-                                        color: ref
-                                            .watch(themeProvider)
-                                            .themeColor
-                                            .descColor(),
-                                        fontSize: isCyber ? 12 : 13,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildFeatureButton(
-                          title: "仪表盘",
-                          imagePath: "assets/images/icon_c.png",
-                          iconSize: 28,
-                          fontSize: 15,
-                          onTap: () {
-                            Navigator.of(
-                              context,
-                            ).pushNamed(Routes.routeDashboard);
-                          },
-                        ),
-                        _buildFeatureButton(
-                          title:
-                              getIt<SystemBean>(
-                                    instanceName:
-                                        (SingleAccountPageState.of(
-                                                  context,
-                                                )?.index ??
-                                                0)
-                                            .toString(),
-                                  ).isUpperVersion2_13_0()
-                                  ? "订阅管理"
-                                  : "拉库管理",
-                          imagePath: "assets/images/icon_subsctibe.png",
-                          iconSize: 28,
-                          fontSize: 15,
-                          onTap: () {
-                            if (getIt<SystemBean>(
-                              instanceName:
-                                  (SingleAccountPageState.of(
-                                            context,
-                                          )?.index ??
-                                          0)
-                                      .toString(),
-                            ).isUpperVersion2_13_0()) {
-                              Navigator.of(
-                                context,
-                              ).pushNamed(Routes.routeSubscribeList);
-                            } else {
-                              Navigator.of(context).push(
-                                ContainerPageRoute(
-                                  builder:
-                                      (context) => const TaskPage(
-                                        onlyShowPullRepo: true,
-                                      ),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                        _buildFeatureButton(
-                          title: "脚本管理",
-                          imagePath: "assets/images/icon_s.png",
-                          iconSize: 28,
-                          fontSize: 15,
-                          onTap: () {
-                            Navigator.of(
-                              context,
-                            ).pushNamed(Routes.routeScript);
-                          },
-                        ),
-                        _buildFeatureButton(
-                          title: "依赖管理",
-                          imagePath: "assets/images/icon_d.png",
-                          iconSize: 28,
-                          fontSize: 15,
-                          onTap: () {
-                            Navigator.of(
-                              context,
-                            ).pushNamed(Routes.routeDependency);
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
+
+                // 统一卡片共享展开组件（与五列表页同款）：点击 → 内容隐藏 →
+                // 容器从卡片矩形展开账号页，返回收回无缝还原
+                child: CardTransitionSource(
+                  child: _buildUserHeaderContent(),
+                  sourceBuilder: (ctx) => _buildUserHeaderContent(),
+                  pageBuilder: (context) => const ChangeAccountPage(),
                 ),
               ),
+
               OtherPageCard(
                 margin: const EdgeInsets.only(
                   left: AppleColors.spaceMd,
+
                   right: AppleColors.spaceMd,
+
                   top: AppleColors.spaceLg,
                 ),
+
                 onTap: () {
                   Navigator.of(context)
                       .push(
@@ -389,57 +283,78 @@ class OtherPageState extends ConsumerState<OtherPage>
                         setState(() {});
                       });
                 },
+
                 padding: const EdgeInsets.symmetric(
                   vertical: 12,
+
                   horizontal: 15,
                 ),
+
                 child: Row(
                   children: [
                     Text(
                       "APP功能介绍",
+
                       style: TextStyle(
                         fontWeight: FontWeight(ref.watch(textWeightProvider)),
+
                         fontSize: isCyber ? 16 : 17,
-                        color:
-                            ref.watch(themeProvider).themeColor.titleColor(),
+
+                        color: ref.watch(themeProvider).themeColor.titleColor(),
                       ),
                     ),
+
                     const Spacer(),
                   ],
                 ),
               ),
+
               const SizedBox(height: AppleColors.spaceLg),
+
               OtherPageCard(
                 padding: const EdgeInsets.symmetric(
                   vertical: 10,
+
                   horizontal: 15,
                 ),
+
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+
                   children: [
                     const SizedBox(height: 5),
+
                     Text(
                       "多帐号设置/第三方功能",
+
                       style: TextStyle(
                         fontWeight: FontWeight(ref.watch(textWeightProvider)),
+
                         fontSize: isCyber ? 16 : 17,
-                        color:
-                            ref.watch(themeProvider).themeColor.titleColor(),
+
+                        color: ref.watch(themeProvider).themeColor.titleColor(),
                       ),
                     ),
+
                     const SizedBox(height: 10),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+
                       children: [
                         _buildFeatureButton(
                           title: "多账号数",
+
                           icon: CupertinoIcons.infinite,
+
                           onTap: () {
                             if (SpUtil.getBool(
                               spSingleInstance,
+
                               defValue: false,
                             )) {
                               '请先进入 系统设置 关闭单实例模式'.toast();
+
                               return;
                             }
 
@@ -451,21 +366,26 @@ class OtherPageState extends ConsumerState<OtherPage>
                             );
                           },
                         ),
+
                         _buildFeatureButton(
                           title: "京东助手",
+
                           icon: CupertinoIcons.gift,
+
                           onTap: () {
-                            Navigator.of(
-                              context,
-                            ).pushNamed(Routes.routeJdck);
+                            Navigator.of(context).pushNamed(Routes.routeJdck);
                           },
                         ),
+
                         _buildFeatureButton(
                           title: "悬浮时间",
+
                           icon: CupertinoIcons.clock,
+
                           onTap: () async {
                             final started =
                                 await FloatingClockService.toggleFloating();
+
                             if (!started) {
                               '请授予悬浮窗权限后再次点击'.toast();
                             } else {
@@ -478,32 +398,45 @@ class OtherPageState extends ConsumerState<OtherPage>
                   ],
                 ),
               ),
+
               const SizedBox(height: AppleColors.spaceLg),
+
               OtherPageCard(
                 padding: const EdgeInsets.symmetric(
                   vertical: 11,
+
                   horizontal: 16,
                 ),
+
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+
                   children: [
                     const SizedBox(height: 5),
+
                     Text(
                       "高级功能",
+
                       style: TextStyle(
                         fontWeight: FontWeight(ref.watch(textWeightProvider)),
+
                         fontSize: isCyber ? 16 : 17,
-                        color:
-                            ref.watch(themeProvider).themeColor.titleColor(),
+
+                        color: ref.watch(themeProvider).themeColor.titleColor(),
                       ),
                     ),
+
                     const SizedBox(height: 10),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+
                       children: [
                         _buildFeatureButton(
                           title: "扫描依赖",
+
                           icon: CupertinoIcons.doc_text_search,
+
                           onTap: () {
                             Navigator.of(context).push(
                               ContainerPageRoute(
@@ -512,9 +445,12 @@ class OtherPageState extends ConsumerState<OtherPage>
                             );
                           },
                         ),
+
                         _buildFeatureButton(
                           title: "字体大小",
+
                           icon: CupertinoIcons.textformat_size,
+
                           onTap: () {
                             Navigator.of(context).push(
                               ContainerPageRoute(
@@ -523,17 +459,23 @@ class OtherPageState extends ConsumerState<OtherPage>
                             );
                           },
                         ),
+
                         _buildFeatureButton(
                           title: "文件备份",
+
                           icon: CupertinoIcons.cloud_upload,
+
                           onTap: () {
                             Navigator.of(context).pushNamed(Routes.routeICloud);
                           },
                         ),
+
                         if (!SpUtil.getBool(spSingleInstance, defValue: false))
                           _buildFeatureButton(
                             title: "账号排序",
+
                             icon: CupertinoIcons.arrow_swap,
+
                             onTap: () {
                               Navigator.of(context).push(
                                 ContainerPageRoute(
@@ -544,45 +486,62 @@ class OtherPageState extends ConsumerState<OtherPage>
                           ),
                       ],
                     ),
+
                     const SizedBox(height: 10),
                   ],
                 ),
               ),
+
               const SizedBox(height: AppleColors.spaceLg),
+
               OtherPageCard(
                 padding: const EdgeInsets.symmetric(
                   vertical: 10,
+
                   horizontal: 15,
                 ),
+
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+
                   children: [
                     const SizedBox(height: 5),
+
                     Text(
                       "基础功能",
+
                       style: TextStyle(
                         fontWeight: FontWeight(ref.watch(textWeightProvider)),
+
                         fontSize: isCyber ? 16 : 17,
-                        color:
-                            ref.watch(themeProvider).themeColor.titleColor(),
+
+                        color: ref.watch(themeProvider).themeColor.titleColor(),
                       ),
                     ),
+
                     const SizedBox(height: 10),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+
                       children: [
                         _buildFeatureButton(
                           title: "任务日志",
+
                           icon: CupertinoIcons.square_stack_3d_down_right,
+
                           onTap: () {
                             Navigator.of(
                               context,
                             ).pushNamed(Routes.routeTaskLog);
                           },
                         ),
+
                         _buildFeatureButton(
                           title: "登录日志",
+
                           icon: CupertinoIcons.text_badge_checkmark,
+
                           onTap: () {
                             if (SingleAccountPageState.ofUserInfo(
                               context,
@@ -595,9 +554,12 @@ class OtherPageState extends ConsumerState<OtherPage>
                             }
                           },
                         ),
+
                         _buildFeatureButton(
                           title: "应用设置",
+
                           icon: CupertinoIcons.gear_alt,
+
                           onTap: () {
                             Navigator.of(context).push(
                               ContainerPageRoute(
@@ -606,9 +568,12 @@ class OtherPageState extends ConsumerState<OtherPage>
                             );
                           },
                         ),
+
                         _buildFeatureButton(
                           title: "通知设置",
+
                           icon: CupertinoIcons.envelope,
+
                           onTap: () {
                             Navigator.of(context).push(
                               ContainerPageRoute(
@@ -619,13 +584,18 @@ class OtherPageState extends ConsumerState<OtherPage>
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 10),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+
                       children: [
                         _buildFeatureButton(
                           title: "修改密码",
+
                           icon: CupertinoIcons.lock_shield,
+
                           onTap: () {
                             if (SingleAccountPageState.ofUserInfo(
                               context,
@@ -641,50 +611,67 @@ class OtherPageState extends ConsumerState<OtherPage>
                             }
                           },
                         ),
+
                         _buildFeatureButton(
                           title: "日志设置",
+
                           icon: CupertinoIcons.gobackward_30,
+
                           onTap: () {
                             _delLog(context);
                           },
                         ),
+
                         _buildFeatureButton(
                           title: "系统设置",
+
                           icon: CupertinoIcons.shield_lefthalf_fill,
+
                           onTap: () {
                             Navigator.of(
                               context,
                             ).pushNamed(Routes.routeSetting);
                           },
                         ),
+
                         _buildFeatureButton(
                           title: "关于软件",
+
                           icon: CupertinoIcons.info_circle,
+
                           onTap: () {
                             Navigator.of(context).pushNamed(Routes.routeAbout);
                           },
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 10),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+
                       children: [
                         _buildFeatureButton(
                           title: "依赖设置",
+
                           icon: CupertinoIcons.cube_box,
+
                           onTap: () {
                             Navigator.of(context).push(
                               ContainerPageRoute(
-                                builder: (context) =>
-                                    const DependencySettingPage(),
+                                builder:
+                                    (context) => const DependencySettingPage(),
                               ),
                             );
                           },
                         ),
+
                         _buildFeatureButton(
                           title: "备份恢复",
+
                           icon: CupertinoIcons.cloud_upload,
+
                           onTap: () {
                             Navigator.of(context).push(
                               ContainerPageRoute(
@@ -693,9 +680,12 @@ class OtherPageState extends ConsumerState<OtherPage>
                             );
                           },
                         ),
+
                         _buildFeatureButton(
                           title: "IP 与代理",
+
                           icon: CupertinoIcons.arrow_left_right_circle,
+
                           onTap: () {
                             Navigator.of(context).push(
                               ContainerPageRoute(
@@ -704,9 +694,12 @@ class OtherPageState extends ConsumerState<OtherPage>
                             );
                           },
                         ),
+
                         _buildFeatureButton(
                           title: "存储清理",
+
                           icon: CupertinoIcons.trash,
+
                           onTap: () {
                             Navigator.of(context).push(
                               ContainerPageRoute(
@@ -721,6 +714,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                   ],
                 ),
               ),
+
               SizedBox(
                 height:
                     kBottomNavigationBarHeight +
@@ -731,45 +725,63 @@ class OtherPageState extends ConsumerState<OtherPage>
         ),
       ),
     );
+
     if (isCyber) {
       body = CyberBackground(child: body);
     }
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
+
       backgroundColor:
           isCyber
               ? CyberColors.bg
               : ref.watch(themeProvider).themeColor.bg2Color(),
+
       body: body,
     );
   }
 
   void _delLog(BuildContext context) async {
     // 立即弹窗（用默认值 30 占位），通过 valueLoader 异步加载当前频率
+
     // 避免冷启动首次点击时"等网络请求才弹窗"的延迟感
+
     final days = await showFrequencyDialog(
       context,
+
       title: '日志删除频率',
+
       initialValue: 30,
+
       maxValue: 1000,
+
       valueLoader: () async {
         var response = await SingleAccountPageState.ofApi(context).logDel();
+
         if (response.success) {
           final bean = response.bean;
+
           if (bean != null) {
             // 新版青龙 API: GET /api/system/config 返回 info.logRemoveFrequency
+
             // 旧版兼容: 顶层 frequency 或 info.frequency
-            final freq = bean.info?.logRemoveFrequency ??
+
+            final freq =
+                bean.info?.logRemoveFrequency ??
                 bean.frequency ??
                 bean.info?.frequency;
+
             if (freq != null) {
               return freq;
             }
           }
         }
+
         return null;
       },
     );
+
     if (days != null) {
       commitLogDel(days);
     }
@@ -777,6 +789,7 @@ class OtherPageState extends ConsumerState<OtherPage>
 
   void commitLogDel(int time) async {
     var response = await SingleAccountPageState.ofApi(context).logDelTime(time);
+
     if (response.success) {
       "修改成功".toast();
     } else {
@@ -785,42 +798,70 @@ class OtherPageState extends ConsumerState<OtherPage>
   }
 
   /// 统一功能按钮组件（支持图片或图标）
+
   /// 顶部4按钮用图片28x28+fontSize15，其余用图标24x24+fontSize16
+
   Widget _buildFeatureButton({
     required String title,
+
     required GestureTapCallback onTap,
+
     String? imagePath,
+
     IconData? icon,
+
     double iconSize = 24,
+
     double fontSize = 16,
   }) {
     final theme = ref.watch(themeProvider);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2),
+
       child: CupertinoButton(
         padding: EdgeInsets.zero,
+
         onPressed: onTap,
+
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+
           child: Column(
             mainAxisSize: MainAxisSize.min,
+
             children: [
               if (imagePath != null)
-                Image.asset(imagePath, width: iconSize, height: iconSize, fit: BoxFit.contain)
+                Image.asset(
+                  imagePath,
+                  width: iconSize,
+                  height: iconSize,
+                  fit: BoxFit.contain,
+                )
               else
                 Icon(icon, color: theme.primaryColor, size: iconSize),
+
               const SizedBox(height: 5),
+
               Text(
                 title,
+
                 maxLines: 1,
+
                 softWrap: false,
+
                 overflow: TextOverflow.ellipsis,
+
                 style: TextStyle(
                   // 显式指定 MiSans：CupertinoButton 默认 DefaultTextStyle 为
+
                   // CupertinoSystemText(inherit:false)，不指定会回退系统字体导致字重映射异常（粗一级）
                   fontFamily: 'MiSans',
+
                   fontSize: fontSize,
+
                   fontWeight: _featureFw,
+
                   color: theme.themeColor.titleColor(),
                 ),
               ),
@@ -845,13 +886,17 @@ class OtherPageState extends ConsumerState<OtherPage>
 
     if (response.success) {
       userIcon = response.bean?.avatar;
+
       userName = response.bean?.username ?? "青龙客户端";
+
       if (userIcon != null && userIcon!.isNotEmpty) {
         userIcon =
             "${SingleAccountPageState.ofUserInfo(context).host}/api/static/$userIcon";
       }
+
       setState(() {});
     }
+
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       loadPoet();
     });
@@ -861,8 +906,10 @@ class OtherPageState extends ConsumerState<OtherPage>
     try {
       int before = SpUtil.getInt(
         spLocalBackUpFileExperiedTime,
+
         defValue: getDefaultLogExperiedTime(),
       );
+
       String now = DateFormat('yyyy-MM-dd').format(DateTime.now()); //获取多少天前的日期
 
       print("...$before天之前的文件全部删除");
@@ -875,13 +922,16 @@ class OtherPageState extends ConsumerState<OtherPage>
 
       for (FileSystemEntity file in list) {
         String date = ints.basename(file.path);
+
         var a = DateTime.tryParse(date);
+
         var b = DateTime.tryParse(now);
 
         if (a != null && b != null) {
           if (b.difference(a).inDays > before) {
             if (await file.exists()) {
               await file.delete(recursive: true);
+
               print("删除成功${file.path}");
             }
           } else {
@@ -901,6 +951,7 @@ class OtherPageState extends ConsumerState<OtherPage>
       Dio dio = Dio(
         BaseOptions(
           receiveTimeout: Duration(milliseconds: 10000),
+
           connectTimeout: Duration(milliseconds: 10000),
         ),
       );
@@ -910,6 +961,7 @@ class OtherPageState extends ConsumerState<OtherPage>
 
         if (tokenResponse.statusCode == 200) {
           String? token = tokenResponse.data["data"];
+
           if (token != null && token.isNotEmpty) {
             SpUtil.putString(spPoetToken, token);
           }
@@ -918,27 +970,255 @@ class OtherPageState extends ConsumerState<OtherPage>
 
       var response = await dio.get(
         "https://v2.jinrishici.com/one.json",
+
         options: Options(
           headers: {
             "X-User-Token": SpUtil.getString(spPoetToken, defValue: ""),
           },
         ),
       );
+
       if (response.statusCode == 200) {
         poetData.clear();
+
         poetData.addAll(response.data as Map<String, dynamic>);
+
         desc.value = poetData["data"]?["content"]?.toString() ?? "欢迎使用青龙客户端";
       }
     } catch (e) {}
+  }
+
+  /// 顶部用户信息卡内容：可见内容与共享转场源共用（两处布局必须一致）
+  Widget _buildUserHeaderContent() {
+    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+
+      children: [
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+
+          // 非会员且多账号模式：置 null 让外层 CardTransitionSource 接管；
+          // 会员点击推 VIP 页；单账号模式占位消费点击（不进账号页）
+          onTap:
+              SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal
+                  ? () {
+                    Navigator.of(context).push(
+                      ContainerPageRoute(
+                        builder:
+                            (context) =>
+                                const InAppPurchasePage(fromDirectly: true),
+                      ),
+                    );
+                  }
+                  : (SpUtil.getBool(spSingleInstance, defValue: false)
+                      ? () {}
+                      : null),
+
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+
+                child:
+                    (userIcon != null && userIcon!.isNotEmpty)
+                        ? Image.network(
+                          userIcon!,
+
+                          width: 60,
+
+                          height: 60,
+
+                          errorBuilder: (_, __, ___) {
+                            return Image.asset(
+                              getImageByVIPLogo(),
+
+                              width: 60,
+
+                              height: 60,
+                            );
+                          },
+                        )
+                        : Image.asset(
+                          getImageByVIPLogo(),
+
+                          width: 60,
+
+                          height: 60,
+                        ),
+              ),
+
+              const SizedBox(width: 15),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                  children: [
+                    const SizedBox(height: 5),
+
+                    GestureDetector(
+                      onLongPress: () => _editAlias(),
+
+                      child: Text(
+                        (SingleAccountPageState.ofUserInfo(context).alias ==
+                                    null ||
+                                SingleAccountPageState.ofUserInfo(
+                                  context,
+                                ).alias!.isEmpty)
+                            ? userName
+                            : SingleAccountPageState.ofUserInfo(context).alias!,
+
+                        maxLines: 1,
+
+                        style: TextStyle(
+                          // 服务器名称/账号别名：跟随自定义字体颜色设置
+
+                          // 赛博模式走 _customCyberPrimaryOf（spCyberPrimary），
+
+                          // 非赛博模式走 _customThemePrimaryOf（spThemePrimary）
+                          color:
+                              ref.watch(themeProvider).themeColor.titleColor(),
+
+                          fontSize: 18,
+
+                          fontWeight: FontWeight(ref.watch(textWeightProvider)),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    Obx(
+                      () => GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+
+                        onTap: () {
+                          // 与官方青龙一致：点击诗句随机更换一句新诗
+
+                          // 不再跳转 PoetPage（其 data 取值逻辑有误会抛异常）
+
+                          loadPoet();
+                        },
+
+                        child: Text(
+                          desc.value,
+
+                          style: TextStyle(
+                            // 随机语句：跟随次字体色（赛博/非赛博都走 descColor）
+                            color:
+                                ref.watch(themeProvider).themeColor.descColor(),
+
+                            fontSize: isCyber ? 12 : 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 15),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+
+          children: [
+            _buildFeatureButton(
+              title: "仪表盘",
+
+              imagePath: "assets/images/icon_c.png",
+
+              iconSize: 28,
+
+              fontSize: 15,
+
+              onTap: () {
+                Navigator.of(context).pushNamed(Routes.routeDashboard);
+              },
+            ),
+
+            _buildFeatureButton(
+              title:
+                  getIt<SystemBean>(
+                        instanceName:
+                            (SingleAccountPageState.of(context)?.index ?? 0)
+                                .toString(),
+                      ).isUpperVersion2_13_0()
+                      ? "订阅管理"
+                      : "拉库管理",
+
+              imagePath: "assets/images/icon_subsctibe.png",
+
+              iconSize: 28,
+
+              fontSize: 15,
+
+              onTap: () {
+                if (getIt<SystemBean>(
+                  instanceName:
+                      (SingleAccountPageState.of(context)?.index ?? 0)
+                          .toString(),
+                ).isUpperVersion2_13_0()) {
+                  Navigator.of(context).pushNamed(Routes.routeSubscribeList);
+                } else {
+                  Navigator.of(context).push(
+                    ContainerPageRoute(
+                      builder:
+                          (context) => const TaskPage(onlyShowPullRepo: true),
+                    ),
+                  );
+                }
+              },
+            ),
+
+            _buildFeatureButton(
+              title: "脚本管理",
+
+              imagePath: "assets/images/icon_s.png",
+
+              iconSize: 28,
+
+              fontSize: 15,
+
+              onTap: () {
+                Navigator.of(context).pushNamed(Routes.routeScript);
+              },
+            ),
+
+            _buildFeatureButton(
+              title: "依赖管理",
+
+              imagePath: "assets/images/icon_d.png",
+
+              iconSize: 28,
+
+              fontSize: 15,
+
+              onTap: () {
+                Navigator.of(context).pushNamed(Routes.routeDependency);
+              },
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
 
 int getDefaultLogExperiedTime() {
   int count = 5;
+
   if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeVIP) {
     count = 5;
   } else {
     count = 30;
   }
+
   return count;
 }

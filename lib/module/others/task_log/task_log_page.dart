@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
+import 'package:qinglong_app/base/ui/selector_card.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
@@ -109,46 +110,165 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
             list.isEmpty
                 ? const Center(child: LoadingWidget())
                 : FloatingSearchBarArea(
-                    controller: searchText,
-                    listView: SlidableAutoCloseBehavior(
-                      child: ListView.builder(
-                        // 顶部间距 64 = 搜索框区域(10+44) + 间距10，放在列表内部（滚动时被内容填充，无背景色块）
-                        padding: EdgeInsets.only(
-                          top: 64,
-                          bottom:
-                              MediaQuery.of(context).viewPadding.bottom + 50,
-                        ),
-                        controller: controller,
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        keyboardDismissBehavior:
-                            ScrollViewKeyboardDismissBehavior.onDrag,
-                        itemBuilder: (context, index) {
-                          TaskLogBean item = list[index];
+                  controller: searchText,
+                  listView: SlidableAutoCloseBehavior(
+                    child: ListView.builder(
+                      // 顶部间距 64 = 搜索框区域(10+44) + 间距10，放在列表内部（滚动时被内容填充，无背景色块）
+                      padding: EdgeInsets.only(
+                        top: 64,
+                        bottom: MediaQuery.of(context).viewPadding.bottom + 50,
+                      ),
+                      controller: controller,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      itemBuilder: (context, index) {
+                        TaskLogBean item = list[index];
 
-                            if (searchText.text.isNotEmpty &&
-                                !(item.name
-                                        ?.toLowerCase()
-                                        .contains(
-                                          searchText.text.toLowerCase(),
-                                        ) ??
-                                    false)) {
-                              return const SizedBox.shrink();
-                            }
+                        if (searchText.text.isNotEmpty &&
+                            !(item.name?.toLowerCase().contains(
+                                  searchText.text.toLowerCase(),
+                                ) ??
+                                false)) {
+                          return const SizedBox.shrink();
+                        }
 
-                            if ((item.isDir ?? false)) {
-                              if (isCyber) {
-                                return CapsuleGlowCard(
-                                  isCyber: true,
-                                  isPinned: false,
-                                  // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
-                                  margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                                  child: CyberSlidable(
-                                  slidableKey: ValueKey(item.name ?? ""),
-                                  endActions: [
-                                    CyberSlideAction(
-                                      label: '删除',
-                                      icon: CupertinoIcons.delete,
+                        if ((item.isDir ?? false)) {
+                          if (isCyber) {
+                            return CapsuleGlowCard(
+                              isCyber: true,
+                              isPinned: false,
+                              // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
+                              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                              child: CyberSlidable(
+                                slidableKey: ValueKey(item.name ?? ""),
+                                endActions: [
+                                  CyberSlideAction(
+                                    label: '删除',
+                                    icon: CupertinoIcons.delete,
+                                    color: const Color(0xffEA4D3E),
+                                    onTap: () {
+                                      showCupertinoDialog(
+                                        context: context,
+                                        useRootNavigator: false,
+                                        builder:
+                                            (context) => CupertinoAlertDialog(
+                                              title: const Text("确认删除"),
+                                              content: const Text("确定删除这个文件夹吗"),
+                                              actions: [
+                                                CupertinoDialogAction(
+                                                  child: const Text(
+                                                    "取消",
+                                                    style: TextStyle(
+                                                      color: Color(0xff999999),
+                                                    ),
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                                CupertinoDialogAction(
+                                                  child: Text(
+                                                    "确定",
+                                                    style: TextStyle(
+                                                      color:
+                                                          ref
+                                                              .watch(
+                                                                themeProvider,
+                                                              )
+                                                              .primaryColor,
+                                                    ),
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                    deleteFold(item);
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                                child: SelectorCard(
+                                  title: item.name ?? "",
+                                  collapseOnSelect: false,
+                                  items:
+                                      (item.files?.isNotEmpty ?? false)
+                                          ? item.files!
+                                              .map(
+                                                (e) => SelectorCardItem(
+                                                  title: e,
+                                                  onTap: () {
+                                                    Navigator.of(context).push(
+                                                      ContainerPageRoute(
+                                                        builder:
+                                                            (
+                                                              context,
+                                                            ) => InTimeHistoryLogPage(
+                                                              path:
+                                                                  item.name ??
+                                                                  "",
+                                                              title: e,
+                                                            ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              )
+                                              .toList()
+                                          : (item.children ?? [])
+                                              .map(
+                                                (e) => SelectorCardItem(
+                                                  title: e.title ?? "",
+                                                  onTap: () {
+                                                    Navigator.of(context)
+                                                        .push(
+                                                          ContainerPageRoute(
+                                                            builder:
+                                                                (
+                                                                  context,
+                                                                ) => InTimeHistoryLogPage(
+                                                                  path:
+                                                                      item.name ??
+                                                                      "",
+                                                                  title:
+                                                                      e.title ??
+                                                                      "",
+                                                                ),
+                                                          ),
+                                                        )
+                                                        .then((value) {
+                                                          if (value != null &&
+                                                              value == true) {
+                                                            loadData();
+                                                          }
+                                                        });
+                                                  },
+                                                ),
+                                              )
+                                              .toList(),
+                                ),
+                              ),
+                            );
+                          }
+                          return CapsuleGlowCard(
+                            isCyber: false,
+                            isPinned: false,
+                            // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
+                            margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(18),
+                              child: Slidable(
+                                key: ValueKey(item.name ?? ""),
+                                endActionPane: ActionPane(
+                                  motion: const ScrollMotion(),
+                                  extentRatio: 0.22,
+                                  children: [
+                                    AppSlideButton(
+                                      context: context,
                                       color: const Color(0xffEA4D3E),
+                                      icon: CupertinoIcons.delete,
                                       onTap: () {
                                         showCupertinoDialog(
                                           context: context,
@@ -198,197 +318,24 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                               ),
                                         );
                                       },
+                                      cyberMode: false,
+                                      width: double.infinity,
+                                      cornerRadius: 12,
+                                      iconSize: 22,
+                                      outerGap: 5,
+                                      innerGap: 6,
                                     ),
                                   ],
-                                  child: ExpansionTile(
-                                    title: Text(
-                                      item.name ?? "",
-                                      style: TextStyle(
-                                        color:
-                                            ref
-                                                .watch(themeProvider)
-                                                .themeColor
-                                                .titleColor(),
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    children:
-                                        (item.files?.isNotEmpty ?? false)
-                                            ? item.files!
-                                                .map(
-                                                  (e) => ListTile(
-                                                    onTap: () {
-                                                      Navigator.of(
-                                                        context,
-                                                      ).push(
-                                                        ContainerPageRoute(
-                                                          builder:
-                                                              (
-                                                                context,
-                                                              ) => InTimeHistoryLogPage(
-                                                                path:
-                                                                    item.name ??
-                                                                    "",
-                                                                title: e,
-                                                              ),
-                                                        ),
-                                                      );
-                                                    },
-                                                    title: Text(
-                                                      e,
-                                                      style: TextStyle(
-                                                        color:
-                                                            ref
-                                                                .watch(
-                                                                  themeProvider,
-                                                                )
-                                                                .themeColor
-                                                                .titleColor(),
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                )
-                                                .toList()
-                                            : (item.children ?? [])
-                                                .map(
-                                                  (e) => ListTile(
-                                                    onTap: () {
-                                                      Navigator.of(context)
-                                                          .push(
-                                                            ContainerPageRoute(
-                                                              builder:
-                                                                  (
-                                                                    context,
-                                                                  ) => InTimeHistoryLogPage(
-                                                                    path:
-                                                                        item.name ??
-                                                                        "",
-                                                                    title:
-                                                                        e.title ??
-                                                                        "",
-                                                                  ),
-                                                            ),
-                                                          )
-                                                          .then((value) {
-                                                            if (value != null &&
-                                                                value == true) {
-                                                              loadData();
-                                                            }
-                                                          });
-                                                    },
-                                                    title: Text(
-                                                      e.title ?? "",
-                                                      style: TextStyle(
-                                                        color:
-                                                            ref
-                                                                .watch(
-                                                                  themeProvider,
-                                                                )
-                                                                .themeColor
-                                                                .titleColor(),
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                )
-                                                .toList(),
-                                  ),
-                                  ),
-                                );
-                              }
-                              return CapsuleGlowCard(
-                                isCyber: false,
-                                isPinned: false,
-                                // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
-                                margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                                child: ClipRRect(
-                                borderRadius: BorderRadius.circular(18),
-                                child: Slidable(
-                                  key: ValueKey(item.name ?? ""),
-                                  endActionPane: ActionPane(
-                                    motion: const ScrollMotion(),
-                                    extentRatio: 0.22,
-                                    children: [
-                                      AppSlideButton(
-                                        context: context,
-                                        color: const Color(0xffEA4D3E),
-                                        icon: CupertinoIcons.delete,
-                                        onTap: () {
-                                          showCupertinoDialog(
-                                            context: context,
-                                            useRootNavigator: false,
-                                            builder:
-                                                (context) => CupertinoAlertDialog(
-                                                  title: const Text("确认删除"),
-                                                  content: const Text(
-                                                    "确定删除这个文件夹吗",
-                                                  ),
-                                                  actions: [
-                                                    CupertinoDialogAction(
-                                                      child: const Text(
-                                                        "取消",
-                                                        style: TextStyle(
-                                                          color: Color(
-                                                            0xff999999,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      onPressed: () {
-                                                        Navigator.of(
-                                                          context,
-                                                        ).pop();
-                                                      },
-                                                    ),
-                                                    CupertinoDialogAction(
-                                                      child: Text(
-                                                        "确定",
-                                                        style: TextStyle(
-                                                          color:
-                                                              ref
-                                                                  .watch(
-                                                                    themeProvider,
-                                                                  )
-                                                                  .primaryColor,
-                                                        ),
-                                                      ),
-                                                      onPressed: () {
-                                                        Navigator.of(
-                                                          context,
-                                                        ).pop();
-                                                        deleteFold(item);
-                                                      },
-                                                    ),
-                                                  ],
-                                                ),
-                                          );
-                                        },
-                                        cyberMode: false,
-                                        width: double.infinity,
-                                        cornerRadius: 12,
-                                        iconSize: 22,
-                                        outerGap: 5,
-                                        innerGap: 6,
-                                      ),
-                                    ],
-                                  ),
-                                  child: ExpansionTile(
-                                  title: Text(
-                                    item.name ?? "",
-                                    style: TextStyle(
-                                      color:
-                                          ref
-                                              .watch(themeProvider)
-                                              .themeColor
-                                              .titleColor(),
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  children:
+                                ),
+                                child: SelectorCard(
+                                  title: item.name ?? "",
+                                  collapseOnSelect: false,
+                                  items:
                                       (item.files?.isNotEmpty ?? false)
                                           ? item.files!
                                               .map(
-                                                (e) => ListTile(
+                                                (e) => SelectorCardItem(
+                                                  title: e,
                                                   onTap: () {
                                                     Navigator.of(context).push(
                                                       ContainerPageRoute(
@@ -404,25 +351,13 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                       ),
                                                     );
                                                   },
-                                                  title: Text(
-                                                    e,
-                                                    style: TextStyle(
-                                                      color:
-                                                          ref
-                                                              .watch(
-                                                                themeProvider,
-                                                              )
-                                                              .themeColor
-                                                              .titleColor(),
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
                                                 ),
                                               )
                                               .toList()
                                           : (item.children ?? [])
                                               .map(
-                                                (e) => ListTile(
+                                                (e) => SelectorCardItem(
+                                                  title: e.title ?? "",
                                                   onTap: () {
                                                     Navigator.of(context)
                                                         .push(
@@ -447,40 +382,119 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                           }
                                                         });
                                                   },
-                                                  title: Text(
-                                                    e.title ?? "",
+                                                ),
+                                              )
+                                              .toList(),
+                                ),
+                              ),
+                            ),
+                          );
+                        } else {
+                          if (isCyber) {
+                            return CapsuleGlowCard(
+                              isCyber: true,
+                              isPinned: false,
+                              // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
+                              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                              child: CyberSlidable(
+                                slidableKey: ValueKey(item.name ?? ""),
+                                endActions: [
+                                  CyberSlideAction(
+                                    label: '删除',
+                                    icon: CupertinoIcons.delete,
+                                    color: const Color(0xffEA4D3E),
+                                    onTap: () {
+                                      showCupertinoDialog(
+                                        context: context,
+                                        useRootNavigator: false,
+                                        builder:
+                                            (context) => CupertinoAlertDialog(
+                                              title: const Text("确认删除"),
+                                              content: const Text("确定删除这个文件吗"),
+                                              actions: [
+                                                CupertinoDialogAction(
+                                                  child: const Text(
+                                                    "取消",
+                                                    style: TextStyle(
+                                                      color: Color(0xff999999),
+                                                    ),
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                                CupertinoDialogAction(
+                                                  child: Text(
+                                                    "确定",
                                                     style: TextStyle(
                                                       color:
                                                           ref
                                                               .watch(
                                                                 themeProvider,
                                                               )
-                                                              .themeColor
-                                                              .titleColor(),
-                                                      fontSize: 14,
+                                                              .primaryColor,
                                                     ),
                                                   ),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                    deleteFold(item);
+                                                  },
                                                 ),
-                                              )
-                                              .toList(),
+                                              ],
+                                            ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                                child: ListTile(
+                                  onTap: () {
+                                    if (item.isDir ?? false) {
+                                      "该文件夹为空".toast();
+                                      return;
+                                    }
+
+                                    Navigator.of(context).push(
+                                      ContainerPageRoute(
+                                        builder:
+                                            (context) => InTimeHistoryLogPage(
+                                              path: "",
+                                              title: item.name ?? "",
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                  title: Text(
+                                    item.name ?? "",
+                                    style: TextStyle(
+                                      color:
+                                          ref
+                                              .watch(themeProvider)
+                                              .themeColor
+                                              .titleColor(),
+                                      fontSize: 16,
+                                    ),
+                                  ),
                                 ),
-                                ),
-                                ),
-                              );
-                            } else {
-                              if (isCyber) {
-                                return CapsuleGlowCard(
-                                  isCyber: true,
-                                  isPinned: false,
-                                  // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
-                                  margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                                  child: CyberSlidable(
-                                  slidableKey: ValueKey(item.name ?? ""),
-                                  endActions: [
-                                    CyberSlideAction(
-                                      label: '删除',
-                                      icon: CupertinoIcons.delete,
+                              ),
+                            );
+                          }
+                          return CapsuleGlowCard(
+                            isCyber: false,
+                            isPinned: false,
+                            // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
+                            margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(18),
+                              child: Slidable(
+                                key: ValueKey(item.name ?? ""),
+                                endActionPane: ActionPane(
+                                  motion: const ScrollMotion(),
+                                  extentRatio: 0.22,
+                                  children: [
+                                    AppSlideButton(
+                                      context: context,
                                       color: const Color(0xffEA4D3E),
+                                      icon: CupertinoIcons.delete,
                                       onTap: () {
                                         showCupertinoDialog(
                                           context: context,
@@ -530,116 +544,16 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                               ),
                                         );
                                       },
+                                      cyberMode: false,
+                                      width: double.infinity,
+                                      cornerRadius: 12,
+                                      iconSize: 22,
+                                      outerGap: 5,
+                                      innerGap: 6,
                                     ),
                                   ],
-                                  child: ListTile(
-                                    onTap: () {
-                                      if (item.isDir ?? false) {
-                                        "该文件夹为空".toast();
-                                        return;
-                                      }
-
-                                      Navigator.of(context).push(
-                                        ContainerPageRoute(
-                                          builder:
-                                              (context) => InTimeHistoryLogPage(
-                                                path: "",
-                                                title: item.name ?? "",
-                                              ),
-                                        ),
-                                      );
-                                    },
-                                    title: Text(
-                                      item.name ?? "",
-                                      style: TextStyle(
-                                        color:
-                                            ref
-                                                .watch(themeProvider)
-                                                .themeColor
-                                                .titleColor(),
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ),
-                                  ),
-                                );
-                              }
-                              return CapsuleGlowCard(
-                                isCyber: false,
-                                isPinned: false,
-                                // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
-                                margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                                child: ClipRRect(
-                                borderRadius: BorderRadius.circular(18),
-                                child: Slidable(
-                                  key: ValueKey(item.name ?? ""),
-                                  endActionPane: ActionPane(
-                                    motion: const ScrollMotion(),
-                                    extentRatio: 0.22,
-                                    children: [
-                                      AppSlideButton(
-                                        context: context,
-                                        color: const Color(0xffEA4D3E),
-                                        icon: CupertinoIcons.delete,
-                                        onTap: () {
-                                          showCupertinoDialog(
-                                            context: context,
-                                            useRootNavigator: false,
-                                            builder:
-                                                (context) => CupertinoAlertDialog(
-                                                  title: const Text("确认删除"),
-                                                  content: const Text(
-                                                    "确定删除这个文件吗",
-                                                  ),
-                                                  actions: [
-                                                    CupertinoDialogAction(
-                                                      child: const Text(
-                                                        "取消",
-                                                        style: TextStyle(
-                                                          color: Color(
-                                                            0xff999999,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      onPressed: () {
-                                                        Navigator.of(
-                                                          context,
-                                                        ).pop();
-                                                      },
-                                                    ),
-                                                    CupertinoDialogAction(
-                                                      child: Text(
-                                                        "确定",
-                                                        style: TextStyle(
-                                                          color:
-                                                              ref
-                                                                  .watch(
-                                                                    themeProvider,
-                                                                  )
-                                                                  .primaryColor,
-                                                        ),
-                                                      ),
-                                                      onPressed: () {
-                                                        Navigator.of(
-                                                          context,
-                                                        ).pop();
-                                                        deleteFold(item);
-                                                      },
-                                                    ),
-                                                  ],
-                                                ),
-                                          );
-                                        },
-                                        cyberMode: false,
-                                        width: double.infinity,
-                                        cornerRadius: 12,
-                                        iconSize: 22,
-                                        outerGap: 5,
-                                        innerGap: 6,
-                                      ),
-                                    ],
-                                  ),
-                                  child: ListTile(
+                                ),
+                                child: ListTile(
                                   onTap: () {
                                     if (item.isDir ?? false) {
                                       "该文件夹为空".toast();
@@ -668,15 +582,15 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                     ),
                                   ),
                                 ),
-                                ),
-                                ),
-                              );
-                            }
-                          },
-                          itemCount: list.length,
-                        ),
-                      ),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      itemCount: list.length,
                     ),
+                  ),
+                ),
       ),
     );
     return isCyber ? CyberBackground(child: scaffold) : scaffold;
