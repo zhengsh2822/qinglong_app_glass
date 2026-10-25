@@ -18,6 +18,7 @@ import 'package:qinglong_app/module/home/system_bean.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_log_page.dart';
 
 import '../../main.dart';
+import '../../base/ui/container_page_route.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -732,7 +733,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
   void _openLog(int id, String name) {
     if (id <= 0) return;
     Navigator.of(context).push(
-      CupertinoPageRoute(
+      ContainerPageRoute(
         builder: (context) => InTimeLogPage('$id', true, name),
       ),
     );

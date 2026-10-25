@@ -18,7 +18,9 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/animated_indexed_switch.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/page_tap_origin.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/utils/ql_debug_log.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/module/home/home_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -32,6 +34,8 @@ var logger = Logger();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 调试日志（debug 构建）：错误钩子 + 文件通道（设备 logcat 被 MIUI 禁用）
+  QlDebugLog.init();
   // 预编译液态玻璃 shader：首页底部导航 / 顶部 tab 的 LiquidGlassLens 首次
   // 渲染即走完整 shader 路径，避免首帧走 frosted fallback（无折射、无外圈
   // 高光 —— "顶部 tab 外圈高光丢失"的根源之一）。
@@ -284,24 +288,28 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
           // updateShouldNotify 返回 false → 子树不随键盘动画 rebuild
           // （不能再用 RepaintBoundary 包整树：会缓存整屏 surface、且可能
           //   切断液态玻璃 BackdropFilter 的采样链，IMP-2026 教训）
-          return MediaQuery(
-            data: mediaQuery.copyWith(
-              textScaler: TextScaler.linear(textScaleFactor),
-              viewInsets:
-                  mediaQuery.viewInsets == EdgeInsets.zero
-                      ? mediaQuery.viewInsets
-                      : EdgeInsets.zero,
-            ),
-            child: ScrollConfiguration(
-              behavior: const ScrollPhysicsConfig(),
-              child: AnimatedTheme(
-                data: theme,
-                duration:
-                    themeRevealActive
-                        ? Duration.zero
-                        : const Duration(milliseconds: 600),
-                curve: Curves.easeInOutCubic,
-                child: child ?? Container(),
+          // PageTapScope：根部记录每次点击命中的视觉卡片矩形，
+          // ContainerPageRoute 据此做「从卡片展开」的容器转场
+          return PageTapScope(
+            child: MediaQuery(
+              data: mediaQuery.copyWith(
+                textScaler: TextScaler.linear(textScaleFactor),
+                viewInsets:
+                    mediaQuery.viewInsets == EdgeInsets.zero
+                        ? mediaQuery.viewInsets
+                        : EdgeInsets.zero,
+              ),
+              child: ScrollConfiguration(
+                behavior: const ScrollPhysicsConfig(),
+                child: AnimatedTheme(
+                  data: theme,
+                  duration:
+                      themeRevealActive
+                          ? Duration.zero
+                          : const Duration(milliseconds: 600),
+                  curve: Curves.easeInOutCubic,
+                  child: child ?? Container(),
+                ),
               ),
             ),
           );

@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_subscribe_log_page.dart';
 import 'package:qinglong_app/utils/utils.dart';
+import '../../base/ui/container_page_route.dart';
 
 class SubscribeDetailPage extends ConsumerStatefulWidget {
   final Map<String, dynamic> taskBean;
@@ -92,7 +93,7 @@ class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
                   onTap: () {
                     Navigator.of(context)
                         .push(
-                          CupertinoPageRoute(
+                          ContainerPageRoute(
                             builder:
                                 (context) =>
                                     AddSubscribePage(taskBean: widget.taskBean),
@@ -359,7 +360,7 @@ class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
 
   void showLog() {
     Navigator.of(context).push(
-      CupertinoPageRoute(
+      ContainerPageRoute(
         builder:
             (context) => InTimeSubscribeLogPage(
               widget.taskBean["id"],

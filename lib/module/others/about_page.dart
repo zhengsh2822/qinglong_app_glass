@@ -317,7 +317,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
                             try {
                               await launchUrl(
                                 Uri.tryParse(
-                                  "https://github.com/zhengsh2822/qinglong_app_glass",
+                                  "https://github.com/zhengsh2822/qinglong_app_glass/releases",
                                 )!,
                               );
                             } catch (e) {

@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:qinglong_app/base/base_state_widget.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
+import 'package:qinglong_app/base/ui/card_transition_source.dart';
+import 'package:qinglong_app/module/task/task_detail/task_detail_page.dart';
 import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
@@ -34,6 +36,7 @@ import 'package:qinglong_app/utils/utils.dart';
 
 import '../../base/ui/notify.dart';
 import '../../main.dart';
+import '../../base/ui/container_page_route.dart';
 
 class TaskPage extends ConsumerStatefulWidget {
   final bool loading;
@@ -281,7 +284,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                 onPressed: () {
                   Navigator.of(context)
                       .push(
-                        CupertinoPageRoute(
+                        ContainerPageRoute(
                           builder:
                               (context) =>
                                   const AddTaskPage(hideUploadFile: false),
@@ -468,7 +471,7 @@ class TaskPageState extends ConsumerState<TaskPage>
 
                 Navigator.of(context)
                     .push(
-                      CupertinoPageRoute(
+                      ContainerPageRoute(
                         builder:
                             (context) =>
                                 const AddTaskPage(hideUploadFile: false),
@@ -865,7 +868,7 @@ class TaskPageState extends ConsumerState<TaskPage>
         }
 
         Navigator.of(context).push(
-          CupertinoPageRoute(
+          ContainerPageRoute(
             builder:
                 (context) =>
                     InTimeLogPage(cronId, false, name, command: command),
@@ -1081,7 +1084,7 @@ class TaskItemCell extends StatelessWidget {
               color: const Color(0xFF00F0FF),
               onTap: () {
                 Navigator.of(context).push(
-                  CupertinoPageRoute(
+                  ContainerPageRoute(
                     builder:
                         (context) =>
                             AddTaskPage(taskBean: bean, hideUploadFile: true),
@@ -1158,7 +1161,7 @@ class TaskItemCell extends StatelessWidget {
                 width: double.infinity,
                 onTap: () {
                   Navigator.of(context).push(
-                    CupertinoPageRoute(
+                    ContainerPageRoute(
                       builder:
                           (context) =>
                               AddTaskPage(taskBean: bean, hideUploadFile: true),
@@ -1259,21 +1262,21 @@ class TaskItemCell extends StatelessWidget {
 
   /// 构建卡片主体内容（不含外层 margin/decoration，由 CapsuleGlowCard 提供）
   Widget _buildCardChild(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () {
-          if (editMode) {
-            checkedCallback(bean.sId ?? "");
-          } else {
-            Navigator.of(
-              context,
-            ).pushNamed(Routes.routeTaskDetail, arguments: bean);
-          }
-        },
-        child: _buildCardContent(context),
+    // 卡片共享展开：点击卡片 → 卡片内容隐藏 → 容器从卡片矩形展开详情页；
+    // 卡片外壳（CapsuleGlowCard 底色）保持可见，收回时内容淡回、无缝衔接
+    return CardTransitionSource(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          // 非编辑模式由外层 CardTransitionSource 接管点击（内层 onTap
+          // 为 null 不参与手势仲裁），编辑模式保留勾选行为
+          onTap: editMode ? () => checkedCallback(bean.sId ?? "") : null,
+          child: _buildCardContent(context),
+        ),
       ),
+      sourceBuilder: (ctx) => _buildCardContent(ctx),
+      pageBuilder: (context) => TaskDetailPage(bean),
     );
   }
 
@@ -1598,7 +1601,7 @@ class TaskItemCell extends StatelessWidget {
   logCron(BuildContext context, WidgetRef ref) {
     Navigator.of(context)
         .push(
-          CupertinoPageRoute(
+          ContainerPageRoute(
             builder:
                 (context) => InTimeLogPage(
                   bean.sId!,

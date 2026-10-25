@@ -20,7 +20,9 @@ import 'package:qinglong_app/module/appkey/appkey_viewmodel.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
 import 'add_appkey_page.dart';
+import '../../base/ui/container_page_route.dart';
 
+import 'package:qinglong_app/base/ui/content_entrance.dart';
 class AppKeyPage extends ConsumerStatefulWidget {
   const AppKeyPage({Key? key}) : super(key: key);
 
@@ -97,7 +99,7 @@ class _AppKeyPageState extends ConsumerState<AppKeyPage> {
             onTap: () {
               Navigator.of(context)
                   .push(
-                    CupertinoPageRoute(
+                    ContainerPageRoute(
                       builder: (context) => const AddAppKeyPage(bean: {}),
                     ),
                   )
@@ -122,7 +124,11 @@ class _AppKeyPageState extends ConsumerState<AppKeyPage> {
       ),
       body: BaseStateWidget<AppKeyViewModel>(
         builder: (ref, model, child) {
-          return body(model, getListByType(model), ref);
+          return ContentEntrance(
+            // LOADING→CONTENT 切换时内容柔和进场（首次挂载播放一次）：
+            // 淡入 + 轻微上移归位，替换"加载完成直接闪现"的生硬切换
+            child: body(model, getListByType(model), ref),
+          );
         },
         model: SingleAccountPageState.ofAppKeyProvider(context)(
           getProviderName(context),
@@ -220,7 +226,7 @@ class AppKeyItemCell extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
         onTap: () {
           Navigator.of(context).push(
-            CupertinoPageRoute(
+            ContainerPageRoute(
               builder: (context) => AppKeyDetailDetailPage(bean),
             ),
           );
@@ -286,7 +292,7 @@ class AppKeyItemCell extends StatelessWidget {
                 onTap: () {
                   Navigator.of(context)
                       .push(
-                        CupertinoPageRoute(
+                        ContainerPageRoute(
                           builder: (context) => AddAppKeyPage(bean: bean),
                         ),
                       )

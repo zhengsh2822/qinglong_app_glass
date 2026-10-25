@@ -39,6 +39,7 @@ import '../push_setting_page.dart';
 import '../scan_page.dart';
 import '../task/task_page.dart';
 import '../update_max_account_page.dart';
+import '../../base/ui/container_page_route.dart';
 
 class OtherPage extends ConsumerStatefulWidget {
   const OtherPage({Key? key}) : super(key: key);
@@ -173,7 +174,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                         if (SpUtil.getInt(spVIP, defValue: typeNormal) ==
                             typeNormal) {
                           Navigator.of(context).push(
-                            CupertinoPageRoute(
+                            ContainerPageRoute(
                               builder:
                                   (context) => const InAppPurchasePage(
                                     fromDirectly: true,
@@ -332,7 +333,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                               ).pushNamed(Routes.routeSubscribeList);
                             } else {
                               Navigator.of(context).push(
-                                CupertinoPageRoute(
+                                ContainerPageRoute(
                                   builder:
                                       (context) => const TaskPage(
                                         onlyShowPullRepo: true,
@@ -378,7 +379,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                 onTap: () {
                   Navigator.of(context)
                       .push(
-                        CupertinoPageRoute(
+                        ContainerPageRoute(
                           builder:
                               (context) =>
                                   const InAppPurchasePage(fromDirectly: true),
@@ -443,7 +444,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                             }
 
                             Navigator.of(context).push(
-                              CupertinoPageRoute(
+                              ContainerPageRoute(
                                 builder:
                                     (context) => const UpdateMaxAccountPage(),
                               ),
@@ -505,7 +506,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                           icon: CupertinoIcons.doc_text_search,
                           onTap: () {
                             Navigator.of(context).push(
-                              CupertinoPageRoute(
+                              ContainerPageRoute(
                                 builder: (context) => const ScanPage(),
                               ),
                             );
@@ -516,7 +517,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                           icon: CupertinoIcons.textformat_size,
                           onTap: () {
                             Navigator.of(context).push(
-                              CupertinoPageRoute(
+                              ContainerPageRoute(
                                 builder: (context) => const TextSizePage(),
                               ),
                             );
@@ -535,7 +536,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                             icon: CupertinoIcons.arrow_swap,
                             onTap: () {
                               Navigator.of(context).push(
-                                CupertinoPageRoute(
+                                ContainerPageRoute(
                                   builder: (context) => const SortAccountPage(),
                                 ),
                               );
@@ -599,7 +600,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                           icon: CupertinoIcons.gear_alt,
                           onTap: () {
                             Navigator.of(context).push(
-                              CupertinoPageRoute(
+                              ContainerPageRoute(
                                 builder: (context) => const AppKeyPage(),
                               ),
                             );
@@ -610,7 +611,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                           icon: CupertinoIcons.envelope,
                           onTap: () {
                             Navigator.of(context).push(
-                              CupertinoPageRoute(
+                              ContainerPageRoute(
                                 builder: (context) => const PushSettingPage(),
                               ),
                             );
@@ -632,7 +633,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                               "使用client_id方式登录无法修改密码".toast();
                             } else {
                               Navigator.of(context).push(
-                                CupertinoPageRoute(
+                                ContainerPageRoute(
                                   builder:
                                       (context) => const UpdatePasswordPage(),
                                 ),
@@ -674,7 +675,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                           icon: CupertinoIcons.cube_box,
                           onTap: () {
                             Navigator.of(context).push(
-                              CupertinoPageRoute(
+                              ContainerPageRoute(
                                 builder: (context) =>
                                     const DependencySettingPage(),
                               ),
@@ -686,7 +687,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                           icon: CupertinoIcons.cloud_upload,
                           onTap: () {
                             Navigator.of(context).push(
-                              CupertinoPageRoute(
+                              ContainerPageRoute(
                                 builder: (context) => const BackupPage(),
                               ),
                             );
@@ -697,7 +698,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                           icon: CupertinoIcons.arrow_left_right_circle,
                           onTap: () {
                             Navigator.of(context).push(
-                              CupertinoPageRoute(
+                              ContainerPageRoute(
                                 builder: (context) => const ClientIpPage(),
                               ),
                             );
@@ -708,7 +709,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                           icon: CupertinoIcons.trash,
                           onTap: () {
                             Navigator.of(context).push(
-                              CupertinoPageRoute(
+                              ContainerPageRoute(
                                 builder:
                                     (context) => const StorageRetentionPage(),
                               ),

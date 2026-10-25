@@ -23,7 +23,9 @@ import '../../../base/ui/tree/tree_view.dart';
 import '../../../base/ui/tree/tree_view_controller.dart';
 import '../../../main.dart';
 import '../../home/system_bean.dart';
+import '../../../base/ui/container_page_route.dart';
 
+import 'package:qinglong_app/base/ui/content_entrance.dart';
 class ScriptPage extends ConsumerStatefulWidget {
   const ScriptPage({Key? key}) : super(key: key);
 
@@ -155,7 +157,9 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
         body:
             list.isEmpty
                 ? const Center(child: LoadingWidget())
-                : FloatingSearchBarArea(
+                // 数据到位后内容柔和进场（首次挂载播放一次）：淡入 + 轻微上移
+                : ContentEntrance(
+                  child: FloatingSearchBarArea(
                     controller: searchText,
                     listView: RefreshIndicator(
                       color: Theme.of(context).primaryColor,
@@ -248,6 +252,7 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
                         },
                       ),
                     ),
+                  ),
                   ),
       ),
     );
@@ -342,7 +347,7 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
   void addScript() {
     Navigator.of(context)
         .push(
-          CupertinoPageRoute(builder: (context) => const ScriptUploadPage()),
+          ContainerPageRoute(builder: (context) => const ScriptUploadPage()),
         )
         .then((value) {
           if (value != null && value == true) {
@@ -353,7 +358,7 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
 
   void addFloder() {
     Navigator.of(context)
-        .push(CupertinoPageRoute(builder: (context) => const FloderAddPage()))
+        .push(ContainerPageRoute(builder: (context) => const FloderAddPage()))
         .then((value) {
           if (value != null && value == true) {
             loadData();

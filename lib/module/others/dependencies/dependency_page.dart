@@ -25,10 +25,12 @@ import 'package:qinglong_app/base/ui/spring_depth_page_track.dart';
 import 'package:qinglong_app/module/others/dependencies/add_dependency_page.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_viewmodel.dart';
+import 'package:qinglong_app/base/ui/card_transition_source.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_dep_log_page.dart';
 import 'package:qinglong_app/module/task/task_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
+import '../../../base/ui/container_page_route.dart';
 
 class DependencyPage extends ConsumerStatefulWidget {
   const DependencyPage({Key? key}) : super(key: key);
@@ -214,7 +216,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                 }
                 Navigator.of(context)
                     .push(
-                      CupertinoPageRoute(
+                      ContainerPageRoute(
                         builder: (context) => const AddDependencyPage(),
                       ),
                     )
@@ -399,7 +401,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
     }
     Navigator.of(context)
         .push(
-          CupertinoPageRoute(
+          ContainerPageRoute(
             builder: (context) => InTimeDepLogPage(v, true, title),
           ),
         )
@@ -756,13 +758,9 @@ class DependencyCell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     Widget cardContent = InkWell(
-      onTap: () {
-        if (editMode) {
-          checkedCallback(bean.mustId ?? "");
-        } else {
-          showLog(context, bean.name ?? "", ref, bean.sId, bean.id);
-        }
-      },
+      // 非编辑模式由外层 CardTransitionSource 接管点击（内层 onTap
+      // 为 null 不参与手势仲裁），编辑模式保留勾选行为
+      onTap: editMode ? () => checkedCallback(bean.mustId ?? "") : null,
       child: Row(
         children: [
           AnimatedSize(
@@ -863,10 +861,29 @@ class DependencyCell extends ConsumerWidget {
       ),
     );
 
-    Widget cardChild = Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(18),
-      child: cardContent,
+    // 卡片共享展开：点击 → 内容隐藏 → 容器从卡片矩形展开依赖日志页；
+    // 卡片外壳保持可见，收回时无缝衔接。返回后刷新列表（与原 showLog 一致）
+    Widget cardChild = CardTransitionSource(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: cardContent,
+      ),
+      sourceBuilder: (ctx) => cardContent,
+      pageBuilder: (context) => InTimeDepLogPage(
+        bean.sId ?? bean.id.toString(),
+        true,
+        bean.name ?? "",
+      ),
+      onResult: (_) async {
+        await ref
+            .read(
+              SingleAccountPageState.ofDependencyProvider(context)(
+                getProviderName(context),
+              ),
+            )
+            .loadData(context, type.name.toLowerCase());
+      },
     );
 
     if (isCyber) {
@@ -978,7 +995,7 @@ class DependencyCell extends ConsumerWidget {
 
     Navigator.of(context)
         .push(
-          CupertinoPageRoute(
+          ContainerPageRoute(
             builder: (context) => InTimeDepLogPage(v, true, title),
           ),
         )

@@ -14,6 +14,7 @@ import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
 import 'login_log_bean.dart';
+import 'package:qinglong_app/base/ui/content_entrance.dart';
 
 
 class LoginLogPage extends ConsumerStatefulWidget {
@@ -41,7 +42,9 @@ class _LoginLogPageState extends ConsumerState<LoginLogPage>
           ? const Center(
               child: LoadingWidget(),
             )
-          : ListView.separated(
+          // 数据到位后内容柔和进场（首次挂载播放一次）：淡入 + 轻微上移
+          : ContentEntrance(
+              child: ListView.separated(
               primary: true,
               itemBuilder: (context, index) {
                 LoginLogBean item = list[index];
@@ -142,6 +145,7 @@ class _LoginLogPageState extends ConsumerState<LoginLogPage>
                 );
               },
             ),
+          ),
     );
   }
 

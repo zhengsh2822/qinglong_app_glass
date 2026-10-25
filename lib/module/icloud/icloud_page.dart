@@ -25,6 +25,7 @@ import 'package:qinglong_app/utils/icloud_utils.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
 import '../../base/theme.dart';
+import '../../base/ui/container_page_route.dart';
 
 class IcloudPage extends ConsumerStatefulWidget {
   const IcloudPage({Key? key}) : super(key: key);
@@ -434,7 +435,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
           SingleAccountPageState.of(context)?.index ?? 0,
         ).sourcePath;
     Navigator.of(context).push(
-      CupertinoPageRoute(builder: (context) => FileDirectoryPage(path: path)),
+      ContainerPageRoute(builder: (context) => FileDirectoryPage(path: path)),
     );
   }
 }

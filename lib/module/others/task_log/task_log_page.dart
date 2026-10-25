@@ -19,6 +19,8 @@ import 'package:qinglong_app/utils/extension.dart';
 
 import '../../../main.dart';
 import '../../home/system_bean.dart';
+import '../../../base/ui/container_page_route.dart';
+import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 
 class TaskLogPage extends ConsumerStatefulWidget {
   final String? searchText;
@@ -33,7 +35,9 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
     with LazyLoadState<TaskLogPage> {
   List<TaskLogBean> list = [];
 
-  TextEditingController searchText = TextEditingController();
+  // 初始筛选文本在 initState 写入构造参数，保证首帧渲染即是筛选后的列表，
+  // 避免「先展示全部日志、预填搜索词后再筛掉」的闪变（同步自壁纸版）
+  late final TextEditingController searchText;
 
   ScrollController controller = ScrollController();
 
@@ -50,6 +54,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
   @override
   void initState() {
     super.initState();
+    searchText = TextEditingController(text: widget.searchText);
     controller.addListener(floatingButtonVisibility);
     searchText.addListener(() {
       setState(() {});
@@ -132,7 +137,12 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
 
                             if ((item.isDir ?? false)) {
                               if (isCyber) {
-                                return CyberSlidable(
+                                return CapsuleGlowCard(
+                                  isCyber: true,
+                                  isPinned: false,
+                                  // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
+                                  margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                                  child: CyberSlidable(
                                   slidableKey: ValueKey(item.name ?? ""),
                                   endActions: [
                                     CyberSlideAction(
@@ -211,7 +221,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                       Navigator.of(
                                                         context,
                                                       ).push(
-                                                        CupertinoPageRoute(
+                                                        ContainerPageRoute(
                                                           builder:
                                                               (
                                                                 context,
@@ -246,7 +256,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                     onTap: () {
                                                       Navigator.of(context)
                                                           .push(
-                                                            CupertinoPageRoute(
+                                                            ContainerPageRoute(
                                                               builder:
                                                                   (
                                                                     context,
@@ -284,9 +294,15 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                 )
                                                 .toList(),
                                   ),
+                                  ),
                                 );
                               }
-                              return ClipRRect(
+                              return CapsuleGlowCard(
+                                isCyber: false,
+                                isPinned: false,
+                                // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
+                                margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                                child: ClipRRect(
                                 borderRadius: BorderRadius.circular(18),
                                 child: Slidable(
                                   key: ValueKey(item.name ?? ""),
@@ -375,7 +391,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                 (e) => ListTile(
                                                   onTap: () {
                                                     Navigator.of(context).push(
-                                                      CupertinoPageRoute(
+                                                      ContainerPageRoute(
                                                         builder:
                                                             (
                                                               context,
@@ -410,7 +426,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                   onTap: () {
                                                     Navigator.of(context)
                                                         .push(
-                                                          CupertinoPageRoute(
+                                                          ContainerPageRoute(
                                                             builder:
                                                                 (
                                                                   context,
@@ -449,10 +465,16 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                               .toList(),
                                 ),
                                 ),
+                                ),
                               );
                             } else {
                               if (isCyber) {
-                                return CyberSlidable(
+                                return CapsuleGlowCard(
+                                  isCyber: true,
+                                  isPinned: false,
+                                  // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
+                                  margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                                  child: CyberSlidable(
                                   slidableKey: ValueKey(item.name ?? ""),
                                   endActions: [
                                     CyberSlideAction(
@@ -518,7 +540,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                       }
 
                                       Navigator.of(context).push(
-                                        CupertinoPageRoute(
+                                        ContainerPageRoute(
                                           builder:
                                               (context) => InTimeHistoryLogPage(
                                                 path: "",
@@ -539,9 +561,15 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                       ),
                                     ),
                                   ),
+                                  ),
                                 );
                               }
-                              return ClipRRect(
+                              return CapsuleGlowCard(
+                                isCyber: false,
+                                isPinned: false,
+                                // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
+                                margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                                child: ClipRRect(
                                 borderRadius: BorderRadius.circular(18),
                                 child: Slidable(
                                   key: ValueKey(item.name ?? ""),
@@ -619,7 +647,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                     }
 
                                     Navigator.of(context).push(
-                                      CupertinoPageRoute(
+                                      ContainerPageRoute(
                                         builder:
                                             (context) => InTimeHistoryLogPage(
                                               path: "",
@@ -639,6 +667,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                       fontSize: 16,
                                     ),
                                   ),
+                                ),
                                 ),
                                 ),
                               );
@@ -663,11 +692,6 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
       }
       list.clear();
       list.addAll(response.bean ?? []);
-      if (widget.searchText != null) {
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          searchText.text = widget.searchText!;
-        });
-      }
       setState(() {});
     } else {
       response.message?.toast();

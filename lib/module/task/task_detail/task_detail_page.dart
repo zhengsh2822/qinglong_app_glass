@@ -22,6 +22,7 @@ import 'package:timezone/standalone.dart';
 import '../../../base/cron_parse.dart';
 import '../../home/system_bean.dart';
 import '../../../main.dart';
+import '../../../base/ui/container_page_route.dart';
 
 class TaskDetailPage extends ConsumerStatefulWidget {
   final TaskBean taskBean;
@@ -219,7 +220,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
                           desc: "查看历史运行实例",
                           taped: () {
                             Navigator.of(context).push(
-                              CupertinoPageRoute(
+                              ContainerPageRoute(
                                 builder: (context) => CronInstancesPage(
                                   cronId: widget.taskBean.sId ?? "",
                                   cronName: widget.taskBean.name ?? "",
@@ -327,7 +328,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
                     title: "编辑",
                     onTap: () {
                       Navigator.of(context).push(
-                        CupertinoPageRoute(
+                        ContainerPageRoute(
                           builder: (context) => AddTaskPage(
                             taskBean: widget.taskBean,
                             hideUploadFile: true,
@@ -447,7 +448,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
 
   void showLog() {
     Navigator.of(context).push(
-      CupertinoPageRoute(
+      ContainerPageRoute(
         builder: (context) => InTimeLogPage(
           widget.taskBean.sId!,
           true,
@@ -515,7 +516,13 @@ class TaskDetailCell extends ConsumerWidget {
             left: 15,
             bottom: 10,
           ),
-          child: Row(
+          // 整行作为点击区（taped 非空时）：desc 文本的 SelectableText.onTap
+          // 保留（手势仲裁内层优先，文本上点击不会重复触发），行内空白区域
+          // 由这层 GestureDetector 接管，转场来源也与整行一致
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: taped != null ? () => taped!() : null,
+            child: Row(
             children: [
               Text(
                 title,
@@ -563,6 +570,7 @@ class TaskDetailCell extends ConsumerWidget {
                 width: 15,
               ),
             ],
+          ),
           ),
         ),
         hideDivide
