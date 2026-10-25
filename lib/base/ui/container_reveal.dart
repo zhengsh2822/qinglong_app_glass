@@ -116,8 +116,13 @@ class ContainerReveal extends StatelessWidget {
                   0.46,
                   curve: Curves.easeOutCubic,
                 ).transform(t);
-        final Color baseColor =
-            Color.lerp(Colors.transparent, pageBackground, fillT)!;
+        // 主题版：容器底色从首帧即不透明。
+        // 壁纸版的「透明→渐入」配方是为了先透出旧页面复刻磨砂玻璃卡材质
+        // （深色界面里透什么 都看不出来）；主题版纯色卡无此需求，且半透明
+        // 填充期会透出旧页面（如青色 AppBar）+ 压暗层 → 浅色模式出现
+        // 「深色药丸残影」（真机截图已复现），故直接取实心底色。
+        // fillT 仍保留用于顶部高光渐隐与（壁纸版的）模糊层开关。
+        final Color baseColor = pageBackground;
 
         final double backgroundT =
             dissolving

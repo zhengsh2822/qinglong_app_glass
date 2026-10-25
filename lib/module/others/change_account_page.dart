@@ -7,7 +7,6 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/utils/ql_debug_log.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
@@ -15,9 +14,8 @@ import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
-import 'package:qinglong_app/base/ui/container_transform_route.dart';
+import 'package:qinglong_app/base/ui/card_transition_source.dart';
 import 'package:qinglong_app/module/login/login_page.dart';
-import 'package:qinglong_app/base/ui/shared_page_entrance.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -36,10 +34,6 @@ class ChangeAccountPage extends ConsumerStatefulWidget {
 }
 
 class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
-  /// 添加账号卡片：共享转场源矩形
-  final GlobalKey _addAccountKey = GlobalKey();
-  bool _addAccountOpening = false;
-
   @override
   void initState() {
     super.initState();
@@ -96,13 +90,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
             (ref.watch(themeProvider).themeMode == modeDark || isCyber)
                 ? SystemUiOverlayStyle.light
                 : SystemUiOverlayStyle.dark,
-        child: _buildBody(
-          context,
-          usedSlots,
-          freeSlot,
-          itemCount,
-          isCyber,
-        ),
+        child: _buildBody(context, usedSlots, freeSlot, itemCount, isCyber),
       ),
     );
     if (isCyber && entrance == null) {
@@ -274,11 +262,9 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
         final viewModel = getIt<MultiAccountUserInfoViewModel>();
         // 仅当没有其它槽位使用同一 host 时才清理历史记录：
         // 否则会连带删掉同 host 的其它账号历史（本次实机复现：两个槽位同 host）
-        final bool sharedByOtherSlot =
-            viewModel.tokenBeans
-                .asMap()
-                .entries
-                .any((e) => e.key != index && e.value.host == model.host);
+        final bool sharedByOtherSlot = viewModel.tokenBeans.asMap().entries.any(
+          (e) => e.key != index && e.value.host == model.host,
+        );
         if (!sharedByOtherSlot) {
           viewModel.removeHistoryAccount(model.host);
         }
@@ -311,10 +297,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: ref
-                        .watch(themeProvider)
-                        .themeColor
-                        .titleColor(),
+                    color: ref.watch(themeProvider).themeColor.titleColor(),
                     fontSize: 15,
                   ),
                 ),
@@ -324,10 +307,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: ref
-                        .watch(themeProvider)
-                        .themeColor
-                        .descColor(),
+                    color: ref.watch(themeProvider).themeColor.descColor(),
                     fontSize: 13,
                   ),
                 ),
@@ -368,58 +348,6 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     );
   }
 
-  /// 添加账号：从卡片共享展开到登录页（同导航器，返回时收回卡片）
-  void _openAddAccountPage(int index, Color accentColor) {
-    final RenderBox? box =
-        _addAccountKey.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize) {
-      // 兜底：保持原行为（切到空槽位回首页进登录）
-      context
-          .findAncestorStateOfType<MultiAccountPageState>()
-          ?.updateIndex(index);
-      Navigator.of(context).pop();
-      return;
-    }
-
-    final Rect rect = box.localToGlobal(Offset.zero) & box.size;
-    // 几何诊断日志（debug 构建，release 零开销）：核对捕获矩形与可视内容盒
-    QlDebugLog.write(
-      'QLLOG AddAccount open rect=$rect size=${box.size} opening=true',
-    );
-
-    HapticFeedback.lightImpact();
-    setState(() => _addAccountOpening = true);
-
-    Navigator.of(context)
-        .push(
-          ContainerTransformRoute(
-            sourceRect: rect,
-            sourceChild: _buildAddAccountContent(accentColor),
-            sourceRadius: 18,
-            sourceBlurSigma: 0,
-            sourceHighlightOpacity: 0,
-            sourceBorderColor: Colors.transparent,
-            pageBackground: Theme.of(context).scaffoldBackgroundColor,
-            pageBuilder:
-                (context, animation) => AccountIndexScope(
-                  index: index,
-                  child: SharedPageEntrance(
-                    animation: animation,
-                    child: LoginPage(
-                      fromAddNewAccount: true,
-                      targetAccountIndex: index,
-                    ),
-                  ),
-                ),
-          ),
-        )
-        .whenComplete(() {
-          if (mounted) {
-            setState(() => _addAccountOpening = false);
-          }
-        });
-  }
-
   /// 添加账号按钮（赛博/非赛博统一布局）
   ///
   /// 结构与列表页 CardTransitionSource 同款（真机验证过的模式）：
@@ -432,25 +360,30 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     // 提示色统一走 primaryColor（赛博模式下返回 cyan），参与主题切换颜色过渡
     final accentColor = ref.watch(themeProvider).primaryColor;
-    return CapsuleGlowCard(
-      isCyber: isCyber,
-      isPinned: false,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(18),
-        child: GestureDetector(
-          key: _addAccountKey,
-          behavior: HitTestBehavior.opaque,
-          onTap: () => _openAddAccountPage(index, accentColor),
-          child: IgnorePointer(
-            ignoring: _addAccountOpening,
-            child: Opacity(
-              opacity: _addAccountOpening ? 0 : 1,
-              child: _buildAddAccountContent(accentColor),
-            ),
+    // 统一卡片共享展开组件（与五列表页同款，margin 在组件外层防矩形陷阱）：
+    // 点击 → 内容隐藏 → 容器从卡片矩形展开登录页（以目标空槽位身份登录），
+    // 返回收回无缝还原。AccountIndexScope 让登录链路写入空槽位。
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: CardTransitionSource(
+        child: CapsuleGlowCard(
+          isCyber: isCyber,
+          isPinned: false,
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+            child: _buildAddAccountContent(accentColor),
           ),
         ),
+        sourceBuilder: (ctx) => _buildAddAccountContent(accentColor),
+        pageBuilder:
+            (context) => AccountIndexScope(
+              index: index,
+              child: LoginPage(
+                fromAddNewAccount: true,
+                targetAccountIndex: index,
+              ),
+            ),
       ),
     );
   }
