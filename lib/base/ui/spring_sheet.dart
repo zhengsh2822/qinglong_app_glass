@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:qinglong_app/utils/ql_debug_log.dart';
 import 'package:flutter/scheduler.dart';
 
 /// 底部弹层弹簧数值（全局唯一）
@@ -78,11 +77,7 @@ Future<T?> showSpringSheet<T>({
   bool useRootNavigator = false,
 }) {
   // 动画进行中再次触发 → 反向打断，不新开一层
-  QlDebugLog.write(
-    'QLLOG SpringSheet call t=${DateTime.now().toString().substring(11, 23)}',
-  );
   if (SpringSheetRegistry.toggleIfTransitioning()) {
-    QlDebugLog.write('QLLOG SpringSheet TOGGLE-reverse');
     return Future<T?>.value(null);
   }
   final _SpringSheetRoute<T> route = _SpringSheetRoute<T>(
@@ -90,7 +85,6 @@ Future<T?> showSpringSheet<T>({
     enableDrag: enableDrag,
     isDismissible: isDismissible,
   );
-  QlDebugLog.write('QLLOG SpringSheet PUSH route');
   return Navigator.of(context, rootNavigator: useRootNavigator).push<T>(route);
 }
 
