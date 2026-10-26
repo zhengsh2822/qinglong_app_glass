@@ -36,6 +36,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // 调试日志（debug 构建）：错误钩子 + 文件通道（设备 logcat 被 MIUI 禁用）
   QlDebugLog.init();
+  // 临时：release 诊断日志（定位双层弹窗，诊断完回退）
+  QlDebugLog.releaseLogging = true;
   // 预编译液态玻璃 shader：首页底部导航 / 顶部 tab 的 LiquidGlassLens 首次
   // 渲染即走完整 shader 路径，避免首帧走 frosted fallback（无折射、无外圈
   // 高光 —— "顶部 tab 外圈高光丢失"的根源之一）。
@@ -166,7 +168,11 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
     const preloadText =
         '青龙面板任务脚本订阅依赖环境变量配置系统设置登录账号密码通知推送备份恢复关于仪表盘京东助手悬浮时间扫描字体大小文件排序修改历史记录运行停止启用禁用删除编辑搜索确认取消返回保存0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      for (final weight in [FontWeight.w400, FontWeight.w500, FontWeight.w600]) {
+      for (final weight in [
+        FontWeight.w400,
+        FontWeight.w500,
+        FontWeight.w600,
+      ]) {
         final painter = TextPainter(
           text: TextSpan(
             text: preloadText,
@@ -186,11 +192,15 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
   }
 
   void updateTextScaleFactor(double target) {
-    debugPrint('[字体排查] updateTextScaleFactor called, target=$target, current=$textScaleFactor');
+    debugPrint(
+      '[字体排查] updateTextScaleFactor called, target=$target, current=$textScaleFactor',
+    );
     if (textScaleFactor == target) return;
     textScaleFactor = target;
     SpUtil.putDouble(spTextScaleFactor, textScaleFactor);
-    debugPrint('[字体排查] saved spTextScaleFactor=$textScaleFactor, calling setState');
+    debugPrint(
+      '[字体排查] saved spTextScaleFactor=$textScaleFactor, calling setState',
+    );
     setState(() {});
   }
 
@@ -237,10 +247,12 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
     return theme.copyWith(
       textTheme: weighted(tt),
       appBarTheme: theme.appBarTheme.copyWith(
-        titleTextStyle:
-            theme.appBarTheme.titleTextStyle?.copyWith(fontWeight: fw),
-        toolbarTextStyle:
-            theme.appBarTheme.toolbarTextStyle?.copyWith(fontWeight: fw),
+        titleTextStyle: theme.appBarTheme.titleTextStyle?.copyWith(
+          fontWeight: fw,
+        ),
+        toolbarTextStyle: theme.appBarTheme.toolbarTextStyle?.copyWith(
+          fontWeight: fw,
+        ),
       ),
       tabBarTheme: theme.tabBarTheme.copyWith(
         labelStyle: theme.tabBarTheme.labelStyle?.copyWith(fontWeight: fw),

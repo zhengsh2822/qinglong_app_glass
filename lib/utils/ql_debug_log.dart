@@ -15,7 +15,7 @@ class QlDebugLog {
 
   /// 挂接全局错误收集（Flutter 框架异常 + 未捕获异步异常）。
   static void init() {
-    if (!kDebugMode) return;
+    if (!kDebugMode && !releaseLogging) return;
     FlutterError.onError = (details) {
       write('FLUTTER ERROR: ${details.exception}\n${details.stack}');
       FlutterError.presentError(details);
@@ -26,8 +26,11 @@ class QlDebugLog {
     };
   }
 
+  /// 临时：release 诊断日志开关（定位双层弹窗后回退）
+  static bool releaseLogging = false;
+
   static void write(String message) {
-    if (!kDebugMode) return;
+    if (!kDebugMode && !releaseLogging) return;
     debugPrint(message);
     _queue = _queue.then((_) async {
       try {

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:qinglong_app/utils/ql_debug_log.dart';
 import 'package:flutter/scheduler.dart';
 
 /// 底部弹层弹簧数值（全局唯一）
@@ -21,6 +22,15 @@ class SpringSheetSpec {
     mass: 1,
     stiffness: 200,
     damping: 21,
+  );
+
+  /// 「我的」长按账号弹窗入场：更低阻尼让缩放过冲肉眼可见。
+  /// 统一 open 规格的过冲仅 ~3%，映射到弹窗的 0.14 缩放区间上只有 ~1.5px
+  /// （不可感知），故此场景单独放低阻尼（ζ≈0.5，过冲≈16%，一次可见回弹）
+  static const SpringDescription popupOpen = SpringDescription(
+    mass: 1,
+    stiffness: 200,
+    damping: 14,
   );
 
   /// 关闭
@@ -68,7 +78,11 @@ Future<T?> showSpringSheet<T>({
   bool useRootNavigator = false,
 }) {
   // 动画进行中再次触发 → 反向打断，不新开一层
+  QlDebugLog.write(
+    'QLLOG SpringSheet call t=${DateTime.now().toString().substring(11, 23)}',
+  );
   if (SpringSheetRegistry.toggleIfTransitioning()) {
+    QlDebugLog.write('QLLOG SpringSheet TOGGLE-reverse');
     return Future<T?>.value(null);
   }
   final _SpringSheetRoute<T> route = _SpringSheetRoute<T>(
@@ -76,6 +90,7 @@ Future<T?> showSpringSheet<T>({
     enableDrag: enableDrag,
     isDismissible: isDismissible,
   );
+  QlDebugLog.write('QLLOG SpringSheet PUSH route');
   return Navigator.of(context, rootNavigator: useRootNavigator).push<T>(route);
 }
 
@@ -119,10 +134,7 @@ class SpringSheetTrailing extends StatelessWidget {
 }
 
 class _SpringSheetScope extends InheritedWidget {
-  const _SpringSheetScope({
-    required this.trailingDelta,
-    required super.child,
-  });
+  const _SpringSheetScope({required this.trailingDelta, required super.child});
 
   final ValueListenable<double> trailingDelta;
 
@@ -382,8 +394,7 @@ class _SpringSheetRoute<T> extends PopupRoute<T> {
   }
 
   void _step(SpringDescription s, double h) {
-    final double a =
-        (-s.stiffness * (_y - _target) - s.damping * _v) / s.mass;
+    final double a = (-s.stiffness * (_y - _target) - s.damping * _v) / s.mass;
     _v += a * h;
     _y += _v * h;
   }
@@ -591,8 +602,7 @@ class _SpringSheetRoute<T> extends PopupRoute<T> {
     final double h = _sheetHeight > 0 ? _sheetHeight : 1;
     final double threshold = SpringSheetSpec.closeVelocity / h;
     final bool shouldClose =
-        _y > SpringSheetSpec.closeRatio ||
-        (vNorm > threshold && _y > 0.02);
+        _y > SpringSheetSpec.closeRatio || (vNorm > threshold && _y > 0.02);
     if (shouldClose) {
       _animateTo(1, math.max(0, vNorm), SpringSheetSpec.close);
     } else {
