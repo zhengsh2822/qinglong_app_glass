@@ -14,7 +14,6 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import 'package:qinglong_app/base/ui/liquid_glass_shapes.dart';
 import 'package:qinglong_app/base/ui/spring_depth_page_track.dart';
-import 'package:qinglong_app/utils/ql_debug_log.dart';
 import 'package:qinglong_app/base/cupertino_sheet.dart';
 import 'package:qinglong_app/base/ui/glow_sheet.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
@@ -313,9 +312,6 @@ class HomePageState extends ConsumerState<HomePage> {
       return;
     }
     _lastSheetAt = now;
-    QlDebugLog.write(
-      'QLLOG AccountSheet push t=${DateTime.now().toString().substring(11, 23)}',
-    );
     HapticFeedback.mediumImpact();
     final viewModel = getIt<MultiAccountUserInfoViewModel>();
     final List<Widget> rows = [];
@@ -614,9 +610,6 @@ class HomePageState extends ConsumerState<HomePage> {
       longPressDurationByIndex: const {3: Duration(milliseconds: 500)},
       onLongTapItem: (i) {
         if (i == 3) {
-          QlDebugLog.write(
-            'QLLOG longtap 我的 t=${DateTime.now().toString().substring(11, 23)}',
-          );
           _showAccountSheet();
           return true;
         }

@@ -36,8 +36,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // 调试日志（debug 构建）：错误钩子 + 文件通道（设备 logcat 被 MIUI 禁用）
   QlDebugLog.init();
-  // 临时：release 诊断日志（定位双层弹窗，诊断完回退）
-  QlDebugLog.releaseLogging = true;
   // 预编译液态玻璃 shader：首页底部导航 / 顶部 tab 的 LiquidGlassLens 首次
   // 渲染即走完整 shader 路径，避免首帧走 frosted fallback（无折射、无外圈
   // 高光 —— "顶部 tab 外圈高光丢失"的根源之一）。
