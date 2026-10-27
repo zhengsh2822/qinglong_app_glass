@@ -7,13 +7,12 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/env/env_bean.dart';
+import 'package:qinglong_app/utils/download_dir_utils.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/file_picker_utils.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/utils/utils.dart';
 import 'package:path/path.dart' as path;
-
-
 
 class ICloudUtils {
   static bool remindError = false;
@@ -32,10 +31,13 @@ class ICloudUtils {
       if (list.isEmpty) return;
       if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
       if (SpUtil.getBool(spICloud, defValue: true) == false &&
-          focusUpdate == false) return;
+          focusUpdate == false)
+        return;
 
       bool exist = await existContent(
-          await FileUtil(index).getSubscribeDirectory(), list);
+        await FileUtil(index).getSubscribeDirectory(),
+        list,
+      );
 
       if (!exist) {
         await FileUtil(index).writeSubscribe(list);
@@ -62,9 +64,12 @@ class ICloudUtils {
       if (list.isEmpty) return;
       if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
       if (SpUtil.getBool(spICloud, defValue: true) == false &&
-          focusUpdate == false) return;
+          focusUpdate == false)
+        return;
       bool exist = await existContent(
-          await FileUtil(index).getEnvDirectory(), jsonEncode(list));
+        await FileUtil(index).getEnvDirectory(),
+        jsonEncode(list),
+      );
 
       if (!exist) {
         await FileUtil(index).writeEnv(jsonEncode(list));
@@ -74,19 +79,23 @@ class ICloudUtils {
     }
   }
 
-  Future<void> asyncConfig(String title, String content,
-      {bool focusUpdate = false}) async {
+  Future<void> asyncConfig(
+    String title,
+    String content, {
+    bool focusUpdate = false,
+  }) async {
     try {
       if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
 
       if (content == null || content.isEmpty) return;
       if (SpUtil.getBool(spICloud, defValue: true) == false &&
-          focusUpdate == false) return;
+          focusUpdate == false)
+        return;
 
       bool exist = await existContent(
-          await FileUtil(index)
-              .getConfigHolDirectory(title ?? "nameNotFound.sh"),
-          content);
+        await FileUtil(index).getConfigHolDirectory(title ?? "nameNotFound.sh"),
+        content,
+      );
 
       if (!exist) {
         await FileUtil(index).writeConfig(title ?? "nameNotFound.sh", content);
@@ -171,9 +180,11 @@ class ICloudUtils {
 
       List<dynamic> data = jsonDecode(contents);
 
-      list.addAll(data.map((e) {
-        return e as Map<String, dynamic>;
-      }).toList());
+      list.addAll(
+        data.map((e) {
+          return e as Map<String, dynamic>;
+        }).toList(),
+      );
 
       for (var value in list) {
         value.remove("id");
@@ -215,11 +226,7 @@ class ICloudUtils {
       for (var value in list) {
         if (value.name == null || value.value == null) continue;
 
-        await Api(index).addEnv(
-          value.name!,
-          value.value!,
-          value.remarks ?? "",
-        );
+        await Api(index).addEnv(value.name!, value.value!, value.remarks ?? "");
       }
       "已还原，请刷新环境变量列表查看".toast();
     } catch (e) {
@@ -347,13 +354,23 @@ class FileUtil {
   }
 
   Future<File> writeDownloadFile(String suffix, String content) async {
-    final path = await downloadFilePath;
-    File f;
     if (Platform.isAndroid) {
-      f = File('$path/qinglong_app/$downloadFiles/$suffix');
-    } else {
-      f = File('$path/$downloadFiles/$suffix');
+      final Directory? pub = await resolveAndroidScriptDownloadDirectory();
+      if (pub != null) {
+        return _writeFreshFile(File('${pub.path}/$suffix'), content);
+      }
+      // 公共 Download 不可写（Android 10 及以下缺存储权限等），回退应用专属外部目录
+      final path = await downloadFilePath;
+      return _writeFreshFile(
+        File('$path/qinglong_app/$downloadFiles/$suffix'),
+        content,
+      );
     }
+    final path = await downloadFilePath;
+    return _writeFreshFile(File('$path/$downloadFiles/$suffix'), content);
+  }
+
+  Future<File> _writeFreshFile(File f, String content) async {
     if (f.existsSync()) {
       f.deleteSync();
     }
