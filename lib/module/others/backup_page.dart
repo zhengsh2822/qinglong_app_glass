@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
 import 'package:qinglong_app/base/ui/selectable_chip.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
+import 'package:qinglong_app/utils/download_dir_utils.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/file_picker_utils.dart';
 import 'package:qinglong_app/utils/icloud_utils.dart';
@@ -65,10 +66,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     return Stack(
       children: [
         Scaffold(
-          appBar: QlAppBar(
-            title: '备份与恢复',
-            canBack: true,
-          ),
+          appBar: QlAppBar(title: '备份与恢复', canBack: true),
           body: SingleChildScrollView(
             padding: EdgeInsets.only(
               left: AppleColors.spaceMd,
@@ -130,41 +128,45 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           Text(
             '将青龙面板数据打包为 .tgz 压缩包，保存到本地',
             style: TextStyle(
-                fontSize: 12,
-                color: ref.read(themeProvider).themeColor.descColor()),
+              fontSize: 12,
+              color: ref.read(themeProvider).themeColor.descColor(),
+            ),
           ),
           const SizedBox(height: 14),
           Text(
             '备份内容（基础数据固定包含，不可取消）',
             style: TextStyle(
-                fontSize: 13,
-                color: ref.read(themeProvider).themeColor.descColor()),
+              fontSize: 13,
+              color: ref.read(themeProvider).themeColor.descColor(),
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _backupOptions.entries.map((entry) {
-              final isBase = entry.key == _baseKey;
-              // 基础数据固定选中不可取消（对齐网页版），其余可勾选
-              final selected = isBase || _selected.contains(entry.key);
-              return SelectableChip(
-                label: entry.value,
-                selected: selected,
-                disabled: _processing,
-                onToggle: isBase
-                    ? null
-                    : (value) {
-                        setState(() {
-                          if (value) {
-                            _selected.add(entry.key);
-                          } else {
-                            _selected.remove(entry.key);
-                          }
-                        });
-                      },
-              );
-            }).toList(),
+            children:
+                _backupOptions.entries.map((entry) {
+                  final isBase = entry.key == _baseKey;
+                  // 基础数据固定选中不可取消（对齐网页版），其余可勾选
+                  final selected = isBase || _selected.contains(entry.key);
+                  return SelectableChip(
+                    label: entry.value,
+                    selected: selected,
+                    disabled: _processing,
+                    onToggle:
+                        isBase
+                            ? null
+                            : (value) {
+                              setState(() {
+                                if (value) {
+                                  _selected.add(entry.key);
+                                } else {
+                                  _selected.remove(entry.key);
+                                }
+                              });
+                            },
+                  );
+                }).toList(),
           ),
           const SizedBox(height: 16),
           // 开始备份：按钮宽度对齐卡片内容（即对齐到卡片 padding 16px 的内边界）
@@ -212,8 +214,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           Text(
             '选择本地 .tgz 备份文件上传恢复，恢复后会自动重载系统',
             style: TextStyle(
-                fontSize: 12,
-                color: ref.read(themeProvider).themeColor.descColor()),
+              fontSize: 12,
+              color: ref.read(themeProvider).themeColor.descColor(),
+            ),
           ),
           const SizedBox(height: 14),
           // 选择文件恢复：按钮宽度对齐卡片内容（与"开始备份"按钮同款）
@@ -240,6 +243,18 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     );
   }
 
+  /// 备份目录统一解析（导出与扫描必须同源，否则扫不到刚导出的包）：
+  /// Android 优先公共 Download/qinglong_backup，不可写回退应用专属外部目录；
+  /// 非 Android 走 downloadFilePath（iOS = 文档目录），行为不变
+  Future<Directory> _resolveBackupDirectory(FileUtil fileUtil) async {
+    final Directory? pub = await resolveAndroidBackupDirectory();
+    if (pub != null) {
+      return pub;
+    }
+    final basePath = await fileUtil.downloadFilePath;
+    return Directory('$basePath${Platform.pathSeparator}qinglong_backup');
+  }
+
   /// 执行备份
   Future<void> _doBackup() async {
     setState(() {
@@ -248,13 +263,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     });
 
     try {
-      final fileUtil = FileUtil(
-        SingleAccountPageState.of(context)?.index ?? 0,
-      );
-      // 保存到外部存储目录，文件管理器可见
-      final basePath = await fileUtil.downloadFilePath;
-      final backupDir =
-          Directory('$basePath${Platform.pathSeparator}qinglong_backup');
+      final fileUtil = FileUtil(SingleAccountPageState.of(context)?.index ?? 0);
+      // Android 优先公共 Download/qinglong_backup（文件管理器可见）；
+      // 不可写或非 Android 回退原应用专属外部目录，iOS 行为不变
+      final backupDir = await _resolveBackupDirectory(fileUtil);
       if (!await backupDir.exists()) {
         await backupDir.create(recursive: true);
       }
@@ -267,10 +279,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
       final typeList = _selected.toList();
 
-      final error = await SingleAccountPageState.ofApi(context).exportData(
-        savePath,
-        type: typeList,
-      );
+      final error = await SingleAccountPageState.ofApi(
+        context,
+      ).exportData(savePath, type: typeList);
 
       if (!mounted) return;
 
@@ -315,9 +326,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
         final fileUtil = FileUtil(
           SingleAccountPageState.of(context)?.index ?? 0,
         );
-        final basePath = await fileUtil.downloadFilePath;
-        final backupDir =
-            Directory('$basePath${Platform.pathSeparator}qinglong_backup');
+        final backupDir = await _resolveBackupDirectory(fileUtil);
 
         final tgzFiles = <File>[];
         if (await backupDir.exists()) {
@@ -338,7 +347,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
         // 按修改时间倒序排列
         tgzFiles.sort(
-            (a, b) => b.statSync().modified.compareTo(a.statSync().modified));
+          (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
+        );
 
         selectedPath = await _showFileSelectSheet(tgzFiles);
       } catch (e) {
@@ -438,8 +448,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             child: Container(
               color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary)
                   .withOpacity(blurEnabled ? 0.95 : 1.0),
-              padding:
-                  const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               child: SafeArea(
                 top: false,
                 child: Column(
@@ -467,10 +476,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: _globalFw,
-                            color: ref
-                                .read(themeProvider)
-                                .themeColor
-                                .titleColor(),
+                            color:
+                                ref.read(themeProvider).themeColor.titleColor(),
                           ),
                         ),
                       ),
@@ -478,26 +485,20 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                     ListTile(
                       leading: Icon(
                         CupertinoIcons.clock,
-                        color:
-                            ref.watch(themeProvider).primaryColor,
+                        color: ref.watch(themeProvider).primaryColor,
                       ),
                       title: Text(
                         '从最近备份选择',
                         style: TextStyle(
-                          color: ref
-                              .read(themeProvider)
-                              .themeColor
-                              .titleColor(),
+                          color:
+                              ref.read(themeProvider).themeColor.titleColor(),
                         ),
                       ),
                       subtitle: Text(
                         '扫描应用备份目录的 .tgz 文件',
                         style: TextStyle(
                           fontSize: 12,
-                          color: ref
-                              .read(themeProvider)
-                              .themeColor
-                              .descColor(),
+                          color: ref.read(themeProvider).themeColor.descColor(),
                         ),
                       ),
                       onTap: () => Navigator.pop(context, 'recent'),
@@ -505,26 +506,20 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                     ListTile(
                       leading: Icon(
                         CupertinoIcons.folder,
-                        color:
-                            ref.watch(themeProvider).primaryColor,
+                        color: ref.watch(themeProvider).primaryColor,
                       ),
                       title: Text(
                         '从文件管理器选择',
                         style: TextStyle(
-                          color: ref
-                              .read(themeProvider)
-                              .themeColor
-                              .titleColor(),
+                          color:
+                              ref.read(themeProvider).themeColor.titleColor(),
                         ),
                       ),
                       subtitle: Text(
                         '调用系统文件管理器选任意 .tgz 文件',
                         style: TextStyle(
                           fontSize: 12,
-                          color: ref
-                              .read(themeProvider)
-                              .themeColor
-                              .descColor(),
+                          color: ref.read(themeProvider).themeColor.descColor(),
                         ),
                       ),
                       onTap: () => Navigator.pop(context, 'manager'),
@@ -541,8 +536,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   }
 
   /// 备份完成后的操作面板：分享文件 / 完成
-  Future<void> _showBackupResultSheet(String savePath,
-      {required bool isSuccess}) async {
+  Future<void> _showBackupResultSheet(
+    String savePath, {
+    required bool isSuccess,
+  }) async {
     if (!mounted) return;
     await showSpringSheet<void>(
       context: context,
@@ -559,8 +556,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             child: Container(
               color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary)
                   .withOpacity(blurEnabled ? 0.95 : 1.0),
-              padding:
-                  const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               child: SafeArea(
                 top: false,
                 child: Column(
@@ -585,9 +581,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           isSuccess
                               ? CupertinoIcons.checkmark_circle_fill
                               : CupertinoIcons.xmark_circle_fill,
-                          color: isSuccess
-                              ? ref.watch(themeProvider).primaryColor
-                              : Colors.redAccent,
+                          color:
+                              isSuccess
+                                  ? ref.watch(themeProvider).primaryColor
+                                  : Colors.redAccent,
                           size: 22,
                         ),
                         const SizedBox(width: 8),
@@ -596,10 +593,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: _globalFw,
-                            color: ref
-                                .read(themeProvider)
-                                .themeColor
-                                .titleColor(),
+                            color:
+                                ref.read(themeProvider).themeColor.titleColor(),
                           ),
                         ),
                       ],
@@ -609,7 +604,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: ref.watch(themeProvider).primaryColor
+                        color: ref
+                            .watch(themeProvider)
+                            .primaryColor
                             .withOpacity(0.08),
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -617,10 +614,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                         savePath,
                         style: TextStyle(
                           fontSize: 12,
-                          color: ref
-                              .read(themeProvider)
-                              .themeColor
-                              .descColor(),
+                          color: ref.read(themeProvider).themeColor.descColor(),
                           height: 1.4,
                         ),
                       ),
@@ -633,27 +627,32 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           onTap: () async {
                             Navigator.pop(context);
-                            await Share.shareXFiles([XFile(savePath)],
-                                text: '青龙面板备份文件');
+                            await Share.shareXFiles([
+                              XFile(savePath),
+                            ], text: '青龙面板备份文件');
                           },
                           child: Center(
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(CupertinoIcons.share,
-                                    size: 18,
-                                    color: isCyber
-                                        ? CyberColors.cyan
-                                        : AppleColors.accent),
+                                Icon(
+                                  CupertinoIcons.share,
+                                  size: 18,
+                                  color:
+                                      isCyber
+                                          ? CyberColors.cyan
+                                          : AppleColors.accent,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   '分享/保存到文件管理器',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: _globalFw,
-                                    color: isCyber
-                                        ? CyberColors.cyan
-                                        : AppleColors.accent,
+                                    color:
+                                        isCyber
+                                            ? CyberColors.cyan
+                                            : AppleColors.accent,
                                   ),
                                 ),
                               ],
@@ -670,10 +669,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           '完成',
                           style: TextStyle(
                             fontSize: 15,
-                            color: ref
-                                .read(themeProvider)
-                                .themeColor
-                                .descColor(),
+                            color:
+                                ref.read(themeProvider).themeColor.descColor(),
                           ),
                         ),
                       ),
@@ -724,7 +721,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 16),
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
                     child: Row(
                       children: [
                         Text(
@@ -732,10 +731,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: _globalFw,
-                            color: ref
-                                .read(themeProvider)
-                                .themeColor
-                                .titleColor(),
+                            color:
+                                ref.read(themeProvider).themeColor.titleColor(),
                           ),
                         ),
                         const Spacer(),
@@ -744,10 +741,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           child: Icon(
                             CupertinoIcons.xmark,
                             size: 22,
-                            color: ref
-                                .read(themeProvider)
-                                .themeColor
-                                .descColor(),
+                            color:
+                                ref.read(themeProvider).themeColor.descColor(),
                           ),
                         ),
                       ],
@@ -759,31 +754,35 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                     child: ListView.separated(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       itemCount: files.length,
-                      separatorBuilder: (_, __) =>
-                          const Divider(height: 1, indent: 16),
+                      separatorBuilder:
+                          (_, __) => const Divider(height: 1, indent: 16),
                       itemBuilder: (context, index) {
                         final file = files[index];
                         final stat = file.statSync();
                         final name =
                             file.path.split(Platform.pathSeparator).last;
                         final sizeKB = stat.size / 1024;
-                        final sizeStr = sizeKB >= 1024
-                            ? '${(sizeKB / 1024).toStringAsFixed(2)} MB'
-                            : '${sizeKB.toStringAsFixed(1)} KB';
+                        final sizeStr =
+                            sizeKB >= 1024
+                                ? '${(sizeKB / 1024).toStringAsFixed(2)} MB'
+                                : '${sizeKB.toStringAsFixed(1)} KB';
                         final time = stat.modified.toString().substring(0, 16);
                         return InkWell(
                           onTap: () => Navigator.pop(context, file.path),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 14),
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
                             child: Row(
                               children: [
                                 Icon(
                                   CupertinoIcons.doc,
                                   size: 28,
-                                  color: isCyber
-                                      ? CyberColors.cyan
-                                      : AppleColors.accent,
+                                  color:
+                                      isCyber
+                                          ? CyberColors.cyan
+                                          : AppleColors.accent,
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -798,10 +797,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                         style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: _globalFw,
-                                          color: ref
-                                              .read(themeProvider)
-                                              .themeColor
-                                              .titleColor(),
+                                          color:
+                                              ref
+                                                  .read(themeProvider)
+                                                  .themeColor
+                                                  .titleColor(),
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -809,10 +809,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                         '$sizeStr · $time',
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: ref
-                                              .read(themeProvider)
-                                              .themeColor
-                                              .descColor(),
+                                          color:
+                                              ref
+                                                  .read(themeProvider)
+                                                  .themeColor
+                                                  .descColor(),
                                         ),
                                       ),
                                     ],
@@ -821,10 +822,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                 Icon(
                                   CupertinoIcons.right_chevron,
                                   size: 16,
-                                  color: ref
-                                      .read(themeProvider)
-                                      .themeColor
-                                      .descColor(),
+                                  color:
+                                      ref
+                                          .read(themeProvider)
+                                          .themeColor
+                                          .descColor(),
                                 ),
                               ],
                             ),

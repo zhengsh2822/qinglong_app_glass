@@ -126,7 +126,7 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
           try {
             String name = "${Random().nextInt(40000)}_${widget.title}";
             var file = await FileUtil(0).writeDownloadFile(name, content ?? "");
-            "已写入qinglong_app文件夹下,文件名$name".toast2();
+            "已写入Download/qinglong文件夹下,文件名$name".toast2();
           } catch (e) {
             e.toString().toast();
           }
@@ -223,39 +223,43 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
         },
         title: widget.title,
         // 图片预览时隐藏文本类操作（编辑/添加任务均基于文本内容，对图片无意义）
-        actions: _isImageFile
-            ? []
-            : [
-                CupertinoButton(
-                  color: Colors.transparent,
-                  padding: EdgeInsets.zero,
-                  onPressed: () async {
-                    await hideKeyboardFocus();
-                    showMoreOperate(context, actions);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    child: Center(
-                      child: Icon(
-                        Icons.more_horiz,
-                        size: 26,
-                        color:
-                            isCyber
-                                ? CyberColors.cyan
-                                : Theme.of(context).appBarTheme.iconTheme?.color,
+        actions:
+            _isImageFile
+                ? []
+                : [
+                  CupertinoButton(
+                    color: Colors.transparent,
+                    padding: EdgeInsets.zero,
+                    onPressed: () async {
+                      await hideKeyboardFocus();
+                      showMoreOperate(context, actions);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      child: Center(
+                        child: Icon(
+                          Icons.more_horiz,
+                          size: 26,
+                          color:
+                              isCyber
+                                  ? CyberColors.cyan
+                                  : Theme.of(
+                                    context,
+                                  ).appBarTheme.iconTheme?.color,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
       ),
-      body: _isImageFile
-          ? ScriptImagePreviewBody(
-              accountIndex: SingleAccountPageState.of(context)?.index ?? 0,
-              fileName: widget.title,
-              dirPath: widget.path,
-            )
-          : content == null
+      body:
+          _isImageFile
+              ? ScriptImagePreviewBody(
+                accountIndex: SingleAccountPageState.of(context)?.index ?? 0,
+                fileName: widget.title,
+                dirPath: widget.path,
+              )
+              : content == null
               ? Center(
                 child: LoadingWidget(
                   color:

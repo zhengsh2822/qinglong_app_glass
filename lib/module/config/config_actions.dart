@@ -94,7 +94,7 @@ void showConfigActions(
         try {
           String name = "${Random().nextInt(40000)}_$title";
           await FileUtil(0).writeDownloadFile(name, text);
-          "已写入qinglong_app文件夹下,文件名$name".toast2();
+          "已写入Download/qinglong文件夹下,文件名$name".toast2();
         } catch (e) {
           e.toString().toast();
         }
@@ -195,11 +195,12 @@ Future<bool> _deleteByTempTask(BuildContext context, String name) async {
     final logResult = await api.inTimeLog(id);
     final String log = (logResult.success ? logResult.bean : null) ?? '';
     if (log.trim().isNotEmpty) {
-      final lines = log
-          .split('\n')
-          .map((e) => e.replaceAll('\r', '').trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
+      final lines =
+          log
+              .split('\n')
+              .map((e) => e.replaceAll('\r', '').trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
       final failLine = lines.firstWhere(
         (e) => e.contains('QLDEL_FAIL'),
         orElse: () => '',
@@ -333,10 +334,10 @@ Future<void> _editConfig(
         arguments: {"title": bean.title, "content": text},
       )
       .then((value) {
-    if (value != null && value is String && value.isNotEmpty) {
-      onContentChanged?.call(value);
-    }
-  });
+        if (value != null && value is String && value.isNotEmpty) {
+          onContentChanged?.call(value);
+        }
+      });
 }
 
 /// 取文件内容：优先用已缓存的内容，否则实时向面板拉取
