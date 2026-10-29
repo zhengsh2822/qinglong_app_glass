@@ -1,6 +1,3 @@
-
-
-
 class CheckUpdateBean {
   bool? hasNewVersion;
   String? lastVersion;

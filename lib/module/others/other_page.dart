@@ -33,6 +33,7 @@ import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 
 import 'package:qinglong_app/base/ui/other_page_card.dart';
+import 'package:qinglong_app/base/ui/feature_grid.dart';
 import 'package:qinglong_app/base/ui/card_transition_source.dart';
 
 import 'package:qinglong_app/module/in_app_purchase_page.dart';
@@ -338,9 +339,7 @@ class OtherPageState extends ConsumerState<OtherPage>
 
                     const SizedBox(height: 10),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-
+                    FeatureGrid(
                       children: [
                         _buildFeatureButton(
                           title: "多账号数",
@@ -393,12 +392,20 @@ class OtherPageState extends ConsumerState<OtherPage>
                             }
                           },
                         ),
+                        _buildFeatureButton(
+                          title: "关于软件",
+
+                          icon: CupertinoIcons.info_circle,
+
+                          onTap: () {
+                            Navigator.of(context).pushNamed(Routes.routeAbout);
+                          },
+                        ),
                       ],
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: AppleColors.spaceLg),
 
               OtherPageCard(
@@ -428,9 +435,7 @@ class OtherPageState extends ConsumerState<OtherPage>
 
                     const SizedBox(height: 10),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-
+                    FeatureGrid(
                       children: [
                         _buildFeatureButton(
                           title: "扫描依赖",
@@ -508,7 +513,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                     const SizedBox(height: 5),
 
                     Text(
-                      "基础功能",
+                      "日志管理",
 
                       style: TextStyle(
                         fontWeight: FontWeight(ref.watch(textWeightProvider)),
@@ -521,9 +526,7 @@ class OtherPageState extends ConsumerState<OtherPage>
 
                     const SizedBox(height: 10),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-
+                    FeatureGrid(
                       children: [
                         _buildFeatureButton(
                           title: "任务日志",
@@ -556,59 +559,14 @@ class OtherPageState extends ConsumerState<OtherPage>
                         ),
 
                         _buildFeatureButton(
-                          title: "应用设置",
+                          title: "通知日志",
 
-                          icon: CupertinoIcons.gear_alt,
-
-                          onTap: () {
-                            Navigator.of(context).push(
-                              ContainerPageRoute(
-                                builder: (context) => const AppKeyPage(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        _buildFeatureButton(
-                          title: "通知设置",
-
-                          icon: CupertinoIcons.envelope,
+                          icon: CupertinoIcons.bell_fill,
 
                           onTap: () {
-                            Navigator.of(context).push(
-                              ContainerPageRoute(
-                                builder: (context) => const PushSettingPage(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-
-                      children: [
-                        _buildFeatureButton(
-                          title: "修改密码",
-
-                          icon: CupertinoIcons.lock_shield,
-
-                          onTap: () {
-                            if (SingleAccountPageState.ofUserInfo(
+                            Navigator.of(
                               context,
-                            ).useSecretLogined) {
-                              "使用client_id方式登录无法修改密码".toast();
-                            } else {
-                              Navigator.of(context).push(
-                                ContainerPageRoute(
-                                  builder:
-                                      (context) => const UpdatePasswordPage(),
-                                ),
-                              );
-                            }
+                            ).pushNamed(Routes.routeNotifyLog);
                           },
                         ),
 
@@ -621,7 +579,45 @@ class OtherPageState extends ConsumerState<OtherPage>
                             _delLog(context);
                           },
                         ),
+                      ],
+                    ),
 
+                    const SizedBox(height: 10),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: AppleColors.spaceLg),
+
+              OtherPageCard(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+
+                  horizontal: 15,
+                ),
+
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                  children: [
+                    const SizedBox(height: 5),
+
+                    Text(
+                      "基础功能",
+
+                      style: TextStyle(
+                        fontWeight: FontWeight(ref.watch(textWeightProvider)),
+
+                        fontSize: isCyber ? 16 : 17,
+
+                        color: ref.watch(themeProvider).themeColor.titleColor(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    FeatureGrid(
+                      children: [
                         _buildFeatureButton(
                           title: "系统设置",
 
@@ -634,24 +630,6 @@ class OtherPageState extends ConsumerState<OtherPage>
                           },
                         ),
 
-                        _buildFeatureButton(
-                          title: "关于软件",
-
-                          icon: CupertinoIcons.info_circle,
-
-                          onTap: () {
-                            Navigator.of(context).pushNamed(Routes.routeAbout);
-                          },
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-
-                      children: [
                         _buildFeatureButton(
                           title: "依赖设置",
 
@@ -682,20 +660,6 @@ class OtherPageState extends ConsumerState<OtherPage>
                         ),
 
                         _buildFeatureButton(
-                          title: "IP 与代理",
-
-                          icon: CupertinoIcons.arrow_left_right_circle,
-
-                          onTap: () {
-                            Navigator.of(context).push(
-                              ContainerPageRoute(
-                                builder: (context) => const ClientIpPage(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        _buildFeatureButton(
                           title: "存储清理",
 
                           icon: CupertinoIcons.trash,
@@ -709,8 +673,73 @@ class OtherPageState extends ConsumerState<OtherPage>
                             );
                           },
                         ),
+
+                        _buildFeatureButton(
+                          title: "修改密码",
+
+                          icon: CupertinoIcons.lock_shield,
+
+                          onTap: () {
+                            if (SingleAccountPageState.ofUserInfo(
+                              context,
+                            ).useSecretLogined) {
+                              "使用client_id方式登录无法修改密码".toast();
+                            } else {
+                              Navigator.of(context).push(
+                                ContainerPageRoute(
+                                  builder:
+                                      (context) => const UpdatePasswordPage(),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+
+                        _buildFeatureButton(
+                          title: "通知设置",
+
+                          icon: CupertinoIcons.envelope,
+
+                          onTap: () {
+                            Navigator.of(context).push(
+                              ContainerPageRoute(
+                                builder: (context) => const PushSettingPage(),
+                              ),
+                            );
+                          },
+                        ),
+
+                        _buildFeatureButton(
+                          title: "应用设置",
+
+                          icon: CupertinoIcons.gear_alt,
+
+                          onTap: () {
+                            Navigator.of(context).push(
+                              ContainerPageRoute(
+                                builder: (context) => const AppKeyPage(),
+                              ),
+                            );
+                          },
+                        ),
+
+                        _buildFeatureButton(
+                          title: "IP 与代理",
+
+                          icon: CupertinoIcons.arrow_left_right_circle,
+
+                          onTap: () {
+                            Navigator.of(context).push(
+                              ContainerPageRoute(
+                                builder: (context) => const ClientIpPage(),
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
+
+                    const SizedBox(height: 10),
                   ],
                 ),
               ),

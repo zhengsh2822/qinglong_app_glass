@@ -8,6 +8,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/enable_widget.dart';
+import 'package:qinglong_app/base/ui/empty_widget.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -15,7 +16,6 @@ import 'package:qinglong_app/utils/utils.dart';
 
 import 'login_log_bean.dart';
 import 'package:qinglong_app/base/ui/content_entrance.dart';
-
 
 class LoginLogPage extends ConsumerStatefulWidget {
   const LoginLogPage({super.key});
@@ -28,6 +28,9 @@ class _LoginLogPageState extends ConsumerState<LoginLogPage>
     with LazyLoadState<LoginLogPage> {
   List<LoginLogBean> list = [];
 
+  /// 首次加载是否完成：未完成前显示加载态，完成后空数据显示空态（防永远转圈）
+  bool _loaded = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,114 +41,105 @@ class _LoginLogPageState extends ConsumerState<LoginLogPage>
         },
         title: "登录日志",
       ),
-      body: list.isEmpty
-          ? const Center(
-              child: LoadingWidget(),
-            )
-          // 数据到位后内容柔和进场（首次挂载播放一次）：淡入 + 轻微上移
-          : ContentEntrance(
-              child: ListView.separated(
-              primary: true,
-              itemBuilder: (context, index) {
-                LoginLogBean item = list[index];
+      body:
+          !_loaded
+              ? const Center(child: LoadingWidget())
+              : list.isEmpty
+              ? const EmptyWidget()
+              // 数据到位后内容柔和进场（首次挂载播放一次）：淡入 + 轻微上移
+              : ContentEntrance(
+                child: ListView.separated(
+                  primary: true,
+                  itemBuilder: (context, index) {
+                    LoginLogBean item = list[index];
 
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(
-                      width: 15,
-                    ),
-                    Column(
+                    return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Row(
+                        const SizedBox(width: 15),
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ConstrainedBox(
-                              constraints: BoxConstraints.loose(
-                                Size.fromWidth(
-                                    MediaQuery.of(context).size.width / 1.8),
-                              ),
-                              child: Text(
-                                "${item.address}",
-                                style: TextStyle(
-                                  color: ref
-                                      .watch(themeProvider)
-                                      .themeColor
-                                      .titleColor(),
-                                  fontSize: 14,
+                            const SizedBox(height: 10),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ConstrainedBox(
+                                  constraints: BoxConstraints.loose(
+                                    Size.fromWidth(
+                                      MediaQuery.of(context).size.width / 1.8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    "${item.address}",
+                                    style: TextStyle(
+                                      color:
+                                          ref
+                                              .watch(themeProvider)
+                                              .themeColor
+                                              .titleColor(),
+                                      fontSize: 14,
+                                    ),
+                                  ),
                                 ),
+                                const SizedBox(width: 5),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: StatusWidget(
+                                    title: item.status == 0 ? "成功" : "失败",
+                                    color:
+                                        item.status == 0
+                                            ? ref
+                                                .watch(themeProvider)
+                                                .primaryColor
+                                            : const Color(0xffFB5858),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            SelectableText(
+                              "${item.ip}",
+                              selectionControls: cupertinoTextSelectionControls,
+                              selectionWidthStyle: BoxWidthStyle.max,
+                              selectionHeightStyle: BoxHeightStyle.max,
+                              style: TextStyle(
+                                color:
+                                    ref
+                                        .watch(themeProvider)
+                                        .themeColor
+                                        .descColor(),
+                                fontSize: 14,
                               ),
                             ),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: 2,
-                              ),
-                              child: StatusWidget(
-                                title:  item.status == 0
-                                    ? "成功"
-                                    : "失败",
-                                color:  item.status == 0
-                                    ? ref.watch(themeProvider).primaryColor
-                                    : const Color(0xffFB5858),
-                              ),
-                            ),
+                            const SizedBox(height: 10),
                           ],
                         ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        SelectableText(
-                          "${item.ip}",
-                          selectionControls: cupertinoTextSelectionControls,
-                          selectionWidthStyle: BoxWidthStyle.max,
-                          selectionHeightStyle: BoxHeightStyle.max,
-                          style: TextStyle(
-                            color:
-                                ref.watch(themeProvider).themeColor.descColor(),
-                            fontSize: 14,
+                        const Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Text(
+                            Utils.formatMessageTime(item.timestamp ?? 0),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color:
+                                  ref
+                                      .watch(themeProvider)
+                                      .themeColor
+                                      .descColor(),
+                            ),
                           ),
                         ),
-                        const SizedBox(
-                          height: 10,
-                        ),
+                        const SizedBox(width: 15),
                       ],
-                    ),
-                    const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: 10,
-                      ),
-                      child: Text(
-                        Utils.formatMessageTime(item.timestamp ?? 0),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color:
-                              ref.watch(themeProvider).themeColor.descColor(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 15,
-                    ),
-                  ],
-                );
-              },
-              itemCount: list.length,
-              separatorBuilder: (BuildContext context, int index) {
-                return const Divider(
-                  indent: 15,
-                  height: 1,
-                );
-              },
-            ),
-          ),
+                    );
+                  },
+                  itemCount: list.length,
+                  separatorBuilder: (BuildContext context, int index) {
+                    return const Divider(indent: 15, height: 1);
+                  },
+                ),
+              ),
     );
   }
 
@@ -153,15 +147,19 @@ class _LoginLogPageState extends ConsumerState<LoginLogPage>
     HttpResponse<List<LoginLogBean>> response =
         await SingleAccountPageState.ofApi(context).loginLog();
 
+    // 无论成功失败都结束加载态：失败/无数据以空态呈现，避免页面永远转圈
+    _loaded = true;
     if (response.success) {
       if (response.bean == null || response.bean!.isEmpty) {
         "暂无数据".toast();
       }
       list.clear();
       list.addAll(response.bean ?? []);
-      setState(() {});
     } else {
       response.message?.toast();
+    }
+    if (mounted) {
+      setState(() {});
     }
   }
 
