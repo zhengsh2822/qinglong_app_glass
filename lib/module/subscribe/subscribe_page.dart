@@ -28,6 +28,7 @@ import 'package:qinglong_app/utils/utils.dart';
 import 'subscribe_viewmodel.dart';
 import '../../base/ui/container_page_route.dart';
 import 'package:qinglong_app/base/ui/content_entrance.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 class SubscribePage extends ConsumerStatefulWidget {
   const SubscribePage({Key? key}) : super(key: key);
@@ -185,8 +186,7 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
               padding: const EdgeInsets.only(top: 64, bottom: 80),
               controller: controller,
               physics: const AlwaysScrollableScrollPhysics(),
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior.onDrag,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               itemBuilder: (context, index) {
                 Map<String, dynamic> item = list[index];
                 if (searchText.text.isEmpty ||
@@ -562,10 +562,7 @@ class TaskItemCell extends StatelessWidget {
                         style: TextStyle(
                           overflow: TextOverflow.ellipsis,
                           color:
-                              ref
-                                  .watch(themeProvider)
-                                  .themeColor
-                                  .titleColor(),
+                              ref.watch(themeProvider).themeColor.titleColor(),
                           fontSize: 16,
                         ),
                       ),
@@ -674,44 +671,22 @@ class TaskItemCell extends StatelessWidget {
       });
       return;
     }
-    showCupertinoDialog(
-      context: context1,
-      useRootNavigator: false,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text("确认删除"),
-            content: Text("确认删除订阅 ${bean["name"] ?? ""} 吗"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确定",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  ref
-                      .read(
-                        SingleAccountPageState.ofSubscribeProvider(context1)(
-                          getProviderName(context1),
-                        ),
-                      )
-                      .delSubscribe(context1, bean["id"]);
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context1,
+      title: '确认删除',
+      content: '确认删除订阅 ${bean["name"] ?? ""} 吗',
+      danger: true,
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      ref
+          .read(
+            SingleAccountPageState.ofSubscribeProvider(context1)(
+              getProviderName(context1),
+            ),
+          )
+          .delSubscribe(context1, bean["id"]);
+    });
+    ;
   }
 
   void _enableSubscribe(BuildContext context, int disabled) {

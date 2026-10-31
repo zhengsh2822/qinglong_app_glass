@@ -23,6 +23,7 @@ import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/ql_debug_log.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/module/home/home_page.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:local_auth_android/local_auth_android.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
@@ -36,6 +37,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // 调试日志（debug 构建）：错误钩子 + 文件通道（设备 logcat 被 MIUI 禁用）
   QlDebugLog.init();
+  // 临时诊断：release 也放行错误落盘（WebDAV 卡死排查期，定位后移除本行）
+  QlDebugLog.releaseLogging = true;
   // 预编译液态玻璃 shader：首页底部导航 / 顶部 tab 的 LiquidGlassLens 首次
   // 渲染即走完整 shader 路径，避免首帧走 frosted fallback（无折射、无外圈
   // 高光 —— "顶部 tab 外圈高光丢失"的根源之一）。
@@ -64,31 +67,18 @@ void main() async {
         builder: (context) {
           return GestureDetector(
             onDoubleTap: () {
-              showCupertinoDialog(
-                context: context,
-                useRootNavigator: false,
-                builder:
-                    (childContext) => CupertinoAlertDialog(
-                      title: const Text("温馨提示"),
-                      content: const Text("确定要还原App所有配置吗,本次操作不可逆?"),
-                      actions: [
-                        CupertinoDialogAction(
-                          child: const Text("取消"),
-                          onPressed: () {
-                            Navigator.of(childContext).pop();
-                          },
-                        ),
-                        CupertinoDialogAction(
-                          child: const Text("确定"),
-                          onPressed: () {
-                            SpUtil.clear();
-                            "已完成,请重启App".toast();
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    ),
-              );
+              showConfirmDialog(
+                context,
+                title: '温馨提示',
+                content: '确定要还原App所有配置吗,本次操作不可逆?',
+                danger: false,
+              ).then((confirmed) {
+                if (confirmed != true) return;
+                SpUtil.clear();
+                "已完成,请重启App".toast();
+                Navigator.of(context).pop();
+              });
+              ;
             },
             child: Center(
               child: Padding(

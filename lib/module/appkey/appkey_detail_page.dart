@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/tag_chip.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 import 'appkey_page.dart';
 import 'appkey_viewmodel.dart';
@@ -72,9 +73,10 @@ class _TaskDetailPageState extends ConsumerState<AppKeyDetailDetailPage> {
             Wrap(
               runSpacing: 5,
               spacing: 5,
-              children: AppKeyViewModel.getScopeNames(
-                (widget.bean["scopes"] as List<dynamic>?),
-              ).map((e) => TagChip(label: e)).toList(),
+              children:
+                  AppKeyViewModel.getScopeNames(
+                    (widget.bean["scopes"] as List<dynamic>?),
+                  ).map((e) => TagChip(label: e)).toList(),
             ),
             const Spacer(),
             Center(
@@ -101,52 +103,29 @@ class _TaskDetailPageState extends ConsumerState<AppKeyDetailDetailPage> {
   }
 
   void _del(BuildContext context1, WidgetRef ref) {
-    showCupertinoDialog(
-      context: context1,
-      useRootNavigator: false,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text("确认删除"),
-            content: Text("确认删除应用 ${widget.bean["name"] ?? ""} 吗"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确定",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  EasyLoading.show(status: "删除中");
-                  ref
-                      .read(
-                        SingleAccountPageState.ofAppKeyProvider(context1)(
-                          getProviderName(context1),
-                        ),
-                      )
-                      .delAppKey(context1, getAppKeyId(widget.bean))
-                      .then((value) {
-                        EasyLoading.dismiss();
-                        Navigator.of(context1).pop(true);
-                      })
-                      .catchError((_, __) {
-                        EasyLoading.dismiss();
-                      });
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context1,
+      title: "确认删除",
+      content: "确认删除应用 ${widget.bean["name"] ?? ""} 吗",
+      danger: true,
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      EasyLoading.show(status: "删除中");
+      ref
+          .read(
+            SingleAccountPageState.ofAppKeyProvider(context1)(
+              getProviderName(context1),
+            ),
+          )
+          .delAppKey(context1, getAppKeyId(widget.bean))
+          .then((value) {
+            EasyLoading.dismiss();
+            Navigator.of(context1).pop(true);
+          })
+          .catchError((_, __) {
+            EasyLoading.dismiss();
+          });
+    });
   }
 }
 

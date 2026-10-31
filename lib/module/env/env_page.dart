@@ -32,6 +32,7 @@ import 'package:qinglong_app/module/env/env_viewmodel.dart';
 import 'package:qinglong_app/module/task/task_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 import '../../base/ui/enable_widget.dart';
 import '../../base/ui/container_page_route.dart';
@@ -293,9 +294,9 @@ class EnvPageState extends ConsumerState<EnvPage>
               editMode: editMode,
               allChecked:
                   checkedIds.length ==
-                  getListByType(_tabController?.index ?? 0)
-                      .where((value) => value.matchSearch(searchText.text))
-                      .length,
+                  getListByType(
+                    _tabController?.index ?? 0,
+                  ).where((value) => value.matchSearch(searchText.text)).length,
               color:
                   Theme.of(context).appBarTheme.iconTheme?.color ??
                   Colors.black,
@@ -481,15 +482,16 @@ class EnvPageState extends ConsumerState<EnvPage>
     }
     _editModeOverlay = AnimatedEditModeOverlay(
       context: context,
-      backgroundColorBuilder: (ref) =>
-          ref
-              .read(themeProvider)
-              .currentTheme
-              .bottomNavigationBarTheme
-              .backgroundColor
-              ?.withOpacity(1) ??
-          Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
-          Colors.black,
+      backgroundColorBuilder:
+          (ref) =>
+              ref
+                  .read(themeProvider)
+                  .currentTheme
+                  .bottomNavigationBarTheme
+                  .backgroundColor
+                  ?.withOpacity(1) ??
+              Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
+              Colors.black,
       builder: (BuildContext context) {
         return SizedBox(
           height: kBottomNavigationBarHeight,
@@ -537,49 +539,28 @@ class EnvPageState extends ConsumerState<EnvPage>
       return;
     }
 
-    showCupertinoDialog(
-      context: context,
-      useRootNavigator: false,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: Text("确认$s"),
-            content: Text("确认$s吗"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确定",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  editMode = false;
-                  removeOverlay();
-                  WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                    if (s == "启用") {
-                      enableEnv();
-                    } else if (s == "禁用") {
-                      disableEnv();
-                    } else if (s == "删除") {
-                      deleteEnvs();
-                    }
-                  });
-                  setState(() {});
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context,
+      title: "确认$s",
+      content: "确认$s吗",
+      danger: s == "删除",
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      editMode = false;
+      removeOverlay();
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (s == "启用") {
+          enableEnv();
+        } else if (s == "禁用") {
+          disableEnv();
+        } else if (s == "删除") {
+          deleteEnvs();
+        }
+      });
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   void enableEnv() {
@@ -636,7 +617,8 @@ int _envTimeMs(EnvBean e) {
 }
 
 /// 更新时间比较（早→晚）
-int _compareEnvTime(EnvBean a, EnvBean b) => _envTimeMs(a).compareTo(_envTimeMs(b));
+int _compareEnvTime(EnvBean a, EnvBean b) =>
+    _envTimeMs(a).compareTo(_envTimeMs(b));
 
 /// 对已过滤列表应用导航栏排序（默认=保持服务端创建时间顺序，不重排）
 void _applyEnvSort(List<EnvBean> list, SortState nameSort, SortState timeSort) {
@@ -843,11 +825,7 @@ class EnvItemCell extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: 'MiSans',
                         overflow: TextOverflow.ellipsis,
-                        color:
-                            ref
-                                .watch(themeProvider)
-                                .themeColor
-                                .descColor(),
+                        color: ref.watch(themeProvider).themeColor.descColor(),
                         fontSize: 12,
                       ),
                     ),
@@ -1088,44 +1066,21 @@ class EnvItemCell extends StatelessWidget {
   }
 
   void delEnv(BuildContext context1, WidgetRef ref) {
-    showCupertinoDialog(
-      useRootNavigator: false,
-      context: context1,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text("确认删除"),
-            content: Text("确认删除环境变量 ${bean.name ?? ""} 吗"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确定",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  ref
-                      .read(
-                        SingleAccountPageState.ofEnvProvider(context1)(
-                          getProviderName(context1),
-                        ),
-                      )
-                      .delEnv(context1, bean.sId!);
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context1,
+      title: "确认删除",
+      content: "确认删除环境变量 ${bean.name ?? ""} 吗",
+      danger: true,
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      ref
+          .read(
+            SingleAccountPageState.ofEnvProvider(context1)(
+              getProviderName(context1),
+            ),
+          )
+          .delEnv(context1, bean.sId!);
+    });
   }
 
   int getIndexByIndex(BuildContext context, int index) {
@@ -1213,6 +1168,7 @@ class EnvRecordListView extends ConsumerStatefulWidget {
   final ValueChanged<String> changed;
   final SortState nameSort;
   final SortState timeSort;
+
   /// 是否可长按拖拽排序（导航栏排序激活时为 false，避免与显示顺序冲突）
   final bool draggable;
 
@@ -1274,31 +1230,32 @@ class _EnvRecordListViewState extends ConsumerState<EnvRecordListView>
           ),
         );
       },
-      onReorder: widget.draggable
-          ? (int oldIndex, int newIndex) {
-              if (widget.searchText.isNotEmpty) {
-                "请先清空搜索关键词".toast();
-                return;
-              }
-
-              setState(() {
-                //交换数据
-                if (newIndex > oldIndex) {
-                  newIndex -= 1;
+      onReorder:
+          widget.draggable
+              ? (int oldIndex, int newIndex) {
+                if (widget.searchText.isNotEmpty) {
+                  "请先清空搜索关键词".toast();
+                  return;
                 }
-                final EnvBean item = widget.list.removeAt(oldIndex);
-                widget.list.insert(newIndex, item);
 
-                ref
-                    .read(
-                      SingleAccountPageState.ofEnvProvider(context)(
-                        getProviderName(context),
-                      ).notifier,
-                    )
-                    .update(context, item.sId ?? "", newIndex, oldIndex);
-              });
-            }
-          : (_, __) {},
+                setState(() {
+                  //交换数据
+                  if (newIndex > oldIndex) {
+                    newIndex -= 1;
+                  }
+                  final EnvBean item = widget.list.removeAt(oldIndex);
+                  widget.list.insert(newIndex, item);
+
+                  ref
+                      .read(
+                        SingleAccountPageState.ofEnvProvider(context)(
+                          getProviderName(context),
+                        ).notifier,
+                      )
+                      .update(context, item.sId ?? "", newIndex, oldIndex);
+                });
+              }
+              : (_, __) {},
     );
   }
 }

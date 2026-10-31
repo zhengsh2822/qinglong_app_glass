@@ -23,6 +23,8 @@ import 'add_appkey_page.dart';
 import '../../base/ui/container_page_route.dart';
 
 import 'package:qinglong_app/base/ui/content_entrance.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+
 class AppKeyPage extends ConsumerStatefulWidget {
   const AppKeyPage({Key? key}) : super(key: key);
 
@@ -162,8 +164,7 @@ class _AppKeyPageState extends ConsumerState<AppKeyPage> {
               padding: const EdgeInsets.only(top: 64, bottom: 80),
               controller: controller,
               physics: const AlwaysScrollableScrollPhysics(),
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior.onDrag,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               itemBuilder: (context, index) {
                 Map<String, dynamic> item = list[index];
                 if (searchText.text.isEmpty ||
@@ -254,9 +255,10 @@ class AppKeyItemCell extends StatelessWidget {
                 Wrap(
                   runSpacing: 6,
                   spacing: 6,
-                  children: AppKeyViewModel.getScopeNames(
-                    (bean["scopes"] as List<dynamic>?),
-                  ).map((e) => TagChip(label: e)).toList(),
+                  children:
+                      AppKeyViewModel.getScopeNames(
+                        (bean["scopes"] as List<dynamic>?),
+                      ).map((e) => TagChip(label: e)).toList(),
                 ),
               ],
             ),
@@ -280,7 +282,8 @@ class AppKeyItemCell extends StatelessWidget {
             children: [
               AppSlideButton(
                 context: context,
-                color: isCyber ? const Color(0xFF00F0FF) : const Color(0xff5D5E70),
+                color:
+                    isCyber ? const Color(0xFF00F0FF) : const Color(0xff5D5E70),
                 icon: CupertinoIcons.pencil_outline,
                 label: '编辑',
                 cyberMode: isCyber,
@@ -311,7 +314,8 @@ class AppKeyItemCell extends StatelessWidget {
               ),
               AppSlideButton(
                 context: context,
-                color: isCyber ? const Color(0xFFA356D6) : const Color(0xffA356D6),
+                color:
+                    isCyber ? const Color(0xFFA356D6) : const Color(0xffA356D6),
                 icon: CupertinoIcons.arrow_2_circlepath,
                 label: '重置',
                 cyberMode: isCyber,
@@ -328,7 +332,8 @@ class AppKeyItemCell extends StatelessWidget {
               ),
               AppSlideButton(
                 context: context,
-                color: isCyber ? const Color(0xFFFF3D5C) : const Color(0xffEA4D3E),
+                color:
+                    isCyber ? const Color(0xFFFF3D5C) : const Color(0xffEA4D3E),
                 icon: CupertinoIcons.delete,
                 label: '删除',
                 cyberMode: isCyber,
@@ -372,105 +377,39 @@ class AppKeyItemCell extends StatelessWidget {
       });
       return;
     }
-    showCupertinoDialog(
-      context: context1,
-      useRootNavigator: false,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text("确认删除"),
-            content: Text("确认删除应用 ${bean["name"] ?? ""} 吗"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确定",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  ref
-                      .read(
-                        SingleAccountPageState.ofAppKeyProvider(context1)(
-                          getProviderName(context1),
-                        ),
-                      )
-                      .delAppKey(context1, getAppKeyId(bean));
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context1,
+      title: "确认删除",
+      content: "确认删除应用 ${bean["name"] ?? ""} 吗",
+      danger: true,
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      ref
+          .read(
+            SingleAccountPageState.ofAppKeyProvider(context1)(
+              getProviderName(context1),
+            ),
+          )
+          .delAppKey(context1, getAppKeyId(bean));
+    });
   }
 
   void _reset(BuildContext context) {
-    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    if (isCyber) {
-      showCyberConfirmDialog(
-        context,
-        title: "确认重置应用 ${bean["name"]} 的Secret吗",
-        content: "重置Secret会让当前应用所有token失效",
-        danger: true,
-      ).then((confirmed) {
-        if (confirmed == true) {
-          ref
-              .read(
-                SingleAccountPageState.ofAppKeyProvider(context)(
-                  getProviderName(context),
-                ),
-              )
-              .resetAppKey(context, getAppKeyId(bean));
-        }
-      });
-      return;
-    }
-    showCupertinoDialog(
-      context: context,
-      useRootNavigator: false,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: Text("确认重置应用 ${bean["name"]} 的Secret吗"),
-            content: const Text("重置Secret会让当前应用所有token失效"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确定",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  ref
-                      .read(
-                        SingleAccountPageState.ofAppKeyProvider(context)(
-                          getProviderName(context),
-                        ),
-                      )
-                      .resetAppKey(context, getAppKeyId(bean));
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context,
+      title: "确认重置应用 ${bean["name"]} 的Secret吗",
+      content: "重置Secret会让当前应用所有token失效",
+      danger: true,
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      ref
+          .read(
+            SingleAccountPageState.ofAppKeyProvider(context)(
+              getProviderName(context),
+            ),
+          )
+          .resetAppKey(context, getAppKeyId(bean));
+    });
   }
 }
 

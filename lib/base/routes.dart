@@ -17,6 +17,8 @@ import 'package:qinglong_app/module/others/dependencies/add_dependency_page.dart
 import 'package:qinglong_app/module/others/dependencies/dependency_page.dart';
 import 'package:qinglong_app/module/others/login_log/login_log_page.dart';
 import 'package:qinglong_app/module/others/notify_log/notify_log_page.dart';
+import 'package:qinglong_app/module/backup/backup_hub_page.dart';
+import 'package:qinglong_app/module/webdav/webdav_page.dart';
 import 'package:qinglong_app/module/others/scripts/script_add_page.dart';
 import 'package:qinglong_app/module/others/scripts/script_detail_page.dart';
 import 'package:qinglong_app/module/others/scripts/script_edit_page.dart';
@@ -46,6 +48,8 @@ class Routes {
   static const String routeLoginLog = "/log/login";
   static const String routeNotifyLog = "/log/notify";
   static const String routeTaskLog = "/log/task";
+  static const String routeFileBackup = "/filebackup";
+  static const String routeWebDav = "/webdav";
   static const String routeScript = "/script";
   static const String routeScriptDetail = "/script/detail";
   static const String routeScriptUpdate = "/script/update";
@@ -124,6 +128,10 @@ class Routes {
         return ContainerPageRoute(builder: (context) => const LoginLogPage());
       case routeNotifyLog:
         return ContainerPageRoute(builder: (context) => const NotifyLogPage());
+      case routeFileBackup:
+        return ContainerPageRoute(builder: (context) => const BackupHubPage());
+      case routeWebDav:
+        return ContainerPageRoute(builder: (context) => const WebDavPage());
       case routeTaskLog:
         if (settings.arguments != null) {
           return ContainerPageRoute(

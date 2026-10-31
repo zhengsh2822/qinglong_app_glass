@@ -12,16 +12,11 @@ import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/log_text_view.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
-
 class TaskLogDetailPage extends ConsumerStatefulWidget {
   final String title;
   final String path;
 
-  const TaskLogDetailPage({
-    super.key,
-    required this.title,
-    required this.path,
-  });
+  const TaskLogDetailPage({super.key, required this.title, required this.path});
 
   @override
   _TaskLogDetailPageState createState() => _TaskLogDetailPageState();
@@ -41,23 +36,21 @@ class _TaskLogDetailPageState extends ConsumerState<TaskLogDetailPage>
         },
         title: "任务日志详情",
       ),
-      body: content == null
-          ? const Center(child: LoadingWidget())
-          : LogTextView(
-              content: content,
-              accountIndex:
-                  SingleAccountPageState.of(context)?.index ?? 0,
-              emptyText: '暂无数据',
-            ),
+      body:
+          content == null
+              ? const Center(child: LoadingWidget())
+              : LogTextView(
+                content: content,
+                accountIndex: SingleAccountPageState.of(context)?.index ?? 0,
+                emptyText: '暂无数据',
+              ),
     );
   }
 
   Future<void> loadData() async {
-    HttpResponse<String> response =
-        await SingleAccountPageState.ofApi(context).taskLogDetail(
-      widget.title,
-      widget.path,
-    );
+    HttpResponse<String> response = await SingleAccountPageState.ofApi(
+      context,
+    ).taskLogDetail(widget.title, widget.path);
 
     if (response.success) {
       content = response.bean;

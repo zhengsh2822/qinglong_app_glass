@@ -14,6 +14,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/elastic_reorder_list.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 import '../../base/commit_button.dart';
 import '../../main.dart';
@@ -70,27 +71,12 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
                 });
                 return;
               }
-              showCupertinoDialog(
-                useRootNavigator: false,
-                context: context,
-                builder:
-                    (context) => CupertinoAlertDialog(
-                      title: const Text("保存成功"),
-                      content: const Text("重启APP后,新的顺序开始生效"),
-                      actions: [
-                        CupertinoDialogAction(
-                          child: Text(
-                            "知道了",
-                            style: TextStyle(
-                              color: ref.watch(themeProvider).primaryColor,
-                            ),
-                          ),
-                          onPressed: () async {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    ),
+              showConfirmDialog(
+                context,
+                title: "保存成功",
+                content: "重启APP后,新的顺序开始生效",
+                confirmLabel: "知道了",
+                cancelLabel: null,
               );
             },
           ),

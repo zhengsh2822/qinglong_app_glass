@@ -14,15 +14,10 @@ import '../../base/single_account_page.dart';
 import '../../base/ui/selectable_chip.dart';
 import '../subscribe/add_subscribe_page.dart';
 
-
-
 class AddAppKeyPage extends ConsumerStatefulWidget {
   final Map<String, dynamic> bean;
 
-  const AddAppKeyPage({
-    Key? key,
-    required this.bean,
-  }) : super(key: key);
+  const AddAppKeyPage({Key? key, required this.bean}) : super(key: key);
 
   @override
   ConsumerState<AddAppKeyPage> createState() => _AddAppKeyPageState();
@@ -124,84 +119,58 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 15,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  const TitleWidget(
-                    "名称",
-                    required: true,
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
+                  const SizedBox(height: 15),
+                  const TitleWidget("名称", required: true),
+                  const SizedBox(height: 10),
                   TextField(
                     controller: _nameController,
                     maxLines: 3,
                     minLines: 1,
                     textAlignVertical: TextAlignVertical.center,
-                    decoration: const InputDecoration(
-                      hintText: "请输入名称",
-                    ),
+                    decoration: const InputDecoration(hintText: "请输入名称"),
                     autofocus: false,
                   ),
                 ],
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 15,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  const TitleWidget(
-                    "权限",
-                    required: true,
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
+                  const SizedBox(height: 15),
+                  const TitleWidget("权限", required: true),
+                  const SizedBox(height: 10),
                   Wrap(
                     runSpacing: 8,
                     spacing: 8,
-                    children: _allPermissions.map((e) {
-                      final selected = selectedPermissions.contains(e);
-                      return SelectableChip(
-                        label: e,
-                        selected: selected,
-                        onToggle: (value) {
-                          setState(() {
-                            if (value) {
-                              selectedPermissions.add(e);
-                            } else {
-                              selectedPermissions.remove(e);
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
+                    children:
+                        _allPermissions.map((e) {
+                          final selected = selectedPermissions.contains(e);
+                          return SelectableChip(
+                            label: e,
+                            selected: selected,
+                            onToggle: (value) {
+                              setState(() {
+                                if (value) {
+                                  selectedPermissions.add(e);
+                                } else {
+                                  selectedPermissions.remove(e);
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
                   ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  const TitleWidget(
-                    "自定义权限",
-                    required: false,
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
+                  const SizedBox(height: 15),
+                  const TitleWidget("自定义权限", required: false),
+                  const SizedBox(height: 10),
                   // 青龙新增权限时手动输入 scope key，无需等 App 更新
                   Row(
                     children: [
@@ -243,47 +212,48 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: _customScopes.map((s) {
-                        // 可删除的自定义 scope 标签（点击删除）
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() => _customScopes.remove(s));
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.only(
-                              left: 10,
-                              right: 6,
-                              top: 4,
-                              bottom: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: accentColor.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: accentColor.withValues(alpha: 0.4),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  s,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: titleColor,
+                      children:
+                          _customScopes.map((s) {
+                            // 可删除的自定义 scope 标签（点击删除）
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() => _customScopes.remove(s));
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.only(
+                                  left: 10,
+                                  right: 6,
+                                  top: 4,
+                                  bottom: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: accentColor.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: accentColor.withValues(alpha: 0.4),
                                   ),
                                 ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  CupertinoIcons.xmark_circle_fill,
-                                  size: 14,
-                                  color: accentColor,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      s,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: titleColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      CupertinoIcons.xmark_circle_fill,
+                                      size: 14,
+                                      color: accentColor,
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                              ),
+                            );
+                          }).toList(),
                     ),
                   ],
                 ],

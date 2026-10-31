@@ -26,6 +26,8 @@ import '../../home/system_bean.dart';
 import '../../../base/ui/container_page_route.dart';
 
 import 'package:qinglong_app/base/ui/content_entrance.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+
 class ScriptPage extends ConsumerStatefulWidget {
   const ScriptPage({Key? key}) : super(key: key);
 
@@ -186,43 +188,16 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
                           }
                         },
                         onDeleteSelfClick: (ScriptData data) {
-                          showCupertinoDialog(
-                            useRootNavigator: false,
-                            context: context,
-                            builder:
-                                (context1) => CupertinoAlertDialog(
-                                      title: const Text("确认删除"),
-                                      content: const Text("确认删除吗"),
-                                      actions: [
-                                        CupertinoDialogAction(
-                                          child: const Text(
-                                            "取消",
-                                            style: TextStyle(
-                                              color: Color(0xff999999),
-                                            ),
-                                          ),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                        CupertinoDialogAction(
-                                          child: Text(
-                                            "确定",
-                                            style: TextStyle(
-                                              color:
-                                                  ref
-                                                      .watch(themeProvider)
-                                                      .primaryColor,
-                                            ),
-                                          ),
-                                          onPressed: () async {
-                                            Navigator.of(context1).pop();
-                                            deleteFold(data);
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                          );
+                          showConfirmDialog(
+                            context,
+                            title: '确认删除',
+                            content: '确认删除吗',
+                            danger: true,
+                          ).then((confirmed) {
+                            if (confirmed != true) return;
+                            deleteFold(data);
+                          });
+                          ;
                         },
                         onNodeTap: (key) {
                           ScriptData? selectedNode = _treeViewController
@@ -253,7 +228,7 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
                       ),
                     ),
                   ),
-                  ),
+                ),
       ),
     );
     return isCyber ? CyberBackground(child: scaffold) : scaffold;

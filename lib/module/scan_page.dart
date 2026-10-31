@@ -14,6 +14,7 @@ import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
 import 'package:qinglong_app/module/task/TaskBean2.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 import '../../main.dart';
 import '../base/http/http.dart';
@@ -63,38 +64,16 @@ class ScanPageState extends ConsumerState<ScanPage> {
               });
               return;
             }
-            showCupertinoDialog(
-              context: context,
-              useRootNavigator: false,
-              builder:
-                  (childContext) => CupertinoAlertDialog(
-                    title: const Text("温馨提示"),
-                    content: const Text("当前正在扫描文件,确定退出吗?"),
-                    actions: [
-                      CupertinoDialogAction(
-                        child: const Text(
-                          "取消",
-                          style: TextStyle(color: Color(0xff999999)),
-                        ),
-                        onPressed: () {
-                          Navigator.of(childContext).pop();
-                        },
-                      ),
-                      CupertinoDialogAction(
-                        child: Text(
-                          "确定",
-                          style: TextStyle(
-                            color: ref.watch(themeProvider).primaryColor,
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.of(childContext).pop();
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  ),
-            );
+            showConfirmDialog(
+              context,
+              title: '温馨提示',
+              content: '当前正在扫描文件,确定退出吗?',
+              danger: false,
+            ).then((confirmed) {
+              if (confirmed != true) return;
+              Navigator.of(context).pop();
+            });
+            ;
           }
         },
       ),
@@ -127,7 +106,8 @@ class ScanPageState extends ConsumerState<ScanPage> {
           int before = _countScriptFiles(scripts);
           _filterUntrackedScripts(scripts, taskScriptPaths);
           scripts.removeWhere(
-            (element) => element.title == "node_modules" ||
+            (element) =>
+                element.title == "node_modules" ||
                 element.title == "__pycache__" ||
                 element.title == ".git" ||
                 element.title.endsWith(".pyc"),
@@ -159,51 +139,16 @@ class ScanPageState extends ConsumerState<ScanPage> {
       scaning = false;
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (jsInstalled.isNotEmpty || pyInstalled.isNotEmpty) {
-          final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
           String content =
               'NodeJS:\n ${jsInstalled.join("\n").toString()} \n Python3:\n ${pyInstalled.join("\n").toString()}';
-          if (isCyber) {
-            showCyberConfirmDialog(
-              context,
-              title: '本次已安装如下依赖',
-              content: content,
-              confirmLabel: '知道了',
-            );
-            return;
-          }
-          showCupertinoDialog(
-            context: context,
-            useRootNavigator: false,
-            builder:
-                (childContext) => CupertinoAlertDialog(
-                  title: const Text("本次已安装如下依赖"),
-                  content: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight:
-                          MediaQuery.of(childContext).size.height * 0.4,
-                    ),
-                    child: SingleChildScrollView(
-                      child: Text(
-                        content,
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                  ),
-                  actions: [
-                    CupertinoDialogAction(
-                      child: Text(
-                        "知道了",
-                        style: TextStyle(
-                          color: ref.watch(themeProvider).primaryColor,
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.of(childContext).pop();
-                      },
-                    ),
-                  ],
-                ),
+          showConfirmDialog(
+            context,
+            title: '本次已安装如下依赖',
+            content: content,
+            confirmLabel: '知道了',
+            cancelLabel: null,
           );
+          ;
         } else {
           "暂未发现缺失的依赖".toast();
         }
@@ -233,9 +178,7 @@ class ScanPageState extends ConsumerState<ScanPage> {
 
   /// 是否为可扫描的脚本源码文件
   static bool _isScriptFile(String name) {
-    return name.endsWith(".js") ||
-        name.endsWith(".ts") ||
-        name.endsWith(".py");
+    return name.endsWith(".js") || name.endsWith(".ts") || name.endsWith(".py");
   }
 
   /// 递归历遍脚本树，读取脚本源码并提取/安装缺失依赖
@@ -250,7 +193,8 @@ class ScanPageState extends ConsumerState<ScanPage> {
       if (scaning == false) break;
       if (script.type == "directory") {
         // 目录的 path 用 title 拼接（与 ScriptData.key 形式一致）
-        String childPath = path.isEmpty ? script.title : "$path/${script.title}";
+        String childPath =
+            path.isEmpty ? script.title : "$path/${script.title}";
         await _scanScripts(
           script.children,
           childPath,
@@ -267,10 +211,9 @@ class ScanPageState extends ConsumerState<ScanPage> {
         await Future.delayed(const Duration(milliseconds: 100));
 
         // 读取脚本源码内容：scriptDetail 接受父目录 path + 文件名 title
-        HttpResponse<String> response =
-            await SingleAccountPageState.ofApi(
-              context,
-            ).scriptDetail(script.title, path);
+        HttpResponse<String> response = await SingleAccountPageState.ofApi(
+          context,
+        ).scriptDetail(script.title, path);
         if (response.success &&
             response.bean != null &&
             response.bean!.isNotEmpty) {
@@ -359,9 +302,8 @@ class ScanPageState extends ConsumerState<ScanPage> {
   ]) {
     scripts.removeWhere((script) {
       if (script.type == "directory") {
-        String childPath = parentPath.isEmpty
-            ? script.title
-            : "$parentPath/${script.title}";
+        String childPath =
+            parentPath.isEmpty ? script.title : "$parentPath/${script.title}";
         _filterUntrackedScripts(script.children, taskScriptPaths, childPath);
         // 目录里已无有效脚本则整目录移除
         return script.children.isEmpty;
@@ -369,11 +311,12 @@ class ScanPageState extends ConsumerState<ScanPage> {
       // 拿到脚本的完整相对路径：
       // 1) 优先用 script.key（新接口填充的完整路径，如 "jd/rankVote.js"）
       // 2) 退而用 parentPath + title 拼接（兼容旧接口，key 为空时）
-      String fullPath = script.key.isNotEmpty
-          ? script.key
-          : (parentPath.isEmpty
-                ? script.title
-                : "$parentPath/${script.title}");
+      String fullPath =
+          script.key.isNotEmpty
+              ? script.key
+              : (parentPath.isEmpty
+                  ? script.title
+                  : "$parentPath/${script.title}");
       String norm = fullPath.replaceFirst(
         RegExp(r'\.(js|ts|py)$', caseSensitive: false),
         '',
@@ -609,7 +552,10 @@ class ScanPageState extends ConsumerState<ScanPage> {
     ]) {
       for (final match in pattern.allMatches(text)) {
         String? dep = match.group(1);
-        if (dep != null && dep.isNotEmpty && !dep.contains(".") && !dep.contains("/")) {
+        if (dep != null &&
+            dep.isNotEmpty &&
+            !dep.contains(".") &&
+            !dep.contains("/")) {
           if (seen.add(dep)) results.add(dep);
         }
       }
@@ -622,7 +568,10 @@ class ScanPageState extends ConsumerState<ScanPage> {
     ]) {
       for (final match in pattern.allMatches(text)) {
         String? dep = match.group(1);
-        if (dep != null && dep.isNotEmpty && !dep.contains(".") && !dep.contains("/")) {
+        if (dep != null &&
+            dep.isNotEmpty &&
+            !dep.contains(".") &&
+            !dep.contains("/")) {
           if (seen.add(dep)) results.add(dep);
         }
       }

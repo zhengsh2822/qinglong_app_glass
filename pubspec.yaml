@@ -45,6 +45,8 @@ dependencies:
   loading_animation_widget: any
   get: any
   timezone: any
+  pointycastle: ^3.9.0
+  xml: ^6.5.0
   # 液态玻璃双管道（底部导航 + 顶部 tab），正式版独立于实验 demo，
   # 存于主项目 packages/liquid_glass_easy（改 demos/liquid_glass_easy 不影响主项目）
   liquid_glass_easy:

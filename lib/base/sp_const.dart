@@ -46,3 +46,15 @@ const String spGithubLastRemindNo = "spGithubLastRemindNo";
 /// false = 纯色背景（不透明），不使用 BackdropFilter（GPU 零开销）
 /// 用户可在「系统设置 → 通用功能 → 毛玻璃效果」中开关。
 const String spBlurEffect = "spBlurEffect";
+
+// ==== WebDAV 云备份（青龙 2.x 客户端，方案见 docs/云备份方案.md）====
+const String spWebDavUrl =
+    "spWebDavUrl"; // 服务器地址，如 https://dav.jianguoyun.com/dav/
+const String spWebDavUser = "spWebDavUser"; // 账号
+const String spWebDavPassword = "spWebDavPassword"; // 应用密码（坚果云为专用应用密码）
+const String spWebDavDir = "spWebDavDir"; // 远程目录，默认 /qinglong_app_backup
+const String spWebDavEncryptPass = "spWebDavEncryptPass"; // 备份加密口令
+const String spWebDavAuto = "spWebDavAuto"; // 自动备份开关，默认关
+const String spWebDavLastBackTime = "spWebDavLastBackTime"; // 上次手动备份时间
+const String spWebDavLastAutoBackTime =
+    "spWebDavLastAutoBackTime"; // 上次自动备份时间（防抖用，ISO 时间）

@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_subscribe_log_page.dart';
 import 'package:qinglong_app/utils/utils.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import '../../base/ui/container_page_route.dart';
 
 class SubscribeDetailPage extends ConsumerStatefulWidget {
@@ -290,45 +291,24 @@ class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
   }
 
   void delSubscribe(BuildContext context1, WidgetRef ref) {
-    showCupertinoDialog(
-      useRootNavigator: false,
-      context: context1,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text("确认删除"),
-            content: Text("确认删除订阅 ${widget.taskBean["name"] ?? ""} 吗"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确定",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  await ref
-                      .read(
-                        SingleAccountPageState.ofSubscribeProvider(context1)(
-                          getProviderName(context1),
-                        ),
-                      )
-                      .delSubscribe(context1, widget.taskBean["id"]);
-                  Navigator.of(context1).pop();
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context1,
+      title: '确认删除',
+      content: '确认删除订阅 ${widget.taskBean["name"] ?? ""} 吗',
+      danger: true,
+    ).then((confirmed) async {
+      if (confirmed != true) return;
+      if (!context1.mounted) return;
+      await ref
+          .read(
+            SingleAccountPageState.ofSubscribeProvider(context1)(
+              getProviderName(context1),
+            ),
+          )
+          .delSubscribe(context1, widget.taskBean["id"]);
+      Navigator.of(context1).pop();
+    });
+    ;
   }
 
   Widget buildRadioButton(

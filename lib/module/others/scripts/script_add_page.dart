@@ -5,9 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/language_utils.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 import '../../code_editor/editor.dart';
 
@@ -58,39 +58,16 @@ class _ScriptAddPageState extends ConsumerState<ScriptAddPage> {
           if (preResult == result) {
             Navigator.of(context).pop();
           } else {
-            showCupertinoDialog(
-              context: context,
-              useRootNavigator: false,
-              builder: (childContext) => CupertinoAlertDialog(
-                title: const Text("温馨提示"),
-                content: const Text("你新增的内容还没用提交确定退出吗?"),
-                actions: [
-                  CupertinoDialogAction(
-                    child: const Text(
-                      "取消",
-                      style: TextStyle(
-                        color: Color(0xff999999),
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.of(childContext).pop();
-                    },
-                  ),
-                  CupertinoDialogAction(
-                    child: Text(
-                      "确定",
-                      style: TextStyle(
-                        color: ref.watch(themeProvider).primaryColor,
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.of(childContext).pop();
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              ),
-            );
+            showConfirmDialog(
+              context,
+              title: '温馨提示',
+              content: '你新增的内容还没用提交确定退出吗?',
+              danger: false,
+            ).then((confirmed) {
+              if (confirmed != true) return;
+              Navigator.of(context).pop();
+            });
+            ;
           }
         },
         title: '新增${widget.title}',
@@ -102,11 +79,9 @@ class _ScriptAddPageState extends ConsumerState<ScriptAddPage> {
               try {
                 await EasyLoading.show(status: " 提交中");
                 HttpResponse<NullResponse> response =
-                    await SingleAccountPageState.ofApi(context).addScript(
-                  widget.title,
-                  widget.path,
-                  result,
-                );
+                    await SingleAccountPageState.ofApi(
+                      context,
+                    ).addScript(widget.title, widget.path, result);
                 await EasyLoading.dismiss();
                 if (response.success) {
                   "提交成功".toast();
@@ -118,10 +93,8 @@ class _ScriptAddPageState extends ConsumerState<ScriptAddPage> {
                 EasyLoading.dismiss();
               }
             },
-            child:  Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 15,
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Center(
                 child: Text(
                   "提交",
@@ -132,7 +105,7 @@ class _ScriptAddPageState extends ConsumerState<ScriptAddPage> {
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
       body: SafeArea(

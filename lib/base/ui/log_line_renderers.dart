@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 import 'log_models.dart';
 import 'log_image_preview_page.dart';
@@ -41,8 +42,7 @@ final RegExp _taggedBase64Re = RegExp(
 /// Unicode block elements（qrcode-terminal 字符画的主要字符集）
 /// 半角：█▀▄▌▐；上下半：▛▜▙▟▚▞；小方块：▗▖▝▘
 /// 加上全角字符（部分中文字体也用全角空格画）
-const String _blockChars =
-    '█▀▄▌▐▛▜▙▟▚▞▗▖▝▘■□▪▫●○◾◽⬛⬜';
+const String _blockChars = '█▀▄▌▐▛▜▙▟▚▞▗▖▝▘■□▪▫●○◾◽⬛⬜';
 
 /// 单行 block 字符的最小密度阈值（占比）
 const double _asciiArtLineDensity = 0.15;
@@ -75,17 +75,14 @@ Base64ImageLine? tryExtractBase64Image(String line) {
   if (m != null) {
     return Base64ImageLine(
       base64: m.group(2)!,
-      mime: m.group(1)!.toLowerCase().contains('jp') ? 'image/jpeg' : 'image/png',
+      mime:
+          m.group(1)!.toLowerCase().contains('jp') ? 'image/jpeg' : 'image/png',
       raw: line,
     );
   }
   final m2 = _taggedBase64Re.firstMatch(line);
   if (m2 != null) {
-    return Base64ImageLine(
-      base64: m2.group(1)!,
-      mime: 'image/png',
-      raw: line,
-    );
+    return Base64ImageLine(base64: m2.group(1)!, mime: 'image/png', raw: line);
   }
   return null;
 }
@@ -189,13 +186,14 @@ class _ImagePathCardState extends ConsumerState<_ImagePathCard> {
     // 统一走弹簧弹层，与全 App 其它底部弹层手感一致
     showSpringSheet<void>(
       context: context,
-      builder: (_) => Material(
-        type: MaterialType.transparency,
-        child: _PathActionSheet(
-          path: widget.path,
-          accountIndex: widget.accountIndex,
-        ),
-      ),
+      builder:
+          (_) => Material(
+            type: MaterialType.transparency,
+            child: _PathActionSheet(
+              path: widget.path,
+              accountIndex: widget.accountIndex,
+            ),
+          ),
     );
   }
 
@@ -205,12 +203,14 @@ class _ImagePathCardState extends ConsumerState<_ImagePathCard> {
     final isCyber = theme.themeMode == modeCyber;
     final accent = theme.primaryColor;
     final borderColor = accent.withOpacity(isCyber ? 0.55 : 0.35);
-    final textColor = isCyber
-        ? CupertinoColors.white
-        : CupertinoColors.label.resolveFrom(context);
-    final dimColor = isCyber
-        ? const Color(0xFF8D8D8D)
-        : CupertinoColors.secondaryLabel.resolveFrom(context);
+    final textColor =
+        isCyber
+            ? CupertinoColors.white
+            : CupertinoColors.label.resolveFrom(context);
+    final dimColor =
+        isCyber
+            ? const Color(0xFF8D8D8D)
+            : CupertinoColors.secondaryLabel.resolveFrom(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -232,20 +232,17 @@ class _ImagePathCardState extends ConsumerState<_ImagePathCard> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: isCyber
-                        ? const Color(0xFF1A1A24)
-                        : CupertinoColors.white,
+                    color:
+                        isCyber
+                            ? const Color(0xFF1A1A24)
+                            : CupertinoColors.white,
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
                       color: borderColor.withOpacity(0.4),
                       width: 0.5,
                     ),
                   ),
-                  child: Icon(
-                    CupertinoIcons.photo,
-                    size: 20,
-                    color: textColor,
-                  ),
+                  child: Icon(CupertinoIcons.photo, size: 20, color: textColor),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -265,9 +262,7 @@ class _ImagePathCardState extends ConsumerState<_ImagePathCard> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _prefix.isNotEmpty
-                            ? '$_prefix · 长按选择操作'
-                            : '长按选择操作',
+                        _prefix.isNotEmpty ? '$_prefix · 长按选择操作' : '长按选择操作',
                         style: TextStyle(color: dimColor, fontSize: 11),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -275,11 +270,7 @@ class _ImagePathCardState extends ConsumerState<_ImagePathCard> {
                     ],
                   ),
                 ),
-                Icon(
-                  CupertinoIcons.chevron_right,
-                  color: dimColor,
-                  size: 16,
-                ),
+                Icon(CupertinoIcons.chevron_right, color: dimColor, size: 16),
               ],
             ),
           ),
@@ -343,10 +334,9 @@ class _PathActionSheetState extends ConsumerState<_PathActionSheet> {
           PageRouteBuilder(
             opaque: false,
             barrierColor: Colors.black87,
-            pageBuilder: (_, __, ___) => LogImagePreviewPage(
-              path: widget.path,
-              bytes: bytes,
-            ),
+            pageBuilder:
+                (_, __, ___) =>
+                    LogImagePreviewPage(path: widget.path, bytes: bytes),
           ),
         );
       } else {
@@ -358,42 +348,21 @@ class _PathActionSheetState extends ConsumerState<_PathActionSheet> {
   }
 
   void _showFetchFailedDialog(GetBytesResult? r) {
-    // 必须用 builder 自己的 context 来 pop dialog
-    // 否则外层 _PathActionSheetState.context（ActionSheet 已被关闭）会让 pop 无效
-    showCupertinoDialog(
-      context: context,
-      builder: (dialogContext) => CupertinoAlertDialog(
-        title: const Text('拉取失败'),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: SingleChildScrollView(
-            child: Text(
-              '青龙接口未找到该文件（常见原因：路径不在 /ql/scripts 目录）。\n\n'
-              '可手动复制路径到 PC 端青龙面板查看。\n\n'
-              '错误: ${r?.code ?? "-"} · ${r?.message ?? ""}\n'
-              '响应: ${r?.bodyPreview ?? ""}',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF555555)),
-            ),
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: widget.path));
-              if (dialogContext.mounted) {
-                Navigator.of(dialogContext).pop();
-              }
-            },
-            child: const Text('复制路径'),
-          ),
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('关闭'),
-          ),
-        ],
-      ),
-    );
+    showConfirmDialog(
+      context,
+      title: '拉取失败',
+      content:
+          '青龙接口未找到该文件（常见原因：路径不在 /ql/scripts 目录）。\n\n'
+          '可手动复制路径到 PC 端青龙面板查看。\n\n'
+          '错误: ${r?.code ?? "-"} · ${r?.message ?? ""}\n'
+          '响应: ${r?.bodyPreview ?? ""}',
+      cancelLabel: '关闭',
+      confirmLabel: '复制路径',
+    ).then((confirmed) {
+      if (confirmed == true) {
+        Clipboard.setData(ClipboardData(text: widget.path));
+      }
+    });
   }
 
   Future<void> _copyPath() async {
@@ -485,20 +454,22 @@ class _Base64ImageCardState extends State<_Base64ImageCard> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
-          onTap: _bytes == null
-              ? null
-              : () {
-                  Navigator.of(context).push(
-                    PageRouteBuilder(
-                      opaque: false,
-                      barrierColor: Colors.black87,
-                      pageBuilder: (_, __, ___) => LogImagePreviewPage(
-                        path: 'Base64 图片',
-                        bytes: _bytes!,
+          onTap:
+              _bytes == null
+                  ? null
+                  : () {
+                    Navigator.of(context).push(
+                      PageRouteBuilder(
+                        opaque: false,
+                        barrierColor: Colors.black87,
+                        pageBuilder:
+                            (_, __, ___) => LogImagePreviewPage(
+                              path: 'Base64 图片',
+                              bytes: _bytes!,
+                            ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
           child: Container(
             decoration: BoxDecoration(
               color: const Color(0xFF1A1A24),
@@ -519,17 +490,22 @@ class _Base64ImageCardState extends State<_Base64ImageCard> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: _bytes != null
-                      ? Image.memory(_bytes!, fit: BoxFit.cover, gaplessPlayback: true)
-                      : Center(
-                          child: Icon(
-                            _error != null
-                                ? CupertinoIcons.exclamationmark_triangle
-                                : CupertinoIcons.photo,
-                            color: const Color(0xFF555555),
-                            size: 22,
+                  child:
+                      _bytes != null
+                          ? Image.memory(
+                            _bytes!,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                          )
+                          : Center(
+                            child: Icon(
+                              _error != null
+                                  ? CupertinoIcons.exclamationmark_triangle
+                                  : CupertinoIcons.photo,
+                              color: const Color(0xFF555555),
+                              size: 22,
+                            ),
                           ),
-                        ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -596,9 +572,8 @@ class _AsciiArtCard extends StatelessWidget {
               PageRouteBuilder(
                 opaque: false,
                 barrierColor: Colors.black87,
-                pageBuilder: (_, __, ___) => LogAsciiArtPreviewPage(
-                  lines: line.lines,
-                ),
+                pageBuilder:
+                    (_, __, ___) => LogAsciiArtPreviewPage(lines: line.lines),
               ),
             );
           },

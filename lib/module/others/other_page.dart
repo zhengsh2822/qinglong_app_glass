@@ -38,8 +38,6 @@ import 'package:qinglong_app/base/ui/card_transition_source.dart';
 
 import 'package:qinglong_app/module/in_app_purchase_page.dart';
 
-import 'package:qinglong_app/module/others/backup_page.dart';
-
 import 'package:qinglong_app/module/others/change_account_page.dart';
 
 import 'package:qinglong_app/module/others/client_ip_page.dart';
@@ -392,15 +390,6 @@ class OtherPageState extends ConsumerState<OtherPage>
                             }
                           },
                         ),
-                        _buildFeatureButton(
-                          title: "关于软件",
-
-                          icon: CupertinoIcons.info_circle,
-
-                          onTap: () {
-                            Navigator.of(context).pushNamed(Routes.routeAbout);
-                          },
-                        ),
                       ],
                     ),
                   ],
@@ -471,7 +460,9 @@ class OtherPageState extends ConsumerState<OtherPage>
                           icon: CupertinoIcons.cloud_upload,
 
                           onTap: () {
-                            Navigator.of(context).pushNamed(Routes.routeICloud);
+                            Navigator.of(
+                              context,
+                            ).pushNamed(Routes.routeFileBackup);
                           },
                         ),
 
@@ -646,20 +637,6 @@ class OtherPageState extends ConsumerState<OtherPage>
                         ),
 
                         _buildFeatureButton(
-                          title: "备份恢复",
-
-                          icon: CupertinoIcons.cloud_upload,
-
-                          onTap: () {
-                            Navigator.of(context).push(
-                              ContainerPageRoute(
-                                builder: (context) => const BackupPage(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        _buildFeatureButton(
                           title: "存储清理",
 
                           icon: CupertinoIcons.trash,
@@ -669,6 +646,20 @@ class OtherPageState extends ConsumerState<OtherPage>
                               ContainerPageRoute(
                                 builder:
                                     (context) => const StorageRetentionPage(),
+                              ),
+                            );
+                          },
+                        ),
+
+                        _buildFeatureButton(
+                          title: "IP 与代理",
+
+                          icon: CupertinoIcons.arrow_left_right_circle,
+
+                          onTap: () {
+                            Navigator.of(context).push(
+                              ContainerPageRoute(
+                                builder: (context) => const ClientIpPage(),
                               ),
                             );
                           },
@@ -724,16 +715,12 @@ class OtherPageState extends ConsumerState<OtherPage>
                         ),
 
                         _buildFeatureButton(
-                          title: "IP 与代理",
+                          title: "关于软件",
 
-                          icon: CupertinoIcons.arrow_left_right_circle,
+                          icon: CupertinoIcons.info_circle,
 
                           onTap: () {
-                            Navigator.of(context).push(
-                              ContainerPageRoute(
-                                builder: (context) => const ClientIpPage(),
-                              ),
-                            );
+                            Navigator.of(context).pushNamed(Routes.routeAbout);
                           },
                         ),
                       ],

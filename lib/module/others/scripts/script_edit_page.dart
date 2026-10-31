@@ -15,6 +15,7 @@ import 'package:qinglong_app/base/ui/highlight/selectable_code_view.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/language_utils.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 import '../../code_editor/codemirror/io.dart';
 import '../../code_editor/editor.dart';
@@ -117,19 +118,13 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
       padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
       child: Row(
         children: [
-          Expanded(
-            child: SearchCell(controller: _searchTextCtrl),
-          ),
+          Expanded(child: SearchCell(controller: _searchTextCtrl)),
           const SizedBox(width: 4),
           CupertinoButton(
             padding: EdgeInsets.zero,
             minSize: 0,
             onPressed: _onSearchPrev,
-            child: Icon(
-              CupertinoIcons.chevron_up,
-              size: 20,
-              color: iconColor,
-            ),
+            child: Icon(CupertinoIcons.chevron_up, size: 20, color: iconColor),
           ),
           CupertinoButton(
             padding: EdgeInsets.zero,
@@ -325,38 +320,16 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
         }
       });
     } else {
-      showCupertinoDialog(
-        context: context,
-        useRootNavigator: false,
-        builder:
-            (childContext) => CupertinoAlertDialog(
-              title: const Text("温馨提示"),
-              content: const Text("你编辑的内容还没用提交,确定退出吗?"),
-              actions: [
-                CupertinoDialogAction(
-                  child: const Text(
-                    "取消",
-                    style: TextStyle(color: Color(0xff999999)),
-                  ),
-                  onPressed: () {
-                    Navigator.of(childContext).pop();
-                  },
-                ),
-                CupertinoDialogAction(
-                  child: Text(
-                    "确定",
-                    style: TextStyle(
-                      color: ref.watch(themeProvider).primaryColor,
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.of(childContext).pop();
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ),
-      );
+      showConfirmDialog(
+        context,
+        title: '温馨提示',
+        content: '你编辑的内容还没用提交,确定退出吗?',
+        danger: false,
+      ).then((confirmed) {
+        if (confirmed != true) return;
+        Navigator.of(context).pop();
+      });
+      ;
     }
   }
 

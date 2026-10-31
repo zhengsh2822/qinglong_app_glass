@@ -53,8 +53,11 @@ class TaskPage extends ConsumerStatefulWidget {
 }
 
 class TaskPageState extends ConsumerState<TaskPage>
-    with TickerProviderStateMixin, WidgetsBindingObserver,
-        AutomaticKeepAliveClientMixin, PauseableTimerMixin<TaskPage> {
+    with
+        TickerProviderStateMixin,
+        WidgetsBindingObserver,
+        AutomaticKeepAliveClientMixin,
+        PauseableTimerMixin<TaskPage> {
   // PageView 底部 tab 场景保活：切走不销毁，保留滚动位置与页内状态
   @override
   bool get wantKeepAlive => true;
@@ -378,8 +381,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                       editMode == true ? "完成" : "编辑",
                       style: TextStyle(
                         fontSize: 16,
-                        color:
-                            Theme.of(context).appBarTheme.iconTheme?.color,
+                        color: Theme.of(context).appBarTheme.iconTheme?.color,
                       ),
                     ),
                   ),
@@ -640,15 +642,16 @@ class TaskPageState extends ConsumerState<TaskPage>
     }
     _editModeOverlay = AnimatedEditModeOverlay(
       context: context,
-      backgroundColorBuilder: (ref) =>
-          ref
-              .read(themeProvider)
-              .currentTheme
-              .bottomNavigationBarTheme
-              .backgroundColor
-              ?.withOpacity(1) ??
-          Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
-          Colors.black,
+      backgroundColorBuilder:
+          (ref) =>
+              ref
+                  .read(themeProvider)
+                  .currentTheme
+                  .bottomNavigationBarTheme
+                  .backgroundColor
+                  ?.withOpacity(1) ??
+              Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
+              Colors.black,
       builder: (BuildContext context) {
         return SizedBox(
           height: kBottomNavigationBarHeight,
@@ -979,9 +982,12 @@ class _ListBodyState extends ConsumerState<ListBodyWidget>
     final isCyber = ref.read(themeProvider).themeMode == modeCyber;
     final globalFw = FontWeight(ref.watch(textWeightProvider));
     // 预过滤列表，避免为不匹配项构建 SizedBox.shrink 浪费资源
-    final filteredList = lowerSearch.isEmpty
-        ? widget.list
-        : widget.list.where((item) => _matchSearch(item, lowerSearch)).toList();
+    final filteredList =
+        lowerSearch.isEmpty
+            ? widget.list
+            : widget.list
+                .where((item) => _matchSearch(item, lowerSearch))
+                .toList();
     return ListView.separated(
       padding: EdgeInsets.only(
         bottom: kBottomNavigationBarHeight + 50,
@@ -1287,9 +1293,8 @@ class TaskItemCell extends StatelessWidget {
     final bool isDisabled = (bean.isDisabled ?? 0) == 1;
     final bool isRunning = !isDisabled && (bean.status ?? 1) == 0;
     final Color sc = _stateColor(isRunning, isDisabled);
-    final Color accent = isCyber
-        ? CyberColors.cyan
-        : ref.watch(themeProvider).primaryColor;
+    final Color accent =
+        isCyber ? CyberColors.cyan : ref.watch(themeProvider).primaryColor;
 
     // 二次字体：运行时间 / 命令路径 跟随自定义"次字体颜色"（未设置时回退默认次色）
     final Color secondaryText =
@@ -1297,19 +1302,23 @@ class TaskItemCell extends StatelessWidget {
     // 主字体色：任务名称 跟随字体设置里的"主字体颜色"（未设置时回退默认主色）
     final Color primaryText = ref.watch(themeProvider).customPrimaryTextColor;
     // 禁用卡片：整体灰显
-    final Color nameColor = isDisabled
-        ? (dark ? const Color(0xFF5A5A6E) : const Color(0xFFB0B0B8))
-        : primaryText;
-    final Color timeColor = isDisabled
-        ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFF9A9AA0))
-        : secondaryText;
+    final Color nameColor =
+        isDisabled
+            ? (dark ? const Color(0xFF5A5A6E) : const Color(0xFFB0B0B8))
+            : primaryText;
+    final Color timeColor =
+        isDisabled
+            ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFF9A9AA0))
+            : secondaryText;
     // 定时规则（cron 表达式）：不跟随字体颜色调节，始终保留硬编码青色
-    final Color cronColor = isDisabled
-        ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFB0B0B8))
-        : CyberColors.cyan.withValues(alpha: 0.9);
-    final Color commandColor = isDisabled
-        ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFC4C4CC))
-        : secondaryText;
+    final Color cronColor =
+        isDisabled
+            ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFB0B0B8))
+            : CyberColors.cyan.withValues(alpha: 0.9);
+    final Color commandColor =
+        isDisabled
+            ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFC4C4CC))
+            : secondaryText;
 
     final String timeText =
         (bean.lastExecutionTime == null || bean.lastExecutionTime == 0)
@@ -1360,14 +1369,15 @@ class TaskItemCell extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: sc,
                     borderRadius: BorderRadius.circular(2),
-                    boxShadow: isRunning
-                        ? [
-                            BoxShadow(
-                              color: sc.withValues(alpha: 0.6),
-                              blurRadius: 6,
-                            ),
-                          ]
-                        : [],
+                    boxShadow:
+                        isRunning
+                            ? [
+                              BoxShadow(
+                                color: sc.withValues(alpha: 0.6),
+                                blurRadius: 6,
+                              ),
+                            ]
+                            : [],
                   ),
                 ),
                 // 中间内容
@@ -1408,14 +1418,15 @@ class TaskItemCell extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: sc,
                               shape: BoxShape.circle,
-                              boxShadow: isRunning
-                                  ? [
-                                      BoxShadow(
-                                        color: sc.withValues(alpha: 0.7),
-                                        blurRadius: 5,
-                                      ),
-                                    ]
-                                  : [],
+                              boxShadow:
+                                  isRunning
+                                      ? [
+                                        BoxShadow(
+                                          color: sc.withValues(alpha: 0.7),
+                                          blurRadius: 5,
+                                        ),
+                                      ]
+                                      : [],
                             ),
                           ),
                         ],
@@ -1493,9 +1504,8 @@ class TaskItemCell extends StatelessWidget {
 
   /// 卡片状态色：运行中=主色 / 待机=灰 / 禁用=红（赛博 neonRed，苹果 iOS 红）
   Color _stateColor(bool isRunning, bool isDisabled) {
-    final Color accent = isCyber
-        ? CyberColors.cyan
-        : ref.watch(themeProvider).primaryColor;
+    final Color accent =
+        isCyber ? CyberColors.cyan : ref.watch(themeProvider).primaryColor;
     if (isDisabled) {
       return isCyber ? CyberColors.neonRed : const Color(0xFFFF3B30);
     }
@@ -1522,26 +1532,28 @@ class TaskItemCell extends StatelessWidget {
   }) {
     final bool dark = isCyber;
     final bool inactive = isDisabled || editMode;
-    final Color c = inactive
-        ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFB0B0B8))
-        : (isRunning ? const Color(0xFFFF3D00) : accent);
+    final Color c =
+        inactive
+            ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFB0B0B8))
+            : (isRunning ? const Color(0xFFFF3D00) : accent);
     final IconData icon = isRunning ? Icons.stop : Icons.play_arrow;
     final String label = isRunning ? '停止' : '运行';
 
     return GestureDetector(
-      onTap: inactive
-          ? null
-          : () {
-              if (isRunning) {
-                stopCron(context, ref);
-              } else {
-                startCron(
-                  context,
-                  ref,
-                  SpUtil.getBool(spAutoShowLog, defValue: true),
-                );
-              }
-            },
+      onTap:
+          inactive
+              ? null
+              : () {
+                if (isRunning) {
+                  stopCron(context, ref);
+                } else {
+                  startCron(
+                    context,
+                    ref,
+                    SpUtil.getBool(spAutoShowLog, defValue: true),
+                  );
+                }
+              },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
@@ -1563,11 +1575,7 @@ class TaskItemCell extends StatelessWidget {
             const SizedBox(width: 3),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: fontWeight,
-                color: c,
-              ),
+              style: TextStyle(fontSize: 12, fontWeight: fontWeight, color: c),
             ),
           ],
         ),
@@ -1665,4 +1673,3 @@ class TaskItemCell extends StatelessWidget {
         .delCron(context1, [bean.sId!]);
   }
 }
-

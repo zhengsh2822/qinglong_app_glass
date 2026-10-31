@@ -19,21 +19,11 @@ class AddSubscribePage extends ConsumerStatefulWidget {
   ConsumerState<AddSubscribePage> createState() => _AddSubscribePageState();
 }
 
-enum Type {
-  public,
-  single,
-  private,
-}
+enum Type { public, single, private }
 
-enum PullType {
-  privateKey,
-  userName,
-}
+enum PullType { privateKey, userName }
 
-enum CronType {
-  cron,
-  interval,
-}
+enum CronType { cron, interval }
 
 class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
   static const cName = "name";
@@ -118,45 +108,30 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
       body: SingleChildScrollView(
         primary: true,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 15,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 15),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              const SizedBox(
-                height: 15,
-              ),
+              const SizedBox(height: 15),
               const TitleWidget("名称"),
-              const SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 10),
               TextField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  hintText: "请输入订阅名",
-                ),
+                decoration: const InputDecoration(hintText: "请输入订阅名"),
                 autofocus: false,
               ),
-              const SizedBox(
-                height: 15,
-              ),
+              const SizedBox(height: 15),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const TitleWidget(
-                    "类型",
-                    required: true,
-                  ),
+                  const TitleWidget("类型", required: true),
                   Expanded(
                     child: Row(
                       children: [
-                        const SizedBox(
-                          width: 10,
-                        ),
+                        const SizedBox(width: 10),
                         buildRadioButton(
                           "公开仓库",
                           type == Type.public,
@@ -165,9 +140,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
                             setState(() {});
                           },
                         ),
-                        const SizedBox(
-                          width: 10,
-                        ),
+                        const SizedBox(width: 10),
                         buildRadioButton(
                           "私有仓库",
                           type == Type.private,
@@ -176,9 +149,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
                             setState(() {});
                           },
                         ),
-                        const SizedBox(
-                          width: 10,
-                        ),
+                        const SizedBox(width: 10),
                         buildRadioButton(
                           "单文件",
                           type == Type.single,
@@ -192,52 +163,30 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
                   ),
                 ],
               ),
-              const SizedBox(
-                height: 15,
-              ),
-              const TitleWidget(
-                "链接",
-                required: true,
-              ),
-              const SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 15),
+              const TitleWidget("链接", required: true),
+              const SizedBox(height: 10),
               TextField(
                 controller: _linkController,
-                decoration: const InputDecoration(
-                  hintText: "请输入订阅链接",
-                ),
+                decoration: const InputDecoration(hintText: "请输入订阅链接"),
                 autofocus: false,
               ),
-              Visibility(
-                visible: type == Type.public,
-                child: _buildOpenPub(),
-              ),
-              Visibility(
-                visible: type == Type.single,
-                child: _buildSingle(),
-              ),
+              Visibility(visible: type == Type.public, child: _buildOpenPub()),
+              Visibility(visible: type == Type.single, child: _buildSingle()),
               Visibility(
                 visible: type == Type.private,
                 child: _buildPrivatePub(),
               ),
-              const SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 10),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const TitleWidget(
-                    "定时类型",
-                    required: true,
-                  ),
+                  const TitleWidget("定时类型", required: true),
                   Expanded(
                     child: Row(
                       children: [
-                        const SizedBox(
-                          width: 10,
-                        ),
+                        const SizedBox(width: 10),
                         buildRadioButton(
                           "crontab",
                           cronType == CronType.cron,
@@ -246,9 +195,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
                             setState(() {});
                           },
                         ),
-                        const SizedBox(
-                          width: 10,
-                        ),
+                        const SizedBox(width: 10),
                         buildRadioButton(
                           "interval",
                           cronType == CronType.interval,
@@ -257,51 +204,36 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
                             setState(() {});
                           },
                         ),
-                        const SizedBox(
-                          width: 10,
-                        ),
+                        const SizedBox(width: 10),
                       ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(
-                height: 10,
+              const SizedBox(height: 10),
+              Visibility(
+                visible: cronType == CronType.cron,
+                child: const SizedBox(height: 15),
               ),
               Visibility(
                 visible: cronType == CronType.cron,
-                child: const SizedBox(
-                  height: 15,
-                ),
+                child: const TitleWidget("定时规则", required: true),
               ),
               Visibility(
                 visible: cronType == CronType.cron,
-                child: const TitleWidget(
-                  "定时规则",
-                  required: true,
-                ),
-              ),
-              Visibility(
-                visible: cronType == CronType.cron,
-                child: const SizedBox(
-                  height: 10,
-                ),
+                child: const SizedBox(height: 10),
               ),
               Visibility(
                 visible: cronType == CronType.cron,
                 child: TextField(
                   controller: _cronController,
-                  decoration: const InputDecoration(
-                    hintText: "秒可选 分时日月周",
-                  ),
+                  decoration: const InputDecoration(hintText: "秒可选 分时日月周"),
                   autofocus: false,
                 ),
               ),
               Visibility(
                 visible: cronType == CronType.cron,
-                child: const SizedBox(
-                  height: 10,
-                ),
+                child: const SizedBox(height: 10),
               ),
               Visibility(
                 visible: cronType == CronType.cron,
@@ -322,16 +254,11 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
               ),
               Visibility(
                 visible: cronType == CronType.interval,
-                child: const SizedBox(
-                  height: 15,
-                ),
+                child: const SizedBox(height: 15),
               ),
               Visibility(
                 visible: cronType == CronType.interval,
-                child: const TitleWidget(
-                  "定时规则",
-                  required: true,
-                ),
+                child: const TitleWidget("定时规则", required: true),
               ),
               Visibility(
                 visible: cronType == CronType.interval,
@@ -339,71 +266,54 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(
-                      height: 10,
-                    ),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
-                        const TitleWidget(
-                          "值",
-                        ),
-                        const SizedBox(
-                          width: 15,
-                        ),
+                        const TitleWidget("值"),
+                        const SizedBox(width: 15),
                         Expanded(
                           child: TextField(
                             controller: _intervalController,
-                            decoration: const InputDecoration(
-                              hintText: "",
-                            ),
+                            decoration: const InputDecoration(hintText: ""),
                             autofocus: false,
                           ),
                         ),
-                        const SizedBox(
-                          width: 15,
-                        ),
+                        const SizedBox(width: 15),
                         PopupMenuButton<String>(
                           onSelected: (String result) {
                             intervalUnit = result;
                             setState(() {});
                           },
-                          itemBuilder: (BuildContext context) =>
-                              <PopupMenuEntry<String>>[
-                            const PopupMenuItem<String>(
-                              value: "天",
-                              child: Text("天"),
-                            ),
-                            const PopupMenuItem<String>(
-                              value: "时",
-                              child: Text("时"),
-                            ),
-                            const PopupMenuItem<String>(
-                              value: "分",
-                              child: Text("分"),
-                            ),
-                            const PopupMenuItem<String>(
-                              value: "秒",
-                              child: Text("秒"),
-                            ),
-                          ],
+                          itemBuilder:
+                              (BuildContext context) =>
+                                  <PopupMenuEntry<String>>[
+                                    const PopupMenuItem<String>(
+                                      value: "天",
+                                      child: Text("天"),
+                                    ),
+                                    const PopupMenuItem<String>(
+                                      value: "时",
+                                      child: Text("时"),
+                                    ),
+                                    const PopupMenuItem<String>(
+                                      value: "分",
+                                      child: Text("分"),
+                                    ),
+                                    const PopupMenuItem<String>(
+                                      value: "秒",
+                                      child: Text("秒"),
+                                    ),
+                                  ],
                           child: Row(
                             children: [
-                              const SizedBox(
-                                width: 15,
-                              ),
-                              TitleWidget(
-                                intervalUnit,
-                              ),
-                              const SizedBox(
-                                width: 5,
-                              ),
+                              const SizedBox(width: 15),
+                              TitleWidget(intervalUnit),
+                              const SizedBox(width: 5),
                               const Icon(
                                 CupertinoIcons.chevron_up_chevron_down,
                                 size: 16,
                               ),
-                              const SizedBox(
-                                width: 15,
-                              ),
+                              const SizedBox(width: 15),
                             ],
                           ),
                         ),
@@ -414,21 +324,15 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const SizedBox(
-                  height: 15,
-                ),
+                child: const SizedBox(height: 15),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const TitleWidget(
-                  "白名单",
-                ),
+                child: const TitleWidget("白名单"),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const SizedBox(
-                  height: 10,
-                ),
+                child: const SizedBox(height: 10),
               ),
               Visibility(
                 visible: type != Type.single,
@@ -442,21 +346,15 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const SizedBox(
-                  height: 15,
-                ),
+                child: const SizedBox(height: 15),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const TitleWidget(
-                  "黑名单",
-                ),
+                child: const TitleWidget("黑名单"),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const SizedBox(
-                  height: 10,
-                ),
+                child: const SizedBox(height: 10),
               ),
               Visibility(
                 visible: type != Type.single,
@@ -470,21 +368,15 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const SizedBox(
-                  height: 15,
-                ),
+                child: const SizedBox(height: 15),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const TitleWidget(
-                  "依赖文件",
-                ),
+                child: const TitleWidget("依赖文件"),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const SizedBox(
-                  height: 10,
-                ),
+                child: const SizedBox(height: 10),
               ),
               Visibility(
                 visible: type != Type.single,
@@ -498,91 +390,65 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const SizedBox(
-                  height: 15,
-                ),
+                child: const SizedBox(height: 15),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const TitleWidget(
-                  "文件后缀",
-                ),
+                child: const TitleWidget("文件后缀"),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const SizedBox(
-                  height: 10,
-                ),
+                child: const SizedBox(height: 10),
               ),
               Visibility(
                 visible: type != Type.single,
                 child: TextField(
                   controller: _suffixController,
-                  decoration: const InputDecoration(
-                    hintText: "请输入文件后缀",
-                  ),
+                  decoration: const InputDecoration(hintText: "请输入文件后缀"),
                   autofocus: false,
                 ),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const SizedBox(
-                  height: 15,
-                ),
+                child: const SizedBox(height: 15),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const TitleWidget(
-                  "执行前",
-                ),
+                child: const TitleWidget("执行前"),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const SizedBox(
-                  height: 10,
-                ),
+                child: const SizedBox(height: 10),
               ),
               Visibility(
                 visible: type != Type.single,
                 child: TextField(
                   controller: _taskBeforeController,
-                  decoration: const InputDecoration(
-                    hintText: "请输入运行订阅前要执行的命令",
-                  ),
+                  decoration: const InputDecoration(hintText: "请输入运行订阅前要执行的命令"),
                   autofocus: false,
                 ),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const SizedBox(
-                  height: 15,
-                ),
+                child: const SizedBox(height: 15),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const TitleWidget(
-                  "执行后",
-                ),
+                child: const TitleWidget("执行后"),
               ),
               Visibility(
                 visible: type != Type.single,
-                child: const SizedBox(
-                  height: 10,
-                ),
+                child: const SizedBox(height: 10),
               ),
               Visibility(
                 visible: type != Type.single,
                 child: TextField(
                   controller: _taskAfterController,
-                  decoration: const InputDecoration(
-                    hintText: "请输入运行订阅后要执行的命令",
-                  ),
+                  decoration: const InputDecoration(hintText: "请输入运行订阅后要执行的命令"),
                   autofocus: false,
                 ),
               ),
-              const SizedBox(
-                height: 50,
-              ),
+              const SizedBox(height: 50),
             ],
           ),
         ),
@@ -609,9 +475,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
               width: 16,
               fit: BoxFit.cover,
             ),
-            const SizedBox(
-              width: 5,
-            ),
+            const SizedBox(width: 5),
             Text(title),
           ],
         ),
@@ -678,7 +542,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
       } else {
         params[cInterval] = {
           "type": getCodeByName(intervalUnit),
-          "value": int.tryParse(_intervalController.text)
+          "value": int.tryParse(_intervalController.text),
         };
       }
 
@@ -706,12 +570,20 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
         params[cAfter] = _taskAfterController.getTextOrDefault();
       }
 
-      params[cAlias] = getAlias(_linkController.text,
-          _branchController.getTextOrDefault(), type.name);
+      params[cAlias] = getAlias(
+        _linkController.text,
+        _branchController.getTextOrDefault(),
+        type.name,
+      );
       await EasyLoading.show(status: "提交中");
-      var response = params.containsKey("id")
-          ? await SingleAccountPageState.ofApi(context).updateSubscribes(params)
-          : await SingleAccountPageState.ofApi(context).addSubscribes(params);
+      var response =
+          params.containsKey("id")
+              ? await SingleAccountPageState.ofApi(
+                context,
+              ).updateSubscribes(params)
+              : await SingleAccountPageState.ofApi(
+                context,
+              ).addSubscribes(params);
       await EasyLoading.dismiss();
       if (response.success) {
         "提交成功".toast();
@@ -726,9 +598,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
 
   Widget _buildSingle() {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 10,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [],
@@ -738,26 +608,16 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
 
   Widget _buildOpenPub() {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 10,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(
-            height: 15,
-          ),
-          const TitleWidget(
-            "分支",
-          ),
-          const SizedBox(
-            height: 10,
-          ),
+          const SizedBox(height: 15),
+          const TitleWidget("分支"),
+          const SizedBox(height: 10),
           TextField(
             controller: _branchController,
-            decoration: const InputDecoration(
-              hintText: "请输入分支",
-            ),
+            decoration: const InputDecoration(hintText: "请输入分支"),
             autofocus: false,
           ),
         ],
@@ -767,48 +627,29 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
 
   Widget _buildPrivatePub() {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 10,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(
-            height: 15,
-          ),
-          const TitleWidget(
-            "分支",
-          ),
-          const SizedBox(
-            height: 10,
-          ),
+          const SizedBox(height: 15),
+          const TitleWidget("分支"),
+          const SizedBox(height: 10),
           TextField(
             controller: _branchController,
-            decoration: const InputDecoration(
-              hintText: "请输入分支",
-            ),
+            decoration: const InputDecoration(hintText: "请输入分支"),
             autofocus: false,
           ),
-          const SizedBox(
-            height: 15,
-          ),
+          const SizedBox(height: 15),
           Row(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(
-                height: 15,
-              ),
-              const TitleWidget(
-                "拉取方式",
-                required: true,
-              ),
+              const SizedBox(height: 15),
+              const TitleWidget("拉取方式", required: true),
               Expanded(
                 child: Row(
                   children: [
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                     buildRadioButton(
                       "私钥",
                       pullType == PullType.privateKey,
@@ -817,9 +658,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
                         setState(() {});
                       },
                     ),
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                     buildRadioButton(
                       "用户名密码Token",
                       pullType == PullType.userName,
@@ -829,89 +668,62 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
                         setState(() {});
                       },
                     ),
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(
-            height: 15,
+          const SizedBox(height: 15),
+          Visibility(
+            visible: pullType == PullType.privateKey,
+            child: const TitleWidget("私钥", required: true),
           ),
           Visibility(
             visible: pullType == PullType.privateKey,
-            child: const TitleWidget(
-              "私钥",
-              required: true,
-            ),
-          ),
-          Visibility(
-            visible: pullType == PullType.privateKey,
-            child: const SizedBox(
-              height: 10,
-            ),
+            child: const SizedBox(height: 10),
           ),
           Visibility(
             visible: pullType == PullType.privateKey,
             child: TextField(
               controller: _privateKeyController,
-              decoration: const InputDecoration(
-                hintText: "请输入私钥",
-              ),
+              decoration: const InputDecoration(hintText: "请输入私钥"),
               autofocus: false,
             ),
           ),
           Visibility(
             visible: pullType == PullType.userName,
-            child: const TitleWidget(
-              "用户名",
-              required: true,
-            ),
+            child: const TitleWidget("用户名", required: true),
           ),
           Visibility(
             visible: pullType == PullType.userName,
-            child: const SizedBox(
-              height: 10,
-            ),
+            child: const SizedBox(height: 10),
           ),
           Visibility(
             visible: pullType == PullType.userName,
             child: TextField(
               controller: _userNameController,
-              decoration: const InputDecoration(
-                hintText: "请输入用户名",
-              ),
+              decoration: const InputDecoration(hintText: "请输入用户名"),
               autofocus: false,
             ),
           ),
           Visibility(
             visible: pullType == PullType.userName,
-            child: const SizedBox(
-              height: 15,
-            ),
+            child: const SizedBox(height: 15),
           ),
           Visibility(
             visible: pullType == PullType.userName,
-            child: const TitleWidget(
-              "密码/Token",
-              required: true,
-            ),
+            child: const TitleWidget("密码/Token", required: true),
           ),
           Visibility(
             visible: pullType == PullType.userName,
-            child: const SizedBox(
-              height: 10,
-            ),
+            child: const SizedBox(height: 10),
           ),
           Visibility(
             visible: pullType == PullType.userName,
             child: TextField(
               controller: _userPasswordController,
-              decoration: const InputDecoration(
-                hintText: "请输入密码或者Token",
-              ),
+              decoration: const InputDecoration(hintText: "请输入密码或者Token"),
               autofocus: false,
             ),
           ),
@@ -1040,7 +852,8 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
     String _alias = "";
     var _regx = type == 'file' ? fileUrlRegx : repoUrlRegx;
     if (_regx.hasMatch(url)) {
-      _alias = _regx
+      _alias =
+          _regx
               .firstMatch(url)
               ?.group(0)
               ?.replaceAll('/', '_')
@@ -1058,11 +871,8 @@ class TitleWidget extends ConsumerWidget {
   final String title;
   final bool required;
 
-  const TitleWidget(
-    this.title, {
-    Key? key,
-    this.required = false,
-  }) : super(key: key);
+  const TitleWidget(this.title, {Key? key, this.required = false})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context, ref) {
@@ -1070,9 +880,7 @@ class TitleWidget extends ConsumerWidget {
       textScaler: MediaQuery.textScalerOf(context),
       text: TextSpan(
         text: !required ? "" : "* ",
-        style: const TextStyle(
-          color: Color(0xFFF02D2D),
-        ),
+        style: const TextStyle(color: Color(0xFFF02D2D)),
         children: <TextSpan>[
           TextSpan(
             text: title,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/http/http.dart';
+import 'package:qinglong_app/utils/webdav_backup_utils.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
@@ -228,7 +230,10 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 15),
                   child: Center(
-                    child: Icon(CupertinoIcons.arrow_up_right_diamond, size: 20),
+                    child: Icon(
+                      CupertinoIcons.arrow_up_right_diamond,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),
@@ -247,6 +252,12 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
                 if (Platform.isIOS) {
                   await notifyICloud(context, widget.title, result);
                 }
+                // WebDAV 自动云备份不受平台门控（iCloud 还原仅 iOS 有意义）
+                unawaited(
+                  WebDavBackupUtils.maybeAutoBackup(
+                    SingleAccountPageState.of(context)?.index ?? 0,
+                  ),
+                );
                 await EasyLoading.dismiss();
                 if (response.success) {
                   "提交成功".toast();

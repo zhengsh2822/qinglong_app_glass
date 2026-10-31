@@ -869,7 +869,11 @@ class Api {
   /// 不传 type 默认只备份 db + upload
   /// [savePath] 本地保存路径
   /// 成功返回 null，失败返回错误信息
-  Future<String?> exportData(String savePath, {List<String>? type}) async {
+  Future<String?> exportData(
+    String savePath, {
+    List<String>? type,
+    void Function(int received, int total)? onReceiveProgress,
+  }) async {
     final body = <String, dynamic>{};
     if (type != null && type.isNotEmpty) {
       body['type'] = type;
@@ -878,17 +882,22 @@ class Api {
       getIt<Url>(instanceName: index.toString()).dataExport,
       body,
       savePath,
+      onReceiveProgress: onReceiveProgress,
     );
   }
 
   /// 导入数据恢复（上传 .tgz 压缩包）
   /// [filePath] 本地 .tgz 文件路径
   /// 返回服务器解压输出信息
-  Future<HttpResponse<String>> importData(String filePath) async {
+  Future<HttpResponse<String>> importData(
+    String filePath, {
+    void Function(int sent, int total)? onSendProgress,
+  }) async {
     return await getIt<Http>(instanceName: index.toString()).uploadFile<String>(
       getIt<Url>(instanceName: index.toString()).dataImport,
       filePath,
       'data',
+      onSendProgress: onSendProgress,
     );
   }
 

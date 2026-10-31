@@ -102,12 +102,11 @@ class _InTimeHistoryLogPageState extends State<InTimeHistoryLogPage>
           (content == null)
               ? const Center(child: LoadingWidget())
               : CupertinoScrollbar(
-                  child: LogTextView(
-                    content: content,
-                    accountIndex:
-                        SingleAccountPageState.of(context)?.index ?? 0,
-                  ),
+                child: LogTextView(
+                  content: content,
+                  accountIndex: SingleAccountPageState.of(context)?.index ?? 0,
                 ),
+              ),
     );
   }
 

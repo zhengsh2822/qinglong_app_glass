@@ -10,6 +10,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 class UpdateMaxAccountPage extends ConsumerStatefulWidget {
   const UpdateMaxAccountPage({Key? key}) : super(key: key);
@@ -124,41 +125,17 @@ class _UpdateMaxAccountPageState extends ConsumerState<UpdateMaxAccountPage> {
       });
       return;
     }
-    showCupertinoDialog(
-      useRootNavigator: false,
-      context: context,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text("温馨提示"),
-            content: Text("你设置了${controller.text}个最大登录数,确定吗?"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确实",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  MultiAccountUserInfoViewModel.updateMaxAccount(
-                    int.tryParse(controller.text.toString()) ?? count,
-                  );
-                  _restartApp(context);
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context,
+      title: "温馨提示",
+      content: "你设置了${controller.text}个最大登录数,确定吗?",
+    ).then((confirmed) async {
+      if (confirmed != true || !context.mounted) return;
+      MultiAccountUserInfoViewModel.updateMaxAccount(
+        int.tryParse(controller.text.toString()) ?? count,
+      );
+      _restartApp(context);
+    });
   }
 
   void _restartApp(BuildContext context) {
@@ -177,23 +154,16 @@ class _UpdateMaxAccountPageState extends ConsumerState<UpdateMaxAccountPage> {
       });
       return;
     }
-    showCupertinoDialog(
-      useRootNavigator: false,
-      context: context,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text("提示"),
-            content: const Text("重启APP后，相关功能将会启用"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text("知道了"),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  setState(() {});
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context,
+      title: "提示",
+      content: "重启APP后，相关功能将会启用",
+      confirmLabel: "知道了",
+      cancelLabel: null,
+    ).then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 }

@@ -145,8 +145,8 @@ class CronInstancesPageState extends ConsumerState<CronInstancesPage> {
             bottom: MediaQuery.of(context).viewPadding.bottom + 30,
           ),
           itemCount: _items.length,
-          separatorBuilder: (_, _) =>
-              const SizedBox(height: AppleColors.spaceMd),
+          separatorBuilder:
+              (_, _) => const SizedBox(height: AppleColors.spaceMd),
           itemBuilder: (context, index) => _buildItemCard(isCyber, index),
         ),
       );
@@ -308,10 +308,7 @@ class CronInstancesPageState extends ConsumerState<CronInstancesPage> {
                 onPressed: () => _stopInstance(id),
                 child: Text(
                   '停止该实例',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: CyberColors.neonRed,
-                  ),
+                  style: TextStyle(fontSize: 12, color: CyberColors.neonRed),
                 ),
               ),
             ),
@@ -327,10 +324,7 @@ class CronInstancesPageState extends ConsumerState<CronInstancesPage> {
       children: [
         SizedBox(
           width: 46,
-          child: Text(
-            label,
-            style: TextStyle(fontSize: 12, color: desc),
-          ),
+          child: Text(label, style: TextStyle(fontSize: 12, color: desc)),
         ),
         Expanded(
           child: Text(

@@ -44,6 +44,10 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
     with LazyLoadState<InTimeLogPage>, PauseableTimerMixin<InTimeLogPage> {
   String? content;
 
+  /// 传给 LogTextView 的渲染内容：超长日志仅渲染尾部（实时页自动滚底，
+  /// 完整内容仍可分享），避免 2s 轮询的全量重建成本随日志增长无上限
+  String? _renderContent;
+
   bool isRequest = false;
   bool canRequest = true;
   int _emptyCount = 0;
@@ -72,38 +76,49 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
           stopPauseableTimer();
           canRequest = false;
           content = "";
+          _renderContent = "";
           if (!mounted) return;
           setState(() {});
         }
         return;
       }
-      if (content != newContent) {
+      final bool changed = newContent != content;
+      if (changed) {
         _emptyCount = 0;
       }
+      final String prev = content ?? "";
       content = newContent;
 
-      // 使用新的 foundAllReg 同时搜索 NodeJS 和 Python 缺失依赖
-      List<String> foundDeps = ScanPageState.foundAllReg(content ?? "");
-      if (foundDeps.isNotEmpty &&
-          widget.command != null &&
-          (widget.command!.endsWith(".js") ||
-              widget.command!.endsWith(".ts") ||
-              widget.command!.endsWith(".py")) &&
-          SpUtil.getInt(spVIP, defValue: typeNormal) != typeNormal) {
-        Api api = Api(SingleAccountPageState.of(context)?.index ?? 0);
-        bool isPy = widget.command!.endsWith(".py");
-        for (String found in foundDeps) {
-          var result = await ScanPageState.autoInstallFounded(
-            api,
-            found,
-            isPy,
-          );
-          if (result == true) {
-            "已安装依赖 $found".toast();
+      if (changed) {
+        // 依赖检测只跑新增增量：全量正则随日志增长变慢（MB 级日志每 2s 全量
+        // 扫描曾把主线程卡到 ANR），且依赖报错只会出现在新增输出里
+        final String delta =
+            (newContent.length >= prev.length && newContent.endsWith(prev))
+                ? newContent.substring(prev.length)
+                : newContent;
+        List<String> foundDeps = ScanPageState.foundAllReg(delta);
+        if (foundDeps.isNotEmpty &&
+            widget.command != null &&
+            (widget.command!.endsWith(".js") ||
+                widget.command!.endsWith(".ts") ||
+                widget.command!.endsWith(".py")) &&
+            SpUtil.getInt(spVIP, defValue: typeNormal) != typeNormal) {
+          Api api = Api(SingleAccountPageState.of(context)?.index ?? 0);
+          bool isPy = widget.command!.endsWith(".py");
+          for (String found in foundDeps) {
+            var result = await ScanPageState.autoInstallFounded(
+              api,
+              found,
+              isPy,
+            );
+            if (result == true) {
+              "已安装依赖 $found".toast();
+            }
           }
         }
       }
-      if (alwaysAuthScroll) {
+
+      if (changed && alwaysAuthScroll) {
         if (!mounted) return;
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
           if (!mounted) return;
@@ -116,8 +131,18 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
           }
         });
       }
-      if (!mounted) return;
-      setState(() {});
+
+      // 渲染裁剪：仅渲染尾部 96KB；内容未变时不再 setState 重建
+      // （修复：任务持续输出时每 2s 全量重建巨大日志文本 → 主线程卡死 ANR）
+      final String? newRender =
+          (newContent.length > 98304)
+              ? newContent.substring(newContent.length - 98304)
+              : newContent;
+      if (newRender != _renderContent) {
+        _renderContent = newRender;
+        if (!mounted) return;
+        setState(() {});
+      }
     } else {
       if (!hasToastedFailed) {
         hasToastedFailed = true;
@@ -170,13 +195,13 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
               (content == null)
                   ? const Center(child: LoadingWidget())
                   : CupertinoScrollbar(
-                      child: LogTextView(
-                        content: content,
-                        accountIndex:
-                            SingleAccountPageState.of(context)?.index ?? 0,
-                        scrollController: controller,
-                      ),
+                    child: LogTextView(
+                      content: _renderContent ?? content,
+                      accountIndex:
+                          SingleAccountPageState.of(context)?.index ?? 0,
+                      scrollController: controller,
                     ),
+                  ),
         );
       },
     );

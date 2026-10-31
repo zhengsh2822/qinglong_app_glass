@@ -51,9 +51,10 @@ class DialogButton extends StatelessWidget {
       // 取消按钮：赛博模式用白色，非赛博模式用黑色（浅色背景下可见）
       btnColor = Colors.transparent;
       textColor = isCyber ? Colors.white : AppleColors.textPrimary;
-      borderColor = isCyber
-          ? Colors.white.withValues(alpha: 0.3)
-          : AppleColors.textPrimary.withValues(alpha: 0.3);
+      borderColor =
+          isCyber
+              ? Colors.white.withValues(alpha: 0.3)
+              : AppleColors.textPrimary.withValues(alpha: 0.3);
     }
 
     return Expanded(
@@ -63,13 +64,15 @@ class DialogButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             // 确定按钮：赛博模式 alpha 0.2，非赛博模式完全主色（避免透明度太浅）
-            color: primary || danger
-                ? (isCyber ? btnColor.withValues(alpha: 0.2) : btnColor)
-                : Colors.transparent,
+            color:
+                primary || danger
+                    ? (isCyber ? btnColor.withValues(alpha: 0.2) : btnColor)
+                    : Colors.transparent,
             borderRadius: BorderRadius.circular(_dialogButtonRadius),
-            border: primary || danger
-                ? null
-                : Border.all(color: borderColor, width: 1),
+            border:
+                primary || danger
+                    ? null
+                    : Border.all(color: borderColor, width: 1),
           ),
           child: Center(
             child: Text(
@@ -205,7 +208,9 @@ Widget _buildDialogPage({
                   onTap: onBarrierTap,
                   behavior: HitTestBehavior.opaque,
                   child: Container(
-                    color: Colors.black.withValues(alpha: _dialogBarrierDim * t),
+                    color: Colors.black.withValues(
+                      alpha: _dialogBarrierDim * t,
+                    ),
                   ),
                 ),
               ),
@@ -235,8 +240,9 @@ Widget _buildDialogPage({
     );
   }
   // 读取毛玻璃开关（动画期间不变化，避免每帧重读）
-  final bool blurEnabled =
-      ProviderScope.containerOf(context).read(blurEffectProvider);
+  final bool blurEnabled = ProviderScope.containerOf(
+    context,
+  ).read(blurEffectProvider);
   // 毛玻璃关闭时背景置为完全不透明（纯色），符合"关闭=纯色"契约
   final Color cardBg =
       blurEnabled ? theme.cardBg : theme.cardBg.withValues(alpha: 1.0);
@@ -268,7 +274,9 @@ Widget _buildDialogPage({
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 380),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(_dialogBorderRadius),
+                        borderRadius: BorderRadius.circular(
+                          _dialogBorderRadius,
+                        ),
                         child:
                             blurEnabled
                                 ? BackdropFilter(
@@ -309,7 +317,7 @@ Widget _dialogCard(Color cardBg, _DialogTheme theme, Widget child) {
 Widget _buildDialogButtons({
   required _DialogTheme theme,
   required bool isCyber,
-  required String cancelLabel,
+  required String? cancelLabel,
   required String confirmLabel,
   required bool danger,
   required VoidCallback onCancel,
@@ -317,13 +325,15 @@ Widget _buildDialogButtons({
 }) {
   return Row(
     children: [
-      DialogButton(
-        label: cancelLabel,
-        onTap: onCancel,
-        isCyber: isCyber,
-        primaryColor: theme.primaryAction,
-      ),
-      const SizedBox(width: 12),
+      if (cancelLabel != null) ...[
+        DialogButton(
+          label: cancelLabel,
+          onTap: onCancel,
+          isCyber: isCyber,
+          primaryColor: theme.primaryAction,
+        ),
+        const SizedBox(width: 12),
+      ],
       DialogButton(
         label: confirmLabel,
         onTap: onConfirm,
@@ -340,7 +350,8 @@ Future<bool?> showConfirmDialog(
   BuildContext context, {
   required String title,
   required String content,
-  String cancelLabel = '取消',
+  // null = 仅显示确定按钮（纯提示弹窗）
+  String? cancelLabel = '取消',
   String confirmLabel = '确定',
   bool danger = false,
 }) {
@@ -534,6 +545,7 @@ Future<int?> showFrequencyDialog(
   int minValue = 1,
   int maxValue = 1000,
   String unit = '天',
+
   /// 可选的异步值加载器。
   ///
   /// 传入时，弹窗会立即显示（先用 [initialValue] 占位），
