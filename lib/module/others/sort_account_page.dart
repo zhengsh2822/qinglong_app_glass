@@ -5,12 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
-import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/elastic_reorder_list.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -57,20 +55,6 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
             title: "保存",
             onTap: () {
               getIt<MultiAccountUserInfoViewModel>().resetTokenBeans(list);
-              final bool isCyber =
-                  ref.read(themeProvider).themeMode == modeCyber;
-              if (isCyber) {
-                showCyberConfirmDialog(
-                  context,
-                  title: '保存成功',
-                  content: '重启APP后,新的顺序开始生效',
-                  confirmLabel: '知道了',
-                  danger: false,
-                ).then((confirmed) {
-                  // 原代码仅关闭弹窗，无额外操作
-                });
-                return;
-              }
               showConfirmDialog(
                 context,
                 title: "保存成功",

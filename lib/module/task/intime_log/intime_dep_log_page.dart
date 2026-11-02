@@ -64,6 +64,8 @@ class _InTimeDepLogPageState extends State<InTimeDepLogPage>
             "已删除".toast();
             stopPauseableTimer();
             canRequest = false;
+            content = "";
+            if (mounted) setState(() {});
           }
           return;
         }
@@ -87,6 +89,11 @@ class _InTimeDepLogPageState extends State<InTimeDepLogPage>
       setState(() {});
     }
     isRequest = false;
+    // 拉取失败（依赖已删除等）落地空态，避免永久加载；轮询继续后台重试
+    if (content == null) {
+      content = "";
+    }
+    if (mounted) setState(() {});
   }
 
   @override

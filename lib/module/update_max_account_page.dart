@@ -7,7 +7,6 @@ import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
@@ -107,24 +106,6 @@ class _UpdateMaxAccountPageState extends ConsumerState<UpdateMaxAccountPage> {
       return;
     }
 
-    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    if (isCyber) {
-      showCyberConfirmDialog(
-        context,
-        title: '温馨提示',
-        content: '你设置了${controller.text}个最大登录数,确定吗?',
-        confirmLabel: '确实',
-        danger: false,
-      ).then((confirmed) {
-        if (confirmed == true) {
-          MultiAccountUserInfoViewModel.updateMaxAccount(
-            int.tryParse(controller.text.toString()) ?? count,
-          );
-          _restartApp(context);
-        }
-      });
-      return;
-    }
     showConfirmDialog(
       context,
       title: "温馨提示",
@@ -139,26 +120,11 @@ class _UpdateMaxAccountPageState extends ConsumerState<UpdateMaxAccountPage> {
   }
 
   void _restartApp(BuildContext context) {
-    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    if (isCyber) {
-      showCyberConfirmDialog(
-        context,
-        title: '提示',
-        content: '重启APP后，相关功能将会启用',
-        confirmLabel: '知道了',
-        danger: false,
-      ).then((confirmed) {
-        if (confirmed == true) {
-          setState(() {});
-        }
-      });
-      return;
-    }
     showConfirmDialog(
       context,
-      title: "提示",
-      content: "重启APP后，相关功能将会启用",
-      confirmLabel: "知道了",
+      title: '提示',
+      content: '重启APP后，相关功能将会启用',
+      confirmLabel: '知道了',
       cancelLabel: null,
     ).then((_) {
       if (mounted) {

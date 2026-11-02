@@ -9,7 +9,6 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/home/system_bean.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
@@ -135,22 +134,13 @@ Future<bool> deleteConfigFile(BuildContext context, ConfigBean bean) async {
       ProviderScope.containerOf(context).read(themeProvider).themeMode ==
       modeCyber;
   final String tip = '确认删除配置文件 $name 吗？\n该操作不可撤销';
-  final dynamic confirmed =
-      isCyber
-          ? await showCyberConfirmDialog(
-            context,
-            title: '确认删除',
-            content: tip,
-            confirmLabel: '删除',
-            danger: true,
-          )
-          : await showConfirmDialog(
-            context,
-            title: '确认删除',
-            content: tip,
-            confirmLabel: '删除',
-            danger: true,
-          );
+  final dynamic confirmed = await showConfirmDialog(
+    context,
+    title: '确认删除',
+    content: tip,
+    confirmLabel: '删除',
+    danger: true,
+  );
   if (confirmed != true) return false;
   if (!context.mounted) return false;
 

@@ -10,7 +10,6 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/highlight/selectable_code_view.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -308,29 +307,15 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
 
   /// 退出确认弹窗（赛博模式用高斯模糊弹窗，非赛博用CupertinoAlertDialog）
   void _showExitConfirm(bool isCyber) {
-    if (isCyber) {
-      showCyberConfirmDialog(
-        context,
-        title: "温馨提示",
-        content: "你编辑的内容还没用提交,确定退出吗?",
-        confirmLabel: "确定",
-      ).then((confirmed) {
-        if (confirmed == true) {
-          Navigator.of(context).pop();
-        }
-      });
-    } else {
-      showConfirmDialog(
-        context,
-        title: '温馨提示',
-        content: '你编辑的内容还没用提交,确定退出吗?',
-        danger: false,
-      ).then((confirmed) {
-        if (confirmed != true) return;
-        Navigator.of(context).pop();
-      });
-      ;
-    }
+    showConfirmDialog(
+      context,
+      title: '温馨提示',
+      content: '你编辑的内容还没用提交,确定退出吗?',
+      danger: false,
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      Navigator.of(context).pop();
+    });
   }
 
   GlobalKey<CodeMirrorViewState> codeKey = GlobalKey();

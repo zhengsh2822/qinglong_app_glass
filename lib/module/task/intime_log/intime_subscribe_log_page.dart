@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
+import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
@@ -66,8 +67,10 @@ class _InTimeSubscribeLogPageState extends State<InTimeSubscribeLogPage>
         if (_emptyCount >= 3) {
           stopPauseableTimer();
           canRequest = false;
+          content = "";
         }
         isRequest = false;
+        if (mounted) setState(() {});
         return;
       }
       if (content != newContent) {
@@ -82,8 +85,13 @@ class _InTimeSubscribeLogPageState extends State<InTimeSubscribeLogPage>
         });
       }
       setState(() {});
+    } else {
+      // 拉取失败（订阅已删除等）落地空态，避免永久加载
+      (response.message ?? "").toast();
+      content = "";
+      isRequest = false;
+      if (mounted) setState(() {});
     }
-    isRequest = false;
   }
 
   @override

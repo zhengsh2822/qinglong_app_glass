@@ -11,7 +11,6 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
 import 'package:qinglong_app/base/ui/tag_chip.dart';
@@ -357,26 +356,6 @@ class AppKeyItemCell extends StatelessWidget {
   }
 
   void _del(BuildContext context1, WidgetRef ref) {
-    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    if (isCyber) {
-      showCyberConfirmDialog(
-        context1,
-        title: "确认删除",
-        content: "确认删除应用 ${bean["name"] ?? ""} 吗",
-        danger: true,
-      ).then((confirmed) {
-        if (confirmed == true) {
-          ref
-              .read(
-                SingleAccountPageState.ofAppKeyProvider(context1)(
-                  getProviderName(context1),
-                ),
-              )
-              .delAppKey(context1, getAppKeyId(bean));
-        }
-      });
-      return;
-    }
     showConfirmDialog(
       context1,
       title: "确认删除",

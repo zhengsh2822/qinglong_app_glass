@@ -48,6 +48,11 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
   /// 完整内容仍可分享），避免 2s 轮询的全量重建成本随日志增长无上限
   String? _renderContent;
 
+  /// 本次会话已尝试自动安装的依赖（面板安装是异步的，任务日志会持续打印
+  /// 同一条缺依赖错误——不去重会导致 安装→重启→再报错 的无限循环，
+  /// 每 2s 一轮打满主线程直接 ANR 卡死）
+  final Set<String> _autoInstallTried = {};
+
   bool isRequest = false;
   bool canRequest = true;
   int _emptyCount = 0;
@@ -89,6 +94,18 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
       final String prev = content ?? "";
       content = newContent;
 
+      // 渲染先落地：不等依赖检测/安装（自动安装可能耗时很长，曾把首帧
+      // 渲染卡成永久加载），日志内容先展示，依赖处理在后续轮询中继续
+      final String? newRender =
+          (newContent.length > 98304)
+              ? newContent.substring(newContent.length - 98304)
+              : newContent;
+      if (newRender != _renderContent) {
+        _renderContent = newRender;
+        if (!mounted) return;
+        setState(() {});
+      }
+
       if (changed) {
         // 依赖检测只跑新增增量：全量正则随日志增长变慢（MB 级日志每 2s 全量
         // 扫描曾把主线程卡到 ANR），且依赖报错只会出现在新增输出里
@@ -106,6 +123,9 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
           Api api = Api(SingleAccountPageState.of(context)?.index ?? 0);
           bool isPy = widget.command!.endsWith(".py");
           for (String found in foundDeps) {
+            // 同一依赖本次会话只尝试一次：面板安装异步生效，运行中任务会
+            // 持续打印同一条缺依赖错误，无去重会陷入 安装→再报错 死循环
+            if (!_autoInstallTried.add(found)) continue;
             var result = await ScanPageState.autoInstallFounded(
               api,
               found,
@@ -131,23 +151,18 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
           }
         });
       }
-
-      // 渲染裁剪：仅渲染尾部 96KB；内容未变时不再 setState 重建
-      // （修复：任务持续输出时每 2s 全量重建巨大日志文本 → 主线程卡死 ANR）
-      final String? newRender =
-          (newContent.length > 98304)
-              ? newContent.substring(newContent.length - 98304)
-              : newContent;
-      if (newRender != _renderContent) {
-        _renderContent = newRender;
-        if (!mounted) return;
-        setState(() {});
-      }
     } else {
+      // 拉取失败（如任务已被删除）也落地空态，避免永久加载
       if (!hasToastedFailed) {
         hasToastedFailed = true;
         response.message?.toast();
       }
+      if (content == null) {
+        content = "";
+        _renderContent = "";
+      }
+      if (!mounted) return;
+      setState(() {});
     }
   }
 

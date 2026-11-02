@@ -15,7 +15,6 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/highlight/selectable_code_view.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
@@ -138,31 +137,15 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
         danger: true,
         onTap: () async {
           HapticFeedback.mediumImpact();
-          final bool cyber = ref.read(themeProvider).themeMode == modeCyber;
-
-          if (cyber) {
-            // 赛博模式：高斯模糊确认弹窗
-            final confirmed = await showCyberConfirmDialog(
-              context,
-              title: "确认删除",
-              content: "确认删除该脚本吗",
-              confirmLabel: "确定",
-              danger: true,
-            );
-            if (confirmed != true) return;
-            await _deleteScript();
-          } else {
-            // 非赛博模式：使用三模式通用 frosted glass 确认弹窗
-            final confirmed = await showConfirmDialog(
-              context,
-              title: "确认删除",
-              content: "确认删除该脚本吗",
-              confirmLabel: "确定",
-              danger: true,
-            );
-            if (confirmed != true) return;
-            await _deleteScript();
-          }
+          final confirmed = await showConfirmDialog(
+            context,
+            title: "确认删除",
+            content: "确认删除该脚本吗",
+            confirmLabel: "确定",
+            danger: true,
+          );
+          if (confirmed != true) return;
+          await _deleteScript();
         },
       ),
     ]);

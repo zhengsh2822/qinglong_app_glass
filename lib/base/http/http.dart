@@ -200,10 +200,15 @@ class Http {
     bool compute = true,
     String serializationName = "data",
     bool reloginRetry = false,
+    Duration? receiveTimeout,
   }) async {
     try {
       _init();
-      var response = await _dio!.post(uri, data: json);
+      var response = await _dio!.post(
+        uri,
+        data: json,
+        options: Options(receiveTimeout: receiveTimeout),
+      );
 
       _invalidateRelatedCache(uri);
 
@@ -250,10 +255,15 @@ class Http {
     bool compute = true,
     String serializationName = "data",
     bool reloginRetry = false,
+    Duration? receiveTimeout,
   }) async {
     try {
       _init();
-      var response = await _dio!.delete(uri, data: json);
+      var response = await _dio!.delete(
+        uri,
+        data: json,
+        options: Options(receiveTimeout: receiveTimeout),
+      );
 
       _invalidateRelatedCache(uri);
 
@@ -300,10 +310,15 @@ class Http {
     bool compute = true,
     String serializationName = "data",
     bool reloginRetry = false,
+    Duration? receiveTimeout,
   }) async {
     try {
       _init();
-      var response = await _dio!.put(uri, data: json);
+      var response = await _dio!.put(
+        uri,
+        data: json,
+        options: Options(receiveTimeout: receiveTimeout),
+      );
 
       _invalidateRelatedCache(uri);
 

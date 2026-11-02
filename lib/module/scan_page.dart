@@ -7,7 +7,6 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/radar_scan_view.dart';
 import 'package:qinglong_app/module/home/system_bean.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
@@ -51,19 +50,6 @@ class ScanPageState extends ConsumerState<ScanPage> {
           if (!scaning) {
             Navigator.of(context).pop();
           } else {
-            if (isCyber) {
-              showCyberConfirmDialog(
-                context,
-                title: '温馨提示',
-                content: '当前正在扫描文件,确定退出吗?',
-                danger: true,
-              ).then((confirmed) {
-                if (confirmed == true) {
-                  Navigator.of(context).pop();
-                }
-              });
-              return;
-            }
             showConfirmDialog(
               context,
               title: '温馨提示',

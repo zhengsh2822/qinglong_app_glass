@@ -12,7 +12,6 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/enable_widget.dart';
 import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
@@ -651,26 +650,6 @@ class TaskItemCell extends StatelessWidget {
   }
 
   void _delSubscribe(BuildContext context1, WidgetRef ref) {
-    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    if (isCyber) {
-      showCyberConfirmDialog(
-        context1,
-        title: '确认删除',
-        content: '确认删除订阅 ${bean["name"] ?? ""} 吗',
-        danger: true,
-      ).then((confirmed) {
-        if (confirmed == true) {
-          ref
-              .read(
-                SingleAccountPageState.ofSubscribeProvider(context1)(
-                  getProviderName(context1),
-                ),
-              )
-              .delSubscribe(context1, bean["id"]);
-        }
-      });
-      return;
-    }
     showConfirmDialog(
       context1,
       title: '确认删除',

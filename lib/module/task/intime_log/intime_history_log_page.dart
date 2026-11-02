@@ -45,10 +45,14 @@ class _InTimeHistoryLogPageState extends State<InTimeHistoryLogPage>
 
     if (response.success) {
       content = response.bean;
-      setState(() {});
     } else {
+      // 拉取失败也落地空态（toast 一次），避免永久加载
+      if (content == null) {
+        content = "";
+      }
       (response.message ?? "").toast();
     }
+    if (mounted) setState(() {});
   }
 
   @override

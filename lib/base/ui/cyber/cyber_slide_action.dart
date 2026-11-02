@@ -75,14 +75,17 @@ class AppSlideButton extends StatelessWidget {
                   ]
                   : null,
         ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              // 关闭 Slidable
-              Slidable.of(context)?.close();
-              onTap();
-            },
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () async {
+                // 必须用自身 buildContext（位于 Slidable 子树内）解析控制器：
+                // 外部传入的 context 在 Slidable 之上，Slidable.of 恒为 null，
+                // ?.close() 静默空转——收合从未生效，卡片冻在开启态（假死根源）。
+                // 且等收合动画完成再执行动作，避免路由弹出打断动画
+                await Slidable.of(buildContext)?.close();
+                onTap();
+              },
             borderRadius: BorderRadius.circular(cornerRadius),
             child: Center(
               child:

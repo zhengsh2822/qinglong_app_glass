@@ -14,7 +14,6 @@ import 'package:qinglong_app/base/ui/add_select_all_button.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
@@ -27,7 +26,6 @@ import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_viewmodel.dart';
 import 'package:qinglong_app/base/ui/card_transition_source.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_dep_log_page.dart';
-import 'package:qinglong_app/module/task/task_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
@@ -222,52 +220,28 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                       ),
                     )
                     .then((value) async {
-                      if (value != null &&
-                          value is Map<String, dynamic> &&
-                          value.isNotEmpty) {
-                        await ref
-                            .read(
-                              SingleAccountPageState.ofDependencyProvider(
-                                context,
-                              )(getProviderName(context)).notifier,
-                            )
-                            .loadData(
-                              context,
-                              types[0].name.toLowerCase(),
-                              false,
-                            );
-                        await ref
-                            .read(
-                              SingleAccountPageState.ofDependencyProvider(
-                                context,
-                              )(getProviderName(context)).notifier,
-                            )
-                            .loadData(
-                              context,
-                              types[1].name.toLowerCase(),
-                              false,
-                            );
-                        await ref
-                            .read(
-                              SingleAccountPageState.ofDependencyProvider(
-                                context,
-                              )(getProviderName(context)).notifier,
-                            )
-                            .loadData(
-                              context,
-                              types[2].name.toLowerCase(),
-                              false,
-                            );
-
-                        var bean = DependencyBean.fromJson(value);
-                        showLog(
-                          context,
-                          bean.name ?? "",
-                          ref,
-                          bean.sId,
-                          bean.id,
-                        );
+                      if (value == null || value is! Map<String, dynamic>) {
+                        return;
                       }
+                      final model = ref
+                          .read(
+                            SingleAccountPageState.ofDependencyProvider(
+                              context,
+                            )(getProviderName(context)).notifier,
+                          );
+                      // 乐观插入：新依赖卡片（安装中）立即出现，不等网络刷新
+                      // （多选新增返回空 Map，直接走下面的并行刷新）
+                      if (value.isNotEmpty) {
+                        model.insertOptimistic(value);
+                      }
+                      if (!mounted) return;
+                      // 并行刷新三类列表校准真实状态，并联动安装状态轮询；
+                      // 不自动跳转依赖日志页——日志想看就点卡片或滑「日志」
+                      await Future.wait([
+                        model.loadData(context, types[0].name.toLowerCase()),
+                        model.loadData(context, types[1].name.toLowerCase()),
+                        model.loadData(context, types[2].name.toLowerCase()),
+                      ]);
                     });
               },
             ),
@@ -387,39 +361,6 @@ class DependcyPageState extends ConsumerState<DependencyPage>
     return isCyber ? CyberBackground(child: scaffold) : scaffold;
   }
 
-  void showLog(
-    BuildContext context,
-    String title,
-    WidgetRef ref,
-    String? sId,
-    int? id,
-  ) {
-    String v = "";
-    if (sId != null) {
-      v = sId;
-    } else {
-      v = id.toString();
-    }
-    Navigator.of(context)
-        .push(
-          ContainerPageRoute(
-            builder: (context) => InTimeDepLogPage(v, true, title),
-          ),
-        )
-        .then((value) async {
-          await ref
-              .read(
-                SingleAccountPageState.ofDependencyProvider(context)(
-                  getProviderName(context),
-                ),
-              )
-              .loadData(
-                context,
-                types[_tabController!.index].name.toLowerCase(),
-              );
-        });
-  }
-
   double searchCellHeight = 48;
 
   SliverAppBar _buildAppBar(
@@ -513,8 +454,6 @@ class DependcyPageState extends ConsumerState<DependencyPage>
       return;
     }
 
-    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-
     void onConfirm() {
       editMode = false;
       removeOverlay();
@@ -569,30 +508,34 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                   .where((element) => checkedIds.contains(element.mustId))
                   .map((e) => e.id)
                   .toList();
+
+          List<String?> keys =
+              ref
+                  .read(
+                    SingleAccountPageState.ofDependencyProvider(context)(
+                      getProviderName(context),
+                    ).notifier,
+                  )
+                  .getListByType(_tabController!.index)
+                  .where((element) => checkedIds.contains(element.mustId))
+                  .map((e) => e.mustId)
+                  .toList();
           ref
               .read(
                 SingleAccountPageState.ofDependencyProvider(context)(
                   getProviderName(context),
                 ).notifier,
               )
-              .del(context, types[_tabController!.index].name, sids, ids);
+              .del(
+                context,
+                types[_tabController!.index].name,
+                sids,
+                ids,
+                keys: keys,
+              );
         }
       });
       setState(() {});
-    }
-
-    if (isCyber) {
-      showCyberConfirmDialog(
-        context1,
-        title: "确认$s",
-        content: "确认$s吗",
-        danger: true,
-      ).then((confirmed) {
-        if (confirmed == true) {
-          onConfirm();
-        }
-      });
-      return;
     }
 
     showConfirmDialog(
@@ -717,7 +660,7 @@ class _DepListViewState extends State<DepListView>
   bool get wantKeepAlive => true;
 }
 
-class DependencyCell extends ConsumerWidget {
+class DependencyCell extends ConsumerStatefulWidget {
   final DepedencyEnum type;
   final DependencyBean bean;
   final bool editMode;
@@ -734,8 +677,45 @@ class DependencyCell extends ConsumerWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DependencyCell> createState() => _DependencyCellState();
+}
+
+class _DependencyCellState extends ConsumerState<DependencyCell> {
+  DepedencyEnum get type => widget.type;
+  DependencyBean get bean => widget.bean;
+  bool get editMode => widget.editMode;
+  bool get checked => widget.checked;
+  ValueChanged<String> get checkedCallback => widget.checkedCallback;
+
+  /// 本卡片自己的删除中标记：滑动删除确认后本地 setState 立即置位，
+  /// 不依赖任何跨组件通知链路（确认后下一帧必显示「删除中」）；
+  /// 删除完成列表刷新，元素随卡片消失销毁
+  bool _localDeleting = false;
+
+  @override
+  void didUpdateWidget(covariant DependencyCell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // ListView 元素复用：复用到另一条依赖时重置本地删除态
+    if (oldWidget.bean.mustId != widget.bean.mustId) {
+      _localDeleting = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+    // watch 视图模型本体（不能 watch .notifier——那不订阅 notifyListeners），
+    // 编辑模式批量删除的「删除中」徽章依赖这条订阅
+    final bool remoteDeleting =
+        ref
+            .watch(
+              SingleAccountPageState.ofDependencyProvider(context)(
+                getProviderName(context),
+              ),
+            )
+            .deletingKeys
+            .contains(bean.mustId);
+    final bool deleting = _localDeleting || remoteDeleting;
     Widget cardContent = InkWell(
       // 非编辑模式由外层 CardTransitionSource 接管点击（内层 onTap
       // 为 null 不参与手势仲裁），编辑模式保留勾选行为
@@ -796,17 +776,22 @@ class DependencyCell extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 5),
-                      bean.status == 1
-                          ? StatusWidget(
-                            title: "已安装",
-                            color: ref.watch(themeProvider).primaryColor,
+                      deleting
+                          ? const StatusWidget(
+                            title: "删除中",
+                            color: Color(0xffFB5858),
                           )
-                          : (bean.status == 2
-                              ? const StatusWidget(
-                                title: "安装失败",
-                                color: Color(0xffFB5858),
+                          : (bean.status == 1
+                              ? StatusWidget(
+                                title: "已安装",
+                                color: ref.watch(themeProvider).primaryColor,
                               )
-                              : const RunningWidget()),
+                              : (bean.status == 2
+                                  ? const StatusWidget(
+                                    title: "安装失败",
+                                    color: Color(0xffFB5858),
+                                  )
+                                  : const RunningWidget(text: "安装中"))),
                       Expanded(
                         child: Align(
                           alignment: Alignment.centerRight,
@@ -866,6 +851,11 @@ class DependencyCell extends ConsumerWidget {
       },
     );
 
+    // 删除中的卡片：禁点禁滑，只展示「删除中」徽章，等删除完成后列表刷新消失
+    if (deleting) {
+      cardChild = IgnorePointer(child: cardChild);
+    }
+
     if (isCyber) {
       return CapsuleGlowCard(
         isCyber: true,
@@ -873,7 +863,7 @@ class DependencyCell extends ConsumerWidget {
         margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
         child: CyberSlidable(
           slidableKey: ValueKey(bean.mustId),
-          enabled: !editMode,
+          enabled: !editMode && !deleting,
           endActions: [
             CyberSlideAction(
               label: '重装',
@@ -913,7 +903,7 @@ class DependencyCell extends ConsumerWidget {
         borderRadius: BorderRadius.circular(18),
         child: Slidable(
           key: ValueKey(bean.mustId),
-          enabled: !editMode,
+          enabled: !editMode && !deleting,
           endActionPane: ActionPane(
             motion: const ScrollMotion(),
             extentRatio: 0.55,
@@ -1014,27 +1004,6 @@ class DependencyCell extends ConsumerWidget {
     String? sId,
     int? id,
   ) {
-    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    if (isCyber) {
-      showCyberConfirmDialog(
-        context1,
-        title: "确认删除",
-        content: "确认删除依赖 ${bean.name ?? ""} 吗",
-        danger: true,
-      ).then((confirmed) async {
-        if (confirmed == true) {
-          await ref
-              .read(
-                SingleAccountPageState.ofDependencyProvider(context1)(
-                  getProviderName(context1),
-                ),
-              )
-              .del(context1, type.name.toLowerCase(), [sId], [id]);
-          showLog(context1, bean.name ?? "", ref, sId, id);
-        }
-      });
-      return;
-    }
     showConfirmDialog(
       context1,
       title: "确认删除",
@@ -1042,15 +1011,31 @@ class DependencyCell extends ConsumerWidget {
       danger: true,
     ).then((confirmed) async {
       if (confirmed != true || !context1.mounted) return;
-      await ref
+      // 本地立即置「删除中」（不依赖通知链路，确认后下一帧必显示）；
+      // 完成后由 viewmodel 内部静默刷新列表（卡片消失），不再跳转依赖日志页
+      if (mounted) {
+        setState(() {
+          _localDeleting = true;
+        });
+      }
+      final bool ok = await ref
           .read(
             SingleAccountPageState.ofDependencyProvider(context1)(
               getProviderName(context1),
-            ),
+            ).notifier,
           )
-          .del(context1, type.name.toLowerCase(), [sId], [id]);
-      if (context1.mounted) {
-        showLog(context1, bean.name ?? "", ref, sId, id);
+          .del(
+            context1,
+            type.name.toLowerCase(),
+            [sId],
+            [id],
+            keys: [bean.mustId],
+          );
+      // 删除失败：恢复卡片原状态（成功时列表已刷新，卡片消失）
+      if (!ok && mounted) {
+        setState(() {
+          _localDeleting = false;
+        });
       }
     });
   }

@@ -72,8 +72,10 @@ class CyberSlidable extends StatelessWidget {
           actions
               .map(
                 (action) => CustomSlidableAction(
-                  onPressed: (ctx) {
-                    Slidable.of(ctx)?.close();
+                  onPressed: (ctx) async {
+                    // 等收合动画完成再执行动作：确认弹窗/页面路由若在收合中
+                    // 弹出会打断动画，卡片冻在「内容被推走+按钮条悬挂」的假死状态
+                    await Slidable.of(ctx)?.close();
                     action.onTap();
                   },
                   backgroundColor: Colors.transparent,
@@ -83,59 +85,67 @@ class CyberSlidable extends StatelessWidget {
                     horizontal: buttonSpacing / 2,
                     vertical: verticalPadding,
                   ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: action.color,
-                      borderRadius: BorderRadius.circular(buttonRadius),
-                      border: Border.all(
-                        color: action.color.withValues(alpha: 0.7),
-                        width: 0.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: action.color.withValues(alpha: 0.45),
-                          blurRadius: 5,
-                          spreadRadius: 0,
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          Slidable.of(context)?.close();
-                          action.onTap();
-                        },
-                        borderRadius: BorderRadius.circular(buttonRadius),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                action.icon,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                action.label,
-                                maxLines: 1,
-                                overflow: TextOverflow.clip,
-                                softWrap: false,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.1,
-                                ),
+                  child: Builder(
+                    builder:
+                        (buttonContext) => Container(
+                          decoration: BoxDecoration(
+                            color: action.color,
+                            borderRadius: BorderRadius.circular(buttonRadius),
+                            border: Border.all(
+                              color: action.color.withValues(alpha: 0.7),
+                              width: 0.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: action.color.withValues(alpha: 0.45),
+                                blurRadius: 5,
+                                spreadRadius: 0,
                               ),
                             ],
                           ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () async {
+                                // 必须用 Slidable 子树内的 context 解析控制器：
+                                // 内层 InkWell 手势竞争必胜外层 GestureDetector
+                                // （autoClose 收合被跳过），而外层传入的 context
+                                // 在 Slidable 之上，Slidable.of 恒为 null——
+                                // ?.close() 静默空转，卡片冻在开启态（假死根源）
+                                await Slidable.of(buttonContext)?.close();
+                                action.onTap();
+                              },
+                              borderRadius: BorderRadius.circular(buttonRadius),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      action.icon,
+                                      color: Colors.white,
+                                      size: 22,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      action.label,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.clip,
+                                      softWrap: false,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
                   ),
                 ),
               )
