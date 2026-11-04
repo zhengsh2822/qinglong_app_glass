@@ -32,6 +32,9 @@ const String spCyberSecondaryTextColor = "spCyberSecondaryTextColor";
 const String spThemePrimaryTextColor = "spThemePrimaryTextColor";
 const String spThemeSecondaryTextColor = "spThemeSecondaryTextColor";
 const String spLogAutoJump2Bottom = "spLogAutoJump2Bottom";
+// 页面转场动画（bool，默认 false=容器展开：从点击卡片展开/返回收回原处）
+// true = 经典右侧滑入（CupertinoPageRoute）
+const String spClassicPageTransition = "spClassicPageTransition";
 const String spAndroidKeyboardError = "spAndroidKeyboardError";
 const String spSingleInstance = "spSingleInstance";
 // 冷启动主动提醒时"已提醒过"的 GitHub release 附件上传时间(epoch 毫秒)，

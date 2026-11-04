@@ -78,11 +78,7 @@ class _InTimeSubscribeLogPageState extends State<InTimeSubscribeLogPage>
       }
       content = newContent;
       if (alwaysAuthScroll) {
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          if ((controller?.hasClients ?? false)) {
-            controller!.jumpTo(controller!.position.maxScrollExtent);
-          }
-        });
+        scrollLogToBottom(controller, animate: false);
       }
       setState(() {});
     } else {
@@ -112,6 +108,10 @@ class _InTimeSubscribeLogPageState extends State<InTimeSubscribeLogPage>
               setState(() {
                 alwaysAuthScroll = !alwaysAuthScroll;
               });
+              // 开启瞬间立即滚底，与实时日志页行为一致
+              if (alwaysAuthScroll) {
+                scrollLogToBottom(controller);
+              }
             },
           ),
           appBar: QlAppBar(

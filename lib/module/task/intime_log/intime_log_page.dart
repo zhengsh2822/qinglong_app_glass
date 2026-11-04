@@ -139,17 +139,7 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
       }
 
       if (changed && alwaysAuthScroll) {
-        if (!mounted) return;
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          if (!mounted) return;
-          if ((controller?.hasClients ?? false)) {
-            controller!.animateTo(
-              controller!.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.linear,
-            );
-          }
-        });
+        scrollLogToBottom(controller);
       }
     } else {
       // 拉取失败（如任务已被删除）也落地空态，避免永久加载
@@ -192,6 +182,11 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
               setState(() {
                 alwaysAuthScroll = !alwaysAuthScroll;
               });
+              // 开启瞬间立即滚底：日志不再变化时（任务已结束）轮询的
+              // changed 条件永远不满足，只切标记会表现为「点击开启无效」
+              if (alwaysAuthScroll) {
+                scrollLogToBottom(controller);
+              }
             },
           ),
           appBar: QlAppBar(

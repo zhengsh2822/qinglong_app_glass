@@ -79,11 +79,7 @@ class _InTimeDepLogPageState extends State<InTimeDepLogPage>
         }
         content = newContent;
         if (alwaysAuthScroll) {
-          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-            if ((controller?.hasClients ?? false)) {
-              controller!.jumpTo(controller!.position.maxScrollExtent);
-            }
-          });
+          scrollLogToBottom(controller, animate: false);
         }
       } catch (e) {}
       setState(() {});
@@ -114,6 +110,10 @@ class _InTimeDepLogPageState extends State<InTimeDepLogPage>
               setState(() {
                 alwaysAuthScroll = !alwaysAuthScroll;
               });
+              // 开启瞬间立即滚底，与实时日志页行为一致
+              if (alwaysAuthScroll) {
+                scrollLogToBottom(controller);
+              }
             },
           ),
           appBar: QlAppBar(

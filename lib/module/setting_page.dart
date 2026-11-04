@@ -526,6 +526,21 @@ class _SettingPageState extends ConsumerState<SettingPage>
                     },
                   ),
                   settingsDivider,
+                  // 页面转场动画开关：开=经典右侧滑入，关=容器展开（从点击
+                  // 卡片展开/收回原处）；每次进页即时生效，无需重启
+                  SettingsSwitchRow(
+                    icon: CupertinoIcons.arrow_right_circle,
+                    title: "经典页面转场（右侧滑入）",
+                    value: SpUtil.getBool(
+                      spClassicPageTransition,
+                      defValue: false,
+                    ),
+                    onChanged: (open) async {
+                      await SpUtil.putBool(spClassicPageTransition, open);
+                      setState(() {});
+                    },
+                  ),
+                  settingsDivider,
                   // 指针按下位置作为扩散圆心；切换走羽化圆形扩散
                   Listener(
                     onPointerDown: _onThemePointerDown,
