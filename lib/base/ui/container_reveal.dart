@@ -116,13 +116,18 @@ class ContainerReveal extends StatelessWidget {
                   0.46,
                   curve: Curves.easeOutCubic,
                 ).transform(t);
-        // 主题版：容器底色从首帧即不透明。
-        // 壁纸版的「透明→渐入」配方是为了先透出旧页面复刻磨砂玻璃卡材质
-        // （深色界面里透什么 都看不出来）；主题版纯色卡无此需求，且半透明
-        // 填充期会透出旧页面（如青色 AppBar）+ 压暗层 → 浅色模式出现
-        // 「深色药丸残影」（真机截图已复现），故直接取实心底色。
-        // fillT 仍保留用于顶部高光渐隐与（壁纸版的）模糊层开关。
-        final Color baseColor = pageBackground;
+        // 底色变为不透明前保留背景模糊，复刻玻璃卡片的材质。
+        final bool withBlur = sourceBlurSigma > 0.01 && fillT < 0.97;
+        // 底色渐入（2026-11-06 同步壁纸版配方）：模糊层在场时，前段透出的
+        // 是「糊化的旧页面/卡片」而非清晰内容——窗口首帧读作「糊化的卡片」，
+        // 卡片随窗口生长 = 壁纸版「卡片直接展开」观感。当年主题版改首帧
+        // 不透明，是因无模糊层时半透明填充清晰透出旧页面（浅色模式出现
+        // 「深色药丸残影」）；现模糊层已启用（sourceBlurSigma 10），糊化
+        // 遮蔽该问题。模糊关闭（sigma=0）时仍保持首帧不透明，避免清晰透出。
+        final Color baseColor =
+            withBlur
+                ? Color.lerp(Colors.transparent, pageBackground, fillT)!
+                : pageBackground;
 
         final double backgroundT =
             dissolving
@@ -139,9 +144,6 @@ class ContainerReveal extends StatelessWidget {
 
         final double sourceOpacity =
             1 - const Interval(0.0, 0.14, curve: Curves.easeOut).transform(t);
-
-        // 底色变为不透明前保留背景模糊，复刻玻璃卡片的材质。
-        final bool withBlur = sourceBlurSigma > 0.01 && fillT < 0.97;
 
         final double dim =
             0.22 *

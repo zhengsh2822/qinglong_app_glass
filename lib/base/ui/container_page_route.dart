@@ -240,9 +240,11 @@ class ContainerPageRoute<T> extends PageRoute<T> {
         originRect: _resolveOrigin(screen),
         sourceChild: sourceChild,
         sourceRadius: sourceRadius,
-        // 主题版无结霜层：纯色卡片没有 BackdropFilter 材质需要复刻，
-        // 保持 0（ContainerReveal 内部 withBlur=false 跳过模糊层）。
-        sourceBlurSigma: 0,
+        // 材质复刻（同步壁纸版配方，2026-11-06）：窗口前段为实时毛玻璃，
+        // 采样旧页面（含卡片本体）→ 窗口首帧读作「糊化的卡片」=卡片直接
+        // 展开，而非不透明面板叠加展开。sigma 取壁纸版默认 10（主题版无
+        // 卡片模糊设置项，用常量）。
+        sourceBlurSigma: 10,
         sourceHighlightOpacity: sourceHighlightOpacity,
         sourceBorderColor: sourceBorderColor ?? stroke,
         pageBackground: pageBackground,
