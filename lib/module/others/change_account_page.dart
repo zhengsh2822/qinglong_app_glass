@@ -76,10 +76,29 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     final bool isCyber = _isCyber;
     final Animation<double>? entrance = widget.animation;
 
+    // 共享容器转场时按区间做透明度 + 轻微位移的错峰入场（同步壁纸版配方，
+    // 2026-11-06）：关闭按钮 → 提示文案 → 账号卡片逐个滑入（每张 +5% 延迟），
+    // 即用户所说的「甩尾」效果。当年主题版因旧实现出现「文案/图标重复错位
+    // 重叠」而整体移除，现按壁纸版现行实现（整块包裹、区间互不重叠）恢复。
+    // 普通入口（animation 为空）保持原样，不额外包裹。
+    Widget stagger(
+      Widget child, {
+      required double start,
+      required double end,
+      double offsetY = 0,
+    }) {
+      if (entrance == null) return child;
+      return _AccountPageStagger(
+        animation: entrance,
+        start: start,
+        end: end,
+        offsetY: offsetY,
+        child: child,
+      );
+    }
+
     // 共享容器转场自带整页底色，不能再叠 CyberBackground/主题底色；
     // 其它入口（animation 为空）保持原背景。
-    // 不做错峰入场（曾出现文案/图标重复错位重叠，用户要求移除），
-    // 转场期间内容直接随容器展开呈现。
     final Widget scaffold = Scaffold(
       backgroundColor:
           entrance != null
@@ -90,7 +109,14 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
             (ref.watch(themeProvider).themeMode == modeDark || isCyber)
                 ? SystemUiOverlayStyle.light
                 : SystemUiOverlayStyle.dark,
-        child: _buildBody(context, usedSlots, freeSlot, itemCount, isCyber),
+        child: _buildBody(
+          context,
+          usedSlots,
+          freeSlot,
+          itemCount,
+          isCyber,
+          stagger,
+        ),
       ),
     );
     if (isCyber && entrance == null) {
@@ -105,6 +131,8 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     int? freeSlot,
     int itemCount,
     bool isCyber,
+    Widget Function(Widget child, {required double start, required double end, double offsetY})
+    stagger,
   ) {
     return SingleChildScrollView(
       child: SizedBox(
@@ -114,34 +142,44 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
           children: [
             Align(
               alignment: Alignment.topLeft,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30,
-                    vertical: kToolbarHeight,
-                  ),
-                  child: Icon(
-                    CupertinoIcons.clear_thick,
-                    size: 24,
-                    color: isCyber ? CyberColors.cyan : null,
+              child: stagger(
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: kToolbarHeight,
+                    ),
+                    child: Icon(
+                      CupertinoIcons.clear_thick,
+                      size: 24,
+                      color: isCyber ? CyberColors.cyan : null,
+                    ),
                   ),
                 ),
+                start: 0.40,
+                end: 0.68,
+                offsetY: 8,
               ),
             ),
             const SizedBox(height: 10),
-            Text(
-              "轻触账号以切换身份使用",
-              style: TextStyle(
-                color:
-                    isCyber
-                        ? Colors.blueGrey
-                        : ref.watch(themeProvider).themeColor.descColor(),
-                fontSize: 13,
+            stagger(
+              Text(
+                "轻触账号以切换身份使用",
+                style: TextStyle(
+                  color:
+                      isCyber
+                          ? Colors.blueGrey
+                          : ref.watch(themeProvider).themeColor.descColor(),
+                  fontSize: 13,
+                ),
               ),
+              start: 0.45,
+              end: 0.73,
+              offsetY: 10,
             ),
             const SizedBox(height: 10),
             Padding(
@@ -162,15 +200,38 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                     item = GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: () {
-                        context
-                            .findAncestorStateOfType<MultiAccountPageState>()
-                            ?.updateIndex(slot);
+                        // 切层时 IndexedStack 首次光栅化新账号层是长帧
+                        // （透明页面+毛玻璃全量），若在收回动画期间切层会
+                        // 挤占收回动画（卡成闪切）。顺序改为：先收回
+                        // （动画期间保持旧账号层，全程流畅），收回完成
+                        // 后再切层——长帧只在"我的"页静止时发生一次
+                        // （同步壁纸版优化，2026-11-06）。
+                        final navState =
+                            context
+                                .findAncestorStateOfType<
+                                  MultiAccountPageState
+                                >();
+                        // pop 是 void，收回动画 480ms——动画完成后切层
                         Navigator.of(context).pop();
+                        Future.delayed(
+                          const Duration(milliseconds: 480),
+                          () {
+                            if (navState != null && navState.mounted) {
+                              navState.updateIndex(slot);
+                            }
+                          },
+                        );
                       },
                       child: _buildAccountCard(userInfo, slot, isCyber),
                     );
                   }
-                  return item;
+                  // 账号卡片逐个滑入：每张延后 5% 进度，即「甩尾」拖尾感
+                  return stagger(
+                    item,
+                    start: 0.50 + index * 0.05,
+                    end: 0.78 + index * 0.05,
+                    offsetY: 16,
+                  );
                 },
                 separatorBuilder: (_, __) => const SizedBox(height: 4),
                 itemCount: itemCount,
@@ -410,6 +471,48 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
           Text("添加账号", style: TextStyle(color: accentColor, fontSize: 15)),
         ],
       ),
+    );
+  }
+}
+
+/// 账号页错峰入场（同步壁纸版同名实现）：在路由动画的 [start, end] 区间内
+/// 做「淡入 + 轻微上移归位」，动画反向时自动倒放（内容先退场，容器再收回）。
+/// 只包裹整块内容（按钮/文案/整张卡片），避免旧实现逐元素包裹导致的
+/// 「文案/图标重复错位重叠」问题。
+class _AccountPageStagger extends StatelessWidget {
+  const _AccountPageStagger({
+    required this.animation,
+    required this.start,
+    required this.end,
+    required this.offsetY,
+    required this.child,
+  });
+
+  final Animation<double> animation;
+  final double start;
+  final double end;
+  final double offsetY;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      child: child,
+      builder: (context, child) {
+        final double progress = Interval(
+          start,
+          end,
+          curve: Curves.easeOutCubic,
+        ).transform(animation.value);
+        return Opacity(
+          opacity: progress.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, offsetY * (1 - progress)),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

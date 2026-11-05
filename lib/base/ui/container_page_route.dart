@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/ui/container_reveal.dart';
+import 'package:qinglong_app/base/ui/container_transform_route.dart';
 import 'package:qinglong_app/base/ui/page_tap_origin.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
@@ -289,18 +290,21 @@ class ContainerPageRoute<T> extends PageRoute<T> {
   }
 }
 
-/// 注册到 MaterialApp.navigatorObservers：记录收回中的容器展开路由，
+/// 注册到 MaterialApp.navigatorObservers：记录收回中的容器展开路由
+/// （ContainerPageRoute 与账号页 ContainerTransformRoute 两种），
 /// 供「收回中重开同来源」无缝续播（收回打断，与展开打断对称）。
 ///
 /// 展开支持打断是 Flutter 原生能力（推入中 pop，controller 从当前值反向）；
 /// 收回原本不行——收回中的页面盖在下层上吃输入，重开也是双窗口叠影。
-/// 配合 ContainerPageRoute 构造器的同来源检测（initialRevealProgress +
-/// install 时 removeRoute 旧路由）实现无缝续播。
+/// 配合两类路由构造器的同来源检测（initialRevealProgress + install 时
+/// removeRoute 旧路由）实现无缝续播。
 class ContainerCollapseTracker extends NavigatorObserver {
   @override
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
     if (route is ContainerPageRoute<dynamic> && !route._classic) {
       ContainerPageRoute._collapsing = route;
+    } else if (route is ContainerTransformRoute) {
+      ContainerTransformRoute.trackCollapsing(route);
     }
   }
 
@@ -309,5 +313,8 @@ class ContainerCollapseTracker extends NavigatorObserver {
     if (identical(ContainerPageRoute._collapsing, route)) {
       ContainerPageRoute._collapsing = null;
     }
+    ContainerTransformRoute.untrackCollapsing(
+      route is ContainerTransformRoute ? route : null,
+    );
   }
 }

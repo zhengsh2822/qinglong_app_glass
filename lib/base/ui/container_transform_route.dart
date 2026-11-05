@@ -16,6 +16,27 @@ import 'container_reveal.dart';
 /// 容器内部层级与节奏由共用组件 [ContainerReveal] 实现；
 /// 页面自带分段入场动画（pageBuilder 拿 animation 自己做），故 pageFade 为 null。
 class ContainerTransformRoute extends PageRoute<void> {
+  /// 最近一次进入收回中的本类路由（由 ContainerCollapseTracker 维护），
+  /// 供「收回中重开同来源」无缝续播（与 ContainerPageRoute 收回打断对称）。
+  static ContainerTransformRoute? _collapsing;
+
+  /// ContainerCollapseTracker 维护入口（_collapsing 为库私有，跨库经此访问）
+  static void trackCollapsing(ContainerTransformRoute? route) {
+    _collapsing = route;
+  }
+
+  /// 路由移除时清理追踪（仅当仍指向该路由）
+  static void untrackCollapsing(ContainerTransformRoute? route) {
+    if (identical(_collapsing, route)) _collapsing = null;
+  }
+
+  /// 收回被打断重开时的起始进度（0~1，构造时从旧路由捕获）：
+  /// createAnimationController 设为初值，didPush 的 forward() 从此续播。
+  double _initialRevealProgress = 0;
+
+  /// 被本路由接管的收回中旧路由（install 时同帧移除，避免双窗口叠影）。
+  ContainerTransformRoute? _interrupted;
+
   ContainerTransformRoute({
     required this.sourceRect,
     required this.pageBuilder,
@@ -28,7 +49,44 @@ class ContainerTransformRoute extends PageRoute<void> {
     this.pageBackground = const Color(0xFF080A0D),
     this.duration = const Duration(milliseconds: 480),
     super.settings,
-  });
+  }) {
+    // 收回打断：同来源（源矩形相等）的本类路由正在收回 → 新路由从旧进度
+    // 无缝续播展开。页面自带分段入场动画直接吃路由动画，从中间值续播即
+    // 内容入场同步续播，天然无缝。
+    final ContainerTransformRoute? collapsing = _collapsing;
+    final Animation<double>? anim = collapsing?.animation;
+    if (collapsing != null &&
+        anim != null &&
+        anim.status == AnimationStatus.reverse &&
+        anim.value > 0 &&
+        collapsing.sourceRect == sourceRect) {
+      _initialRevealProgress = anim.value;
+      _interrupted = collapsing;
+    }
+  }
+
+  @override
+  AnimationController createAnimationController() {
+    final AnimationController controller = super.createAnimationController();
+    // createAnimationController 在 install() 阶段执行，早于 didPush() 的
+    // forward()——先设初值，展开即从旧收回位置续播
+    if (_initialRevealProgress > 0) {
+      controller.value = _initialRevealProgress.clamp(0.0, 1.0);
+    }
+    return controller;
+  }
+
+  @override
+  void install() {
+    super.install();
+    if (_interrupted != null) {
+      // push 与 removeRoute 同帧：新路由首帧即渲染旧收回位置的窗口，
+      // 旧路由立刻消失，视觉零差异。调用方（如 QlAppBar 的 _opening 标志）
+      // 经 push Future 完成回调恢复真实卡片/标题，被新路由窗口遮盖，无跳变。
+      navigator?.removeRoute(_interrupted!);
+      _interrupted = null;
+    }
+  }
 
   /// 源卡片在屏幕坐标系中的矩形（跳转前捕获）。
   final Rect sourceRect;
@@ -94,17 +152,23 @@ class ContainerTransformRoute extends PageRoute<void> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    return ContainerReveal(
-      animation: animation,
-      originRect: sourceRect,
-      background: background,
-      sourceChild: sourceChild,
-      sourceRadius: sourceRadius,
-      sourceBlurSigma: sourceBlurSigma,
-      sourceHighlightOpacity: sourceHighlightOpacity,
-      sourceBorderColor: sourceBorderColor,
-      pageBackground: pageBackground,
-      child: child,
+    // 收回阶段整页 IgnorePointer：正在收回的面板不应再吃输入，否则收回
+    // 期间点标题/卡片无响应（表现=收回不支持打断）。展开与静止阶段保持
+    // 可交互（展开中可打断返回）。
+    return IgnorePointer(
+      ignoring: animation.status == AnimationStatus.reverse,
+      child: ContainerReveal(
+        animation: animation,
+        originRect: sourceRect,
+        background: background,
+        sourceChild: sourceChild,
+        sourceRadius: sourceRadius,
+        sourceBlurSigma: sourceBlurSigma,
+        sourceHighlightOpacity: sourceHighlightOpacity,
+        sourceBorderColor: sourceBorderColor,
+        pageBackground: pageBackground,
+        child: child,
+      ),
     );
   }
 }
