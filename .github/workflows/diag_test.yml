@@ -7,6 +7,6 @@ jobs:
     steps:
       - run: echo "ubuntu ok"
   macos:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - run: echo "macos ok"
