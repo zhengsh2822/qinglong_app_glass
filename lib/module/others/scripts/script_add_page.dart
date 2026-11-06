@@ -15,7 +15,7 @@ class ScriptAddPage extends ConsumerStatefulWidget {
   final String title;
   final String path;
 
-  const ScriptAddPage(this.title, this.path, {Key? key}) : super(key: key);
+  const ScriptAddPage(this.title, this.path, {super.key});
 
   @override
   ConsumerState createState() => _ScriptAddPageState();
@@ -65,9 +65,9 @@ class _ScriptAddPageState extends ConsumerState<ScriptAddPage> {
               danger: false,
             ).then((confirmed) {
               if (confirmed != true) return;
+              if (!context.mounted) return;
               Navigator.of(context).pop();
             });
-            ;
           }
         },
         title: '新增${widget.title}',
@@ -78,11 +78,13 @@ class _ScriptAddPageState extends ConsumerState<ScriptAddPage> {
             onPressed: () async {
               try {
                 await EasyLoading.show(status: " 提交中");
+                if (!context.mounted) return;
                 HttpResponse<NullResponse> response =
                     await SingleAccountPageState.ofApi(
                       context,
                     ).addScript(widget.title, widget.path, result);
                 await EasyLoading.dismiss();
+                if (!context.mounted) return;
                 if (response.success) {
                   "提交成功".toast();
                   Navigator.of(context).pop(true);

@@ -14,9 +14,9 @@ class FileDirectoryPage extends ConsumerStatefulWidget {
   final String path;
 
   const FileDirectoryPage({
-    Key? key,
+    super.key,
     required this.path,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<FileDirectoryPage> createState() => _FileDirectoryPageState();
@@ -54,6 +54,7 @@ class _FileDirectoryPageState extends ConsumerState<FileDirectoryPage> {
               } else {
                 try {
                   String content = await File(paths[index]).readAsString();
+                  if (!context.mounted) return;
                   Navigator.of(context).push(
                     ContainerPageRoute(
                       builder: (context) => ScriptCodeDetailPage(

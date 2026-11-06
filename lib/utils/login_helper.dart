@@ -1,12 +1,9 @@
 import 'package:flutter/cupertino.dart';
-import 'package:qinglong_app/base/http/api.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/module/login/login_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
-import '../main.dart';
 
 class LoginHelper {
   static int success = 0;
@@ -44,14 +41,17 @@ class LoginHelper {
       ).loginByClientId(userName, password);
     }
     if (response.success) {
+      if (!context.mounted) return failed;
       loginSuccess(context, response, userName, password);
       return success;
     } else if (loginByUserName() && response.code == 401) {
       //可能用户使用的是老版本qinglong
+      if (!context.mounted) return failed;
       HttpResponse<LoginBean> oldResponse = await SingleAccountPageState.ofApi(
         context,
       ).loginOld(userName, password);
       if (oldResponse.success) {
+        if (!context.mounted) return failed;
         loginSuccess(context, oldResponse, userName, password);
         return success;
       } else {
@@ -78,6 +78,7 @@ class LoginHelper {
       context,
     ).loginTwo(userName, password, code);
     if (response.success) {
+      if (!context.mounted) return failed;
       loginSuccess(context, response, userName, password);
       return success;
     } else {

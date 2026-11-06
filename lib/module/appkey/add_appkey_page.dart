@@ -17,7 +17,7 @@ import '../subscribe/add_subscribe_page.dart';
 class AddAppKeyPage extends ConsumerStatefulWidget {
   final Map<String, dynamic> bean;
 
-  const AddAppKeyPage({Key? key, required this.bean}) : super(key: key);
+  const AddAppKeyPage({super.key, required this.bean});
 
   @override
   ConsumerState<AddAppKeyPage> createState() => _AddAppKeyPageState();
@@ -303,6 +303,7 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
     }
     EasyLoading.dismiss();
 
+    if (!mounted) return;
     if (response.success) {
       Navigator.of(context).pop(true);
     } else {

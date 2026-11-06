@@ -80,7 +80,7 @@ import '../update_max_account_page.dart';
 import '../../base/ui/container_page_route.dart';
 
 class OtherPage extends ConsumerStatefulWidget {
-  const OtherPage({Key? key}) : super(key: key);
+  const OtherPage({super.key});
 
   @override
   OtherPageState createState() => OtherPageState();
@@ -900,6 +900,7 @@ class OtherPageState extends ConsumerState<OtherPage>
   @override
   void onLazyLoad() async {
     var response = await SingleAccountPageState.ofApi(context).user();
+    if (!mounted) return;
 
     if (response.success) {
       userIcon = response.bean?.avatar;
@@ -929,7 +930,7 @@ class OtherPageState extends ConsumerState<OtherPage>
 
       String now = DateFormat('yyyy-MM-dd').format(DateTime.now()); //获取多少天前的日期
 
-      print("...$before天之前的文件全部删除");
+      debugPrint("...$before天之前的文件全部删除");
 
       Directory directory = Directory(
         "${await FileUtil(SingleAccountPageState.of(context)?.index ?? 0).localPath}/",
@@ -949,17 +950,17 @@ class OtherPageState extends ConsumerState<OtherPage>
             if (await file.exists()) {
               await file.delete(recursive: true);
 
-              print("删除成功${file.path}");
+              debugPrint("删除成功${file.path}");
             }
           } else {
-            print("不用删除${file.path}");
+            debugPrint("不用删除${file.path}");
           }
         } else {
-          print("时间格式出错${file.path}");
+          debugPrint("时间格式出错${file.path}");
         }
       }
     } catch (e) {
-      print(e);
+      debugPrint('$e');
     }
   }
 
@@ -1002,7 +1003,7 @@ class OtherPageState extends ConsumerState<OtherPage>
 
         desc.value = poetData["data"]?["content"]?.toString() ?? "欢迎使用青龙客户端";
       }
-    } catch (e) {}
+    } catch (_) {}
   }
 
   /// 顶部用户信息卡内容：可见内容与共享转场源共用（两处布局必须一致）

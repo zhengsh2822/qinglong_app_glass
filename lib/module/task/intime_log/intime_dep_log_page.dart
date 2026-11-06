@@ -1,6 +1,4 @@
-import 'dart:async';
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:qinglong_app/utils/share_utils.dart';
 import 'package:flutter/cupertino.dart';
@@ -23,11 +21,10 @@ class InTimeDepLogPage extends StatefulWidget {
   final bool needTimer;
   final String title;
 
-  const InTimeDepLogPage(this.id, this.needTimer, this.title, {Key? key})
-    : super(key: key);
+  const InTimeDepLogPage(this.id, this.needTimer, this.title, {super.key});
 
   @override
-  _InTimeDepLogPageState createState() => _InTimeDepLogPageState();
+  State<InTimeDepLogPage> createState() => _InTimeDepLogPageState();
 }
 
 class _InTimeDepLogPageState extends State<InTimeDepLogPage>
@@ -81,14 +78,12 @@ class _InTimeDepLogPageState extends State<InTimeDepLogPage>
         if (alwaysAuthScroll) {
           scrollLogToBottom(controller, animate: false);
         }
-      } catch (e) {}
+      } catch (_) {}
       setState(() {});
     }
     isRequest = false;
     // 拉取失败（依赖已删除等）落地空态，避免永久加载；轮询继续后台重试
-    if (content == null) {
-      content = "";
-    }
+    content ??= "";
     if (mounted) setState(() {});
   }
 

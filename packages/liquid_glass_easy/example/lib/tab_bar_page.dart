@@ -1010,7 +1010,7 @@ class _GlassTopTabState extends State<_GlassTopTab>
                     child: IgnorePointer(
                       child: Transform(
                         alignment: Alignment.center,
-                        transform: Matrix4.identity()..scale(sx, sy),
+                        transform: Matrix4.identity()..scaleByDouble(sx, sy, 1, 1),
                         child: LiquidGlassLens(style: thumbGlass),
                       ),
                     ),

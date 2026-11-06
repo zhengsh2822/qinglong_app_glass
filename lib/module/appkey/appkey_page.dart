@@ -26,10 +26,10 @@ import 'package:qinglong_app/base/ui/content_entrance.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 class AppKeyPage extends ConsumerStatefulWidget {
-  const AppKeyPage({Key? key}) : super(key: key);
+  const AppKeyPage({super.key});
 
   @override
-  _AppKeyPageState createState() => _AppKeyPageState();
+  ConsumerState<AppKeyPage> createState() => _AppKeyPageState();
 }
 
 class _AppKeyPageState extends ConsumerState<AppKeyPage> {
@@ -106,6 +106,7 @@ class _AppKeyPageState extends ConsumerState<AppKeyPage> {
                     ),
                   )
                   .then((value) {
+                    if (!context.mounted) return;
                     if (value != null && value == true) {
                       ref
                           .read(
@@ -214,7 +215,7 @@ class AppKeyItemCell extends StatelessWidget {
   final Map<String, dynamic> bean;
   final WidgetRef ref;
 
-  const AppKeyItemCell(this.bean, this.ref, {Key? key}) : super(key: key);
+  const AppKeyItemCell(this.bean, this.ref, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -302,6 +303,7 @@ class AppKeyItemCell extends StatelessWidget {
                         ),
                       )
                       .then((value) {
+                        if (!context.mounted) return;
                         if (value != null && value == true) {
                           ref
                               .read(
@@ -328,6 +330,7 @@ class AppKeyItemCell extends StatelessWidget {
                 innerGap: 6,
                 onTap: () {
                   WidgetsBinding.instance.endOfFrame.then((value) {
+                    if (!context.mounted) return;
                     _reset(context);
                   });
                 },
@@ -346,6 +349,7 @@ class AppKeyItemCell extends StatelessWidget {
                 innerGap: 6,
                 onTap: () {
                   WidgetsBinding.instance.endOfFrame.then((value) {
+                    if (!context.mounted) return;
                     _del(context, ref);
                   });
                 },
@@ -366,6 +370,7 @@ class AppKeyItemCell extends StatelessWidget {
       danger: true,
     ).then((confirmed) {
       if (confirmed != true) return;
+      if (!context1.mounted) return;
       ref
           .read(
             SingleAccountPageState.ofAppKeyProvider(context1)(
@@ -384,6 +389,7 @@ class AppKeyItemCell extends StatelessWidget {
       danger: true,
     ).then((confirmed) {
       if (confirmed != true) return;
+      if (!context.mounted) return;
       ref
           .read(
             SingleAccountPageState.ofAppKeyProvider(context)(

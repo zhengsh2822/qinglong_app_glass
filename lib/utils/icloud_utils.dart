@@ -31,8 +31,9 @@ class ICloudUtils {
       if (list.isEmpty) return;
       if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
       if (SpUtil.getBool(spICloud, defValue: true) == false &&
-          focusUpdate == false)
+          focusUpdate == false) {
         return;
+      }
 
       bool exist = await existContent(
         await FileUtil(index).getSubscribeDirectory(),
@@ -55,7 +56,7 @@ class ICloudUtils {
         }
       }
       return false;
-    } catch (e) {}
+    } catch (_) {}
     return false;
   }
 
@@ -64,8 +65,9 @@ class ICloudUtils {
       if (list.isEmpty) return;
       if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
       if (SpUtil.getBool(spICloud, defValue: true) == false &&
-          focusUpdate == false)
+          focusUpdate == false) {
         return;
+      }
       bool exist = await existContent(
         await FileUtil(index).getEnvDirectory(),
         jsonEncode(list),
@@ -87,20 +89,23 @@ class ICloudUtils {
     try {
       if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
 
-      if (content == null || content.isEmpty) return;
+      if (content.isEmpty) return;
       if (SpUtil.getBool(spICloud, defValue: true) == false &&
-          focusUpdate == false)
+          focusUpdate == false) {
         return;
+      }
 
       bool exist = await existContent(
-        await FileUtil(index).getConfigHolDirectory(title ?? "nameNotFound.sh"),
+        await FileUtil(index).getConfigHolDirectory(title),
         content,
       );
 
       if (!exist) {
-        await FileUtil(index).writeConfig(title ?? "nameNotFound.sh", content);
+        await FileUtil(index).writeConfig(title, content);
       }
-    } catch (e) {}
+    } catch (e) {
+      // 配置备份失败不阻塞主流程（仅影响 iCloud 同步）
+    }
   }
 
   void restoreEnv(String? path) async {
@@ -155,7 +160,7 @@ class ICloudUtils {
               title = temp[temp.length - 2];
             }
             _handleRestoreConfig(title, p);
-          } catch (e) {}
+          } catch (_) {}
         }
       }
     } else {
@@ -167,7 +172,7 @@ class ICloudUtils {
           title = temp[temp.length - 2];
         }
         _handleRestoreConfig(title, path);
-      } catch (e) {}
+      } catch (_) {}
     }
   }
 

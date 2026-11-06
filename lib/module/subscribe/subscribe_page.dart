@@ -7,7 +7,6 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/base_state_widget.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
-import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/app_corner.dart';
@@ -31,10 +30,10 @@ import 'package:qinglong_app/base/ui/content_entrance.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 class SubscribePage extends ConsumerStatefulWidget {
-  const SubscribePage({Key? key}) : super(key: key);
+  const SubscribePage({super.key});
 
   @override
-  _SubscribePageState createState() => _SubscribePageState();
+  ConsumerState<SubscribePage> createState() => _SubscribePageState();
 }
 
 class _SubscribePageState extends ConsumerState<SubscribePage> {
@@ -126,6 +125,7 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
                     ),
                   )
                   .then((value) {
+                    if (!context.mounted) return;
                     if (value != null && value == true) {
                       ref
                           .read(
@@ -180,7 +180,7 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
         child: IconTheme(
           data: const IconThemeData(size: 25),
           child: SlidableAutoCloseBehavior(
-            key: ValueKey('subscribe_slidable_${_slidableResetKey}'),
+            key: ValueKey('subscribe_slidable_$_slidableResetKey'),
             child: ListView.separated(
               // 顶部间距 64 = 搜索框区域(10+44) + 间距10，放在列表内部（滚动时被内容填充，无背景色块）
               padding: const EdgeInsets.only(top: 64, bottom: 80),
@@ -260,7 +260,7 @@ class TaskItemCell extends StatelessWidget {
   final Map<String, dynamic> bean;
   final WidgetRef ref;
 
-  const TaskItemCell(this.bean, this.ref, {Key? key}) : super(key: key);
+  const TaskItemCell(this.bean, this.ref, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -293,7 +293,7 @@ class TaskItemCell extends StatelessWidget {
             children: [
               AppSlideButton(
                 context: context,
-                color: isCyber ? const Color(0xFF00F0FF) : AppColors.success,
+                color: const Color(0xFF00F0FF),
                 icon: CupertinoIcons.pencil_outline,
                 label: '编辑',
                 cyberMode: isCyber,
@@ -307,6 +307,7 @@ class TaskItemCell extends StatelessWidget {
                         ),
                       )
                       .then((value) {
+                        if (!context.mounted) return;
                         if (value != null && value == true) {
                           ref
                               .read(
@@ -321,7 +322,7 @@ class TaskItemCell extends StatelessWidget {
               ),
               AppSlideButton(
                 context: context,
-                color: isCyber ? const Color(0xFFA356D6) : AppColors.purple,
+                color: const Color(0xFFA356D6),
                 icon:
                     (bean["is_disabled"] ?? 0) != 1
                         ? Icons.dnd_forwardslash
@@ -331,19 +332,21 @@ class TaskItemCell extends StatelessWidget {
                 width: double.infinity,
                 onTap: () {
                   WidgetsBinding.instance.endOfFrame.then((value) {
+                    if (!context.mounted) return;
                     _enableSubscribe(context, bean["is_disabled"] ?? 0);
                   });
                 },
               ),
               AppSlideButton(
                 context: context,
-                color: isCyber ? const Color(0xFFFF3D5C) : AppColors.danger,
+                color: const Color(0xFFFF3D5C),
                 icon: CupertinoIcons.delete,
                 label: '删除',
                 cyberMode: isCyber,
                 width: double.infinity,
                 onTap: () {
                   WidgetsBinding.instance.endOfFrame.then((value) {
+                    if (!context.mounted) return;
                     _delSubscribe(context, ref);
                   });
                 },
@@ -382,6 +385,7 @@ class TaskItemCell extends StatelessWidget {
                 width: double.infinity,
                 onTap: () {
                   Future.delayed(const Duration(milliseconds: 250), () {
+                    if (!context.mounted) return;
                     logCron(context, ref);
                   });
                 },
@@ -427,6 +431,7 @@ class TaskItemCell extends StatelessWidget {
                         ),
                       )
                       .then((value) {
+                        if (!context.mounted) return;
                         if (value != null && value == true) {
                           ref
                               .read(
@@ -451,6 +456,7 @@ class TaskItemCell extends StatelessWidget {
                 width: double.infinity,
                 onTap: () {
                   WidgetsBinding.instance.endOfFrame.then((value) {
+                    if (!context.mounted) return;
                     _enableSubscribe(context, bean["is_disabled"] ?? 0);
                   });
                 },
@@ -464,6 +470,7 @@ class TaskItemCell extends StatelessWidget {
                 width: double.infinity,
                 onTap: () {
                   WidgetsBinding.instance.endOfFrame.then((value) {
+                    if (!context.mounted) return;
                     _delSubscribe(context, ref);
                   });
                 },
@@ -501,6 +508,7 @@ class TaskItemCell extends StatelessWidget {
                 width: double.infinity,
                 onTap: () {
                   Future.delayed(const Duration(milliseconds: 250), () {
+                    if (!context.mounted) return;
                     logCron(context, ref);
                   });
                 },
@@ -627,8 +635,10 @@ class TaskItemCell extends StatelessWidget {
           ),
         )
         .runCrons(context, bean["id"]);
+    if (!context.mounted) return;
     if (showLog) {
       Future.delayed(const Duration(milliseconds: 250), () {
+        if (!context.mounted) return;
         logCron(context, ref);
       });
     }
@@ -662,6 +672,7 @@ class TaskItemCell extends StatelessWidget {
       danger: true,
     ).then((confirmed) {
       if (confirmed != true) return;
+      if (!context1.mounted) return;
       ref
           .read(
             SingleAccountPageState.ofSubscribeProvider(context1)(
@@ -670,7 +681,6 @@ class TaskItemCell extends StatelessWidget {
           )
           .delSubscribe(context1, bean["id"]);
     });
-    ;
   }
 
   void _enableSubscribe(BuildContext context, int disabled) {

@@ -49,7 +49,7 @@ Future<void> checkAlignment(
         .center
         .dx;
     base ??= thumbCx; // 首格实际中心作为基准，吸收全局常量偏移（如边框 inset 1px）
-    final double expectCx = base! + i * tabWidth;
+    final double expectCx = base + i * tabWidth;
     final double delta = thumbCx - expectCx;
     // ignore: avoid_print
     print('$label Tab[$i] thumbCx=${thumbCx.toStringAsFixed(2)} '

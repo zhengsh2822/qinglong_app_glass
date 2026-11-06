@@ -4,9 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:qinglong_app/base/base_viewmodel.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/utils/extension.dart';
-import 'package:qinglong_app/utils/icloud_utils.dart';
 
 class AppKeyViewModel extends BaseViewModel {
   List<Map<String, dynamic>> list = [];
@@ -29,7 +27,7 @@ class AppKeyViewModel extends BaseViewModel {
 
       List<dynamic> tempList = jsonDecode(result.bean ?? "[]");
 
-      if (tempList != null && tempList.isNotEmpty) {
+      if (tempList.isNotEmpty) {
         for (int i = 0; i < tempList.length; i++) {
           list.add(tempList[i] as Map<String, dynamic>);
         }
@@ -53,6 +51,7 @@ class AppKeyViewModel extends BaseViewModel {
     ).deleteAppKey([id]);
     if (result.success) {
       "删除成功".toast();
+      if (!context.mounted) return;
       loadData(context, false);
     } else {
       failToast(result.message, notify: true);
@@ -65,6 +64,7 @@ class AppKeyViewModel extends BaseViewModel {
     ).resetAppKey(id);
     if (result.success) {
       "重置成功".toast();
+      if (!context.mounted) return;
       loadData(context, false);
     } else {
       failToast(result.message, notify: true);

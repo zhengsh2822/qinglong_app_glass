@@ -28,7 +28,7 @@ class CyberGlassCard extends ConsumerWidget {
   final VoidCallback? onTap;
 
   const CyberGlassCard({
-    Key? key,
+    super.key,
     required this.child,
     this.borderRadius = 18,
     this.margin,
@@ -36,7 +36,7 @@ class CyberGlassCard extends ConsumerWidget {
     this.backgroundColor,
     this.border,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

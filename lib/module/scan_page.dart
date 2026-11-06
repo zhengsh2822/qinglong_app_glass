@@ -1,5 +1,4 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:qinglong_app/base/http/api.dart';
@@ -10,7 +9,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/radar_scan_view.dart';
 import 'package:qinglong_app/module/home/system_bean.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
-import 'package:qinglong_app/module/task/TaskBean2.dart';
+import 'package:qinglong_app/module/task/task_bean2.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
@@ -22,7 +21,7 @@ import '../base/ui/settings_widgets.dart';
 import '../base/ui/tree/models/script_data.dart';
 
 class ScanPage extends ConsumerStatefulWidget {
-  const ScanPage({Key? key}) : super(key: key);
+  const ScanPage({super.key});
 
   @override
   ConsumerState<ScanPage> createState() => ScanPageState();
@@ -57,9 +56,9 @@ class ScanPageState extends ConsumerState<ScanPage> {
               danger: false,
             ).then((confirmed) {
               if (confirmed != true) return;
+              if (!context.mounted) return;
               Navigator.of(context).pop();
             });
-            ;
           }
         },
       ),
@@ -134,7 +133,6 @@ class ScanPageState extends ConsumerState<ScanPage> {
             confirmLabel: '知道了',
             cancelLabel: null,
           );
-          ;
         } else {
           "暂未发现缺失的依赖".toast();
         }
@@ -195,6 +193,7 @@ class ScanPageState extends ConsumerState<ScanPage> {
 
         // 短间隔避免对 keep-alive 连接造成持续压力，减少死连接概率
         await Future.delayed(const Duration(milliseconds: 100));
+        if (!mounted) return;
 
         // 读取脚本源码内容：scriptDetail 接受父目录 path + 文件名 title
         HttpResponse<String> response = await SingleAccountPageState.ofApi(

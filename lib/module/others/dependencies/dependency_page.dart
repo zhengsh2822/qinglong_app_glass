@@ -33,7 +33,7 @@ import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import '../../../base/ui/container_page_route.dart';
 
 class DependencyPage extends ConsumerStatefulWidget {
-  const DependencyPage({Key? key}) : super(key: key);
+  const DependencyPage({super.key});
 
   @override
   DependcyPageState createState() => DependcyPageState();
@@ -42,9 +42,9 @@ class DependencyPage extends ConsumerStatefulWidget {
 class DependcyPageState extends ConsumerState<DependencyPage>
     with TickerProviderStateMixin {
   static List<DepedencyEnum> types = [
-    DepedencyEnum.NodeJS,
-    DepedencyEnum.Python3,
-    DepedencyEnum.Linux,
+    DepedencyEnum.nodejs,
+    DepedencyEnum.python3,
+    DepedencyEnum.linux,
   ];
   ScrollController? controller;
 
@@ -224,6 +224,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                       if (value == null || value is! Map<String, dynamic>) {
                         return;
                       }
+                      if (!context.mounted) return;
                       final model = ref
                           .read(
                             SingleAccountPageState.ofDependencyProvider(
@@ -297,9 +298,9 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                         floating: false,
                         delegate: GlassSegmentedTabDelegate(
                           tabs: [
-                            DependcyPageState.types[0].name,
-                            DependcyPageState.types[1].name,
-                            DependcyPageState.types[2].name,
+                            DependcyPageState.types[0].label,
+                            DependcyPageState.types[1].label,
+                            DependcyPageState.types[2].label,
                           ],
                           tabController: _tabController!,
                           editMode: editMode,
@@ -310,7 +311,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                   ];
                 },
                 body: SlidableAutoCloseBehavior(
-                  key: ValueKey('dep_slidable_${_slidableResetKey}'),
+                  key: ValueKey('dep_slidable_$_slidableResetKey'),
                   child: RefreshIndicator(
                     color: Theme.of(context).primaryColor,
                     notificationPredicate: (_) => true,
@@ -413,7 +414,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                   .currentTheme
                   .bottomNavigationBarTheme
                   .backgroundColor
-                  ?.withOpacity(1) ??
+                  ?.withValues(alpha: 1) ??
               Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
               Colors.black,
       builder: (BuildContext context1) {
@@ -600,14 +601,14 @@ class DepListView extends StatefulWidget {
   final ValueChanged<String> changed;
 
   const DepListView({
-    Key? key,
+    super.key,
     required this.list,
     required this.type,
     required this.searchText,
     required this.editMode,
     required this.checked,
     required this.changed,
-  }) : super(key: key);
+  });
 
   @override
   State<DepListView> createState() => _DepListViewState();
@@ -671,11 +672,11 @@ class DependencyCell extends ConsumerStatefulWidget {
   const DependencyCell(
     this.type,
     this.bean, {
-    Key? key,
+    super.key,
     this.editMode = false,
     required this.checkedCallback,
     required this.checked,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<DependencyCell> createState() => _DependencyCellState();
@@ -973,6 +974,7 @@ class _DependencyCellState extends ConsumerState<DependencyCell> {
           ),
         )
         .then((value) async {
+          if (!context.mounted) return;
           await ref
               .read(
                 SingleAccountPageState.ofDependencyProvider(context)(

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,7 +23,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 /// 集成自 jdck_flutter 项目，适配青龙客户端主题系统
 /// 功能：WebView登录京东、获取Cookie、上传至青龙面板环境变量、账号管理、备份恢复
 class JdckPage extends ConsumerStatefulWidget {
-  const JdckPage({Key? key}) : super(key: key);
+  const JdckPage({super.key});
 
   @override
   ConsumerState<JdckPage> createState() => _JdckPageState();
@@ -181,6 +180,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
       _smsEnabled = prefs.getBool(_spSmsEnabled) ?? false;
 
       // 加载青龙面板登录配置
+      if (!mounted) return;
       _qlAddressController.text =
           prefs.getString(_spQlAddress) ??
           (SingleAccountPageState.ofUserInfo(context).host ?? '');
@@ -816,7 +816,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                             ),
                             decoration: ShapeDecoration(
                               shape: appCornerBorder(radius: 10),
-                              color: const Color(0xFF34C759).withOpacity(0.15),
+                              color: const Color(0xFF34C759).withValues(alpha: 0.15),
                             ),
                             child: const Text(
                               '已登录',
@@ -896,7 +896,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: textColor,
                               side: BorderSide(
-                                color: subTextColor.withOpacity(0.3),
+                                color: subTextColor.withValues(alpha: 0.3),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: appCornerBorder(radius: 12),
@@ -1072,7 +1072,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: textColor,
                               side: BorderSide(
-                                color: subTextColor.withOpacity(0.3),
+                                color: subTextColor.withValues(alpha: 0.3),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: appCornerBorder(radius: 12),
@@ -1183,7 +1183,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: textColor,
                               side: BorderSide(
-                                color: subTextColor.withOpacity(0.3),
+                                color: subTextColor.withValues(alpha: 0.3),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: appCornerBorder(radius: 12),
@@ -1206,8 +1206,9 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                               setState(() {
                                 _phoneSet.remove(phone);
                                 _phoneSet.add(newEntry);
-                                if (_selectedPhone == phone)
+                                if (_selectedPhone == phone) {
                                   _selectedPhone = newEntry;
+                                }
                               });
                               _savePhones();
                               Navigator.pop(context);
@@ -1275,7 +1276,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                       onPressed: () => Navigator.pop(dialogContext),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: textColor,
-                        side: BorderSide(color: subTextColor.withOpacity(0.3)),
+                        side: BorderSide(color: subTextColor.withValues(alpha: 0.3)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: appCornerBorder(radius: 12),
                       ),
@@ -1354,7 +1355,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Divider(
-                  color: subTextColor.withOpacity(0.15),
+                  color: subTextColor.withValues(alpha: 0.15),
                   height: 1,
                 ),
               ),
@@ -1471,13 +1472,13 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                 decoration: InputDecoration(
                   hintText: '粘贴JSON数据...',
                   hintStyle: TextStyle(
-                    color: subTextColor.withOpacity(0.85),
+                    color: subTextColor.withValues(alpha: 0.85),
                     fontSize: 14,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: subTextColor.withOpacity(0.25),
+                      color: subTextColor.withValues(alpha: 0.25),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -1498,7 +1499,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                       onPressed: () => Navigator.pop(dialogContext),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: textColor,
-                        side: BorderSide(color: subTextColor.withOpacity(0.3)),
+                        side: BorderSide(color: subTextColor.withValues(alpha: 0.3)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: appCornerBorder(radius: 12),
                       ),
@@ -1561,7 +1562,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                             _qlToken = token;
                           }
 
-                          if (mounted) {
+                          if (dialogContext.mounted) {
                             Navigator.pop(dialogContext);
                             '恢复成功'.toast();
                             if (_qlToken != null && _qlToken!.isNotEmpty) {
@@ -1880,7 +1881,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        color: const Color(0xFF34C759).withOpacity(0.1),
+        color: const Color(0xFF34C759).withValues(alpha: 0.1),
         child: Row(
           children: [
             Icon(Icons.check_circle, size: 16, color: const Color(0xFF34C759)),
@@ -1901,7 +1902,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: (primaryColor).withOpacity(0.1),
+      color: (primaryColor).withValues(alpha: 0.1),
       child: Row(
         children: [
           Icon(

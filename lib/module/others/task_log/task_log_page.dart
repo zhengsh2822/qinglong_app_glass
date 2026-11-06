@@ -28,10 +28,10 @@ import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 class TaskLogPage extends ConsumerStatefulWidget {
   final String? searchText;
 
-  const TaskLogPage({Key? key, this.searchText}) : super(key: key);
+  const TaskLogPage({super.key, this.searchText});
 
   @override
-  _TaskLogPageState createState() => _TaskLogPageState();
+  ConsumerState<TaskLogPage> createState() => _TaskLogPageState();
 }
 
 class _TaskLogPageState extends ConsumerState<TaskLogPage>
@@ -159,7 +159,6 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                         if (confirmed != true) return;
                                         deleteFold(item);
                                       });
-                                      ;
                                     },
                                   ),
                                 ],
@@ -254,7 +253,6 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                           if (confirmed != true) return;
                                           deleteFold(item);
                                         });
-                                        ;
                                       },
                                       cyberMode: false,
                                       width: double.infinity,
@@ -351,7 +349,6 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                         if (confirmed != true) return;
                                         deleteFold(item);
                                       });
-                                      ;
                                     },
                                   ),
                                 ],
@@ -416,7 +413,6 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                           if (confirmed != true) return;
                                           deleteFold(item);
                                         });
-                                        ;
                                       },
                                       cyberMode: false,
                                       width: double.infinity,

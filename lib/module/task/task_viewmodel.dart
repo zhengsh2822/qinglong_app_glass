@@ -45,6 +45,7 @@ class TaskViewModel extends BaseViewModel {
     }
     list.clear();
     list.addAll(tasks);
+    if (!context.mounted) return;
     sortList(context);
     success();
     // 同步"运行中"快照，确保加载后启动轮询首轮不会因快照为空而误判有变化
@@ -100,6 +101,7 @@ class TaskViewModel extends BaseViewModel {
   Future<bool> pollRunning(BuildContext context) async {
     final tasks = await _fetchTasks(context);
     if (tasks == null) return false;
+    if (!context.mounted) return false;
 
     final newRunning =
         tasks
@@ -213,6 +215,7 @@ class TaskViewModel extends BaseViewModel {
       context,
     ).startTasks(crons);
     if (result.success) {
+      if (!context.mounted) return;
       loadData(context, false);
     } else {
       failToast(result.message, notify: true);
@@ -224,6 +227,7 @@ class TaskViewModel extends BaseViewModel {
       context,
     ).stopTasks(crons);
     if (result.success) {
+      if (!context.mounted) return;
       loadData(context, false);
     } else {
       failToast(result.message, notify: true);
@@ -236,6 +240,7 @@ class TaskViewModel extends BaseViewModel {
     ).delTask(id);
     if (result.success) {
       "删除成功".toast();
+      if (!context.mounted) return;
       loadData(context, false);
     } else {
       failToast(result.message, notify: true);
@@ -258,6 +263,7 @@ class TaskViewModel extends BaseViewModel {
 
       if (response.success) {
         "取消置顶成功".toast();
+        if (!context.mounted) return;
         loadData(context, false);
       } else {
         failToast(response.message, notify: true);
@@ -269,6 +275,7 @@ class TaskViewModel extends BaseViewModel {
 
       if (response.success) {
         "置顶成功".toast();
+        if (!context.mounted) return;
         loadData(context, false);
       } else {
         failToast(response.message, notify: true);
@@ -288,6 +295,7 @@ class TaskViewModel extends BaseViewModel {
 
       if (response.success) {
         "禁用成功".toast();
+        if (!context.mounted) return;
         loadData(context, false);
       } else {
         failToast(response.message, notify: true);
@@ -299,6 +307,7 @@ class TaskViewModel extends BaseViewModel {
 
       if (response.success) {
         "启用成功".toast();
+        if (!context.mounted) return;
         loadData(context, false);
       } else {
         failToast(response.message, notify: true);

@@ -37,13 +37,13 @@ class LoginPage extends ConsumerStatefulWidget {
   final int? targetAccountIndex;
 
   const LoginPage({
-    Key? key,
+    super.key,
     this.fromAddNewAccount = false,
     this.targetAccountIndex,
-  }) : super(key: key);
+  });
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
@@ -278,6 +278,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       child: Row(
         children: [
           Visibility(
+            visible:
+                SpUtil.getBool(spSingleInstance, defValue: false) ||
+                widget.targetAccountIndex != null,
             child: CupertinoButton(
               padding: EdgeInsets.zero,
               onPressed: () => Navigator.of(context).pop(),
@@ -290,9 +293,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 size: 26,
               ),
             ),
-            visible:
-                SpUtil.getBool(spSingleInstance, defValue: false) ||
-                widget.targetAccountIndex != null,
           ),
           Expanded(
             child: Align(
@@ -495,7 +495,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ]
                           : [
                             AppleColors.accent,
-                            AppleColors.accent.withOpacity(0.85),
+                            AppleColors.accent.withValues(alpha: 0.85),
                           ])
                       : (isCyber
                           ? [
@@ -503,8 +503,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             CyberColors.cyan.withValues(alpha: 0.2),
                           ]
                           : [
-                            AppleColors.accent.withOpacity(0.6),
-                            AppleColors.accent.withOpacity(0.6),
+                            AppleColors.accent.withValues(alpha: 0.6),
+                            AppleColors.accent.withValues(alpha: 0.6),
                           ]),
             ),
             borderRadius: BorderRadius.all(
@@ -919,6 +919,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         return;
       }
       if (helper != null) {
+        if (!mounted) return;
         var response = await helper!.loginTwice(context, value);
         dealLoginResponse(response);
       } else {

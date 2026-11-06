@@ -1,5 +1,3 @@
-import 'dart:async';
-import 'dart:ui';
 
 import 'package:qinglong_app/utils/share_utils.dart';
 import 'package:flutter/cupertino.dart';
@@ -32,12 +30,12 @@ class InTimeLogPage extends ConsumerStatefulWidget {
     this.cronId,
     this.needTimer,
     this.title, {
-    Key? key,
+    super.key,
     this.command,
-  }) : super(key: key);
+  });
 
   @override
-  _InTimeLogPageState createState() => _InTimeLogPageState();
+  ConsumerState<InTimeLogPage> createState() => _InTimeLogPageState();
 }
 
 class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
@@ -96,7 +94,7 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
 
       // 渲染先落地：不等依赖检测/安装（自动安装可能耗时很长，曾把首帧
       // 渲染卡成永久加载），日志内容先展示，依赖处理在后续轮询中继续
-      final String? newRender =
+      final String newRender =
           (newContent.length > 98304)
               ? newContent.substring(newContent.length - 98304)
               : newContent;
@@ -165,10 +163,6 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
     super.dispose();
   }
 
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {

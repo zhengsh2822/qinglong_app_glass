@@ -14,10 +14,10 @@ import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 class EnvDetailPage extends ConsumerStatefulWidget {
   final EnvBean envBean;
 
-  const EnvDetailPage(this.envBean, {Key? key}) : super(key: key);
+  const EnvDetailPage(this.envBean, {super.key});
 
   @override
-  _TaskDetailPageState createState() => _TaskDetailPageState();
+  ConsumerState<EnvDetailPage> createState() => _TaskDetailPageState();
 }
 
 class _TaskDetailPageState extends ConsumerState<EnvDetailPage> {
@@ -143,13 +143,13 @@ class EnvDetailCell extends ConsumerWidget {
   final Function? taped;
 
   const EnvDetailCell({
-    Key? key,
+    super.key,
     required this.title,
     this.desc,
     this.icon,
     this.hideDivide = false,
     this.taped,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

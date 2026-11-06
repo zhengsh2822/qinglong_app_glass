@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -30,7 +30,7 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 import '../base/ql_app_bar.dart';
 
 class SettingPage extends ConsumerStatefulWidget {
-  const SettingPage({Key? key}) : super(key: key);
+  const SettingPage({super.key});
 
   @override
   ConsumerState createState() => _SettingPageState();
@@ -582,7 +582,10 @@ class _SettingPageState extends ConsumerState<SettingPage>
                     onPointerDown: _onThemePointerDown,
                     child: SettingsSwitchRow(
                       icon:
-                          SchedulerBinding.instance.window.platformBrightness ==
+                          SchedulerBinding
+                                  .instance
+                                  .platformDispatcher
+                                  .platformBrightness ==
                                   Brightness.dark
                               ? CupertinoIcons.moon_circle
                               : CupertinoIcons.sun_max,
@@ -668,6 +671,7 @@ class _SettingPageState extends ConsumerState<SettingPage>
                       confirmLabel: '退出',
                     ).then((confirmed) {
                       if (confirmed == true) {
+                        if (!context.mounted) return;
                         SingleAccountPageState.ofUserInfo(context).updateToken(
                           SingleAccountPageState.of(context)?.index ?? 0,
                           SingleAccountPageState.ofUserInfo(context).host,
@@ -702,6 +706,7 @@ class _SettingPageState extends ConsumerState<SettingPage>
                       confirmLabel: '清空并退出',
                     ).then((confirmed) {
                       if (confirmed == true) {
+                        if (!context.mounted) return;
                         clearData(context);
                         Navigator.of(context).pushNamedAndRemoveUntil(
                           Routes.routeLogin,
@@ -763,6 +768,7 @@ class _SettingPageState extends ConsumerState<SettingPage>
     if (result == null) return;
     final trimmed = result.trim();
     if (trimmed.isEmpty) return;
+    if (!context.mounted) return;
 
     HomePageState.updateVersionHistory(
       VersionHistoryBean(host: host, version: trimmed),

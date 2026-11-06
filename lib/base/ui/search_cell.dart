@@ -19,7 +19,7 @@ import '../theme.dart';
 class SearchCell extends ConsumerStatefulWidget {
   final TextEditingController controller;
 
-  const SearchCell({Key? key, required this.controller}) : super(key: key);
+  const SearchCell({super.key, required this.controller});
 
   @override
   ConsumerState createState() => _SearchCellState();

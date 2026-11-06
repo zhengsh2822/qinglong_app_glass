@@ -19,11 +19,10 @@ class SubscribeDetailPage extends ConsumerStatefulWidget {
   final Map<String, dynamic> taskBean;
   final bool hideAppbar;
 
-  const SubscribeDetailPage(this.taskBean, {Key? key, this.hideAppbar = false})
-    : super(key: key);
+  const SubscribeDetailPage(this.taskBean, {super.key, this.hideAppbar = false});
 
   @override
-  _TaskDetailPageState createState() => _TaskDetailPageState();
+  ConsumerState<SubscribeDetailPage> createState() => _TaskDetailPageState();
 }
 
 class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
@@ -35,10 +34,6 @@ class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
   PullType pullType = PullType.privateKey;
   String intervalUnit = "天";
 
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   void dispose() {
@@ -101,6 +96,7 @@ class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
                           ),
                         )
                         .then((value) {
+                          if (!context.mounted) return;
                           if (value != null && value == true) {
                             ref
                                 .read(
@@ -306,9 +302,9 @@ class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
             ),
           )
           .delSubscribe(context1, widget.taskBean["id"]);
+      if (!context1.mounted) return;
       Navigator.of(context1).pop();
     });
-    ;
   }
 
   Widget buildRadioButton(
@@ -450,13 +446,13 @@ class SubscribeDetailCell extends ConsumerWidget {
   final Function? taped;
 
   const SubscribeDetailCell({
-    Key? key,
+    super.key,
     required this.title,
     this.desc,
     this.icon,
     this.hideDivide = false,
     this.taped,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -81,7 +81,7 @@ class _GlassSegmentedTabState extends ConsumerState<GlassSegmentedTab> {
         ? const Color(0xFF1A1A24)
         : const Color(0xFFFFFFFF);
     // 大胶囊边框（赛博：未置顶卡片青色；苹果白：1px 纯白边框）
-    final Border? bgBorder = isCyber
+    final Border bgBorder = isCyber
         ? Border.all(color: CyberColors.cyan.withValues(alpha: 0.2), width: 1)
         : Border.all(color: Colors.white, width: 1);
     // ===== 液态滑块视觉（对齐底部导航滑块默认状态） =====
@@ -716,7 +716,7 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
                   child: IgnorePointer(
                     child: Transform(
                       alignment: Alignment.center,
-                      transform: Matrix4.identity()..scale(sx, sy),
+                      transform: Matrix4.identity()..scaleByDouble(sx, sy, 1, 1),
                       child: Container(
                         key: const ValueKey('glass_tab_thumb'),
                         decoration: BoxDecoration(

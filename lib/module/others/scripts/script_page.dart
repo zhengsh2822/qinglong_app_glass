@@ -29,10 +29,10 @@ import 'package:qinglong_app/base/ui/content_entrance.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 class ScriptPage extends ConsumerStatefulWidget {
-  const ScriptPage({Key? key}) : super(key: key);
+  const ScriptPage({super.key});
 
   @override
-  _ScriptPageState createState() => _ScriptPageState();
+  ConsumerState<ScriptPage> createState() => _ScriptPageState();
 }
 
 class _ScriptPageState extends ConsumerState<ScriptPage>
@@ -197,7 +197,6 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
                             if (confirmed != true) return;
                             deleteFold(data);
                           });
-                          ;
                         },
                         onNodeTap: (key) {
                           ScriptData? selectedNode = _treeViewController
@@ -358,18 +357,22 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
     }
 
     EasyLoading.show(status: "删除中...");
-    var temp =
-        (item.type == "directory")
-            ? await SingleAccountPageState.ofApi(
-              context,
-            ).delScriptFold(item.title, item.parent)
-            : (systemBean.isUpperVersion2_14_5()
-                ? await SingleAccountPageState.ofApi(
-                  context,
-                ).delScriptNewVersion(item.title, item.parent)
-                : await SingleAccountPageState.ofApi(
-                  context,
-                ).delScript(item.title, item.parent));
+    HttpResponse<NullResponse> temp;
+    if (item.type == "directory") {
+      temp = await SingleAccountPageState.ofApi(
+        context,
+      ).delScriptFold(item.title, item.parent);
+    } else {
+      if (!context.mounted) return;
+      temp =
+          systemBean.isUpperVersion2_14_5()
+              ? await SingleAccountPageState.ofApi(
+                context,
+              ).delScriptNewVersion(item.title, item.parent)
+              : await SingleAccountPageState.ofApi(
+                context,
+              ).delScript(item.title, item.parent);
+    }
     EasyLoading.dismiss();
     if (temp.success) {
       "已删除".toast();

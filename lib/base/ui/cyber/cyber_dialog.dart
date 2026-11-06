@@ -148,13 +148,13 @@ class CyberGhostButton extends StatelessWidget {
   final bool expanded;
 
   const CyberGhostButton({
-    Key? key,
+    super.key,
     required this.label,
     required this.onTap,
     this.primary = false,
     this.danger = false,
     this.expanded = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

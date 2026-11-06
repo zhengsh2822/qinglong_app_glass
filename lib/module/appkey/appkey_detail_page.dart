@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -19,10 +18,10 @@ import 'appkey_viewmodel.dart';
 class AppKeyDetailDetailPage extends ConsumerStatefulWidget {
   final Map<String, dynamic> bean;
 
-  const AppKeyDetailDetailPage(this.bean, {Key? key}) : super(key: key);
+  const AppKeyDetailDetailPage(this.bean, {super.key});
 
   @override
-  _TaskDetailPageState createState() => _TaskDetailPageState();
+  ConsumerState<AppKeyDetailDetailPage> createState() => _TaskDetailPageState();
 }
 
 class _TaskDetailPageState extends ConsumerState<AppKeyDetailDetailPage> {
@@ -110,6 +109,7 @@ class _TaskDetailPageState extends ConsumerState<AppKeyDetailDetailPage> {
       danger: true,
     ).then((confirmed) {
       if (confirmed != true) return;
+      if (!context1.mounted) return;
       EasyLoading.show(status: "删除中");
       ref
           .read(
@@ -120,6 +120,7 @@ class _TaskDetailPageState extends ConsumerState<AppKeyDetailDetailPage> {
           .delAppKey(context1, getAppKeyId(widget.bean))
           .then((value) {
             EasyLoading.dismiss();
+            if (!context1.mounted) return;
             Navigator.of(context1).pop(true);
           })
           .catchError((_, __) {
@@ -137,13 +138,13 @@ class AppKeyDetailCell extends ConsumerWidget {
   final bool obtext;
 
   const AppKeyDetailCell({
-    Key? key,
+    super.key,
     required this.title,
     this.desc,
     this.icon,
     this.hideDivide = false,
     this.obtext = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -291,7 +291,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
               ),
               const SizedBox(height: 16),
               CupertinoButton(
-                color: accentColor.withOpacity(0.15),
+                color: accentColor.withValues(alpha: 0.15),
                 onPressed: _loadConfig,
                 child: Text(
                   '重试',

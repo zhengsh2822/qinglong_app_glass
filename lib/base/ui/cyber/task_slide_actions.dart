@@ -85,11 +85,11 @@ class CyberSlideActions extends StatelessWidget {
   final double extentRatio;
 
   const CyberSlideActions({
-    Key? key,
+    super.key,
     required this.actions,
     this.borderRadius = 12.0,
     this.extentRatio = 0.7,
-  }) : super(key: key);
+  });
 
   /// 构造 ActionPane，供需要直接返回 ActionPane 的场景使用
   static ActionPane buildActionPane({

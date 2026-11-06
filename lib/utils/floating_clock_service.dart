@@ -20,21 +20,27 @@ class FloatingClockService {
   static Future<void> requestOverlayPermission() async {
     try {
       await _channel.invokeMethod('requestOverlayPermission');
-    } on PlatformException {}
+    } on PlatformException {
+      // 系统未提供悬浮窗设置页时静默失败
+    }
   }
 
   /// 启动悬浮时钟
   static Future<void> startFloating() async {
     try {
       await _channel.invokeMethod('startFloating');
-    } on PlatformException {}
+    } on PlatformException {
+      // 悬浮服务不可用时忽略（无悬浮窗权限等）
+    }
   }
 
   /// 停止悬浮时钟
   static Future<void> stopFloating() async {
     try {
       await _channel.invokeMethod('stopFloating');
-    } on PlatformException {}
+    } on PlatformException {
+      // 已停止 / 服务未启动时忽略
+    }
   }
 
   /// 切换悬浮时钟：有权限则启动，无权限则请求权限

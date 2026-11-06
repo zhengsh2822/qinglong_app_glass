@@ -49,7 +49,6 @@ class ContainerPageRoute<T> extends PageRoute<T> {
   /// 是否走经典右侧滑入（构造时读一次 SP，本次路由生命周期内不变）。
   final bool _classic;
 
-  @override
   final String? title;
 
   /// 构造时捕获的点击来源（由根部 PageTapScope 记录）。

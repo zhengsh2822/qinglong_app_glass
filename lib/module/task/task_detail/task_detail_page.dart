@@ -29,11 +29,10 @@ class TaskDetailPage extends ConsumerStatefulWidget {
   final TaskBean taskBean;
   final bool hideAppbar;
 
-  const TaskDetailPage(this.taskBean, {Key? key, this.hideAppbar = false})
-    : super(key: key);
+  const TaskDetailPage(this.taskBean, {super.key, this.hideAppbar = false});
 
   @override
-  _TaskDetailPageState createState() => _TaskDetailPageState();
+  ConsumerState<TaskDetailPage> createState() => _TaskDetailPageState();
 }
 
 class _TaskDetailPageState extends ConsumerState<TaskDetailPage>
@@ -131,13 +130,15 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage>
                               "-",
                           taped: () {
                             if (widget.taskBean.command == null ||
-                                widget.taskBean.command!.isEmpty)
+                                widget.taskBean.command!.isEmpty) {
                               return;
+                            }
                             if (!(widget.taskBean.command?.startsWith(
                                   "task ",
                                 ) ??
-                                true))
+                                true)) {
                               return;
+                            }
 
                             String path =
                                 widget.taskBean.command
@@ -302,7 +303,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage>
                             const SizedBox(width: 30),
                             const Spacer(),
                             CupertinoSwitch(
-                              activeColor:
+                              activeTrackColor:
                                   ref.watch(themeProvider).primaryColor,
                               value: isPin,
                               onChanged: (v) {
@@ -486,9 +487,9 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage>
             ),
           )
           .delCron(context1, [widget.taskBean.sId!]);
+      if (!context1.mounted) return;
       Navigator.of(context1).pop();
     });
-    ;
   }
 
   void showLog() {
@@ -524,14 +525,14 @@ class TaskDetailCell extends ConsumerWidget {
   final Function? taped;
 
   const TaskDetailCell({
-    Key? key,
+    super.key,
     required this.title,
     this.desc,
     this.icon,
     this.suffixIcon,
     this.hideDivide = false,
     this.taped,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

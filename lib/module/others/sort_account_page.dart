@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
@@ -11,17 +10,16 @@ import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/elastic_reorder_list.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 import '../../base/commit_button.dart';
 import '../../main.dart';
 
 class SortAccountPage extends ConsumerStatefulWidget {
-  const SortAccountPage({Key? key}) : super(key: key);
+  const SortAccountPage({super.key});
 
   @override
-  _ChangeAccountPageState createState() => _ChangeAccountPageState();
+  ConsumerState<SortAccountPage> createState() => _ChangeAccountPageState();
 }
 
 class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
@@ -36,7 +34,7 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
       list.addAll(
         (jsonDecode(json) as List).map((e) => TokenBean.fromJson(e)).toList(),
       );
-    } catch (e) {}
+    } catch (_) {}
 
     super.initState();
     FocusManager.instance.primaryFocus?.unfocus();

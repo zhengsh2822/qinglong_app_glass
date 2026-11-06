@@ -13,7 +13,6 @@ import 'package:qinglong_app/base/http/token_interceptor.dart';
 import 'package:qinglong_app/base/http/url.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
-import 'package:qinglong_app/utils/extension.dart';
 
 import '../../json.jc.dart';
 import '../../main.dart';
@@ -47,9 +46,8 @@ class Http {
       ),
     );
     _dio?.interceptors.add(TokenInterceptor(host, index));
-    (_dio?.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate = (
-      HttpClient client,
-    ) {
+    (_dio?.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
       client.badCertificateCallback =
           (X509Certificate cert, String host, int port) => true;
       return client;
@@ -452,14 +450,14 @@ class Http {
                 code: 200,
                 message: '文件不存在或为空',
                 bodyPreview:
-                    '${jsonEncode({'code': code, 'data': payload, 'message': msg})}',
+                    jsonEncode({'code': code, 'data': payload, 'message': msg}),
               );
             }
             return GetBytesResult.fail(
               code: code is int ? code : 0,
               message: msg.isNotEmpty ? msg : '业务错误',
               bodyPreview:
-                  '${jsonEncode({'code': code, 'data': payload, 'message': msg})}',
+                  jsonEncode({'code': code, 'data': payload, 'message': msg}),
             );
           }
         } catch (_) {
@@ -550,7 +548,7 @@ class Http {
             return GetBytesResult.fail(
               code: code is int ? code : 0,
               message: msg.isNotEmpty ? msg : '业务错误',
-              bodyPreview: '${jsonEncode({'code': code, 'message': msg})}',
+              bodyPreview: jsonEncode({'code': code, 'message': msg}),
             );
           }
         } catch (_) {

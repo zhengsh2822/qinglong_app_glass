@@ -8,7 +8,6 @@ import 'package:qinglong_app/base/base_state_widget.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/ui/card_transition_source.dart';
 import 'package:qinglong_app/module/task/task_detail/task_detail_page.dart';
-import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/app_colors.dart';
@@ -44,10 +43,10 @@ class TaskPage extends ConsumerStatefulWidget {
   final bool onlyShowPullRepo;
 
   const TaskPage({
-    Key? key,
+    super.key,
     this.loading = false,
     this.onlyShowPullRepo = false,
-  }) : super(key: key);
+  });
 
   @override
   TaskPageState createState() => TaskPageState();
@@ -295,6 +294,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                         ),
                       )
                       .then((value) {
+                        if (!context.mounted) return;
                         ref
                             .read(
                               SingleAccountPageState.ofTaskProvider(context)(
@@ -327,7 +327,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                       return await model.loadData(context, false);
                     },
                     child: SlidableAutoCloseBehavior(
-                      key: ValueKey('task_slidable_${_slidableResetKey}'),
+                      key: ValueKey('task_slidable_$_slidableResetKey'),
                       child: body(model, model.notScripts, ref, true),
                     ),
                   ),
@@ -481,6 +481,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                       ),
                     )
                     .then((value) {
+                      if (!context.mounted) return;
                       ref
                           .read(
                             SingleAccountPageState.ofTaskProvider(context)(
@@ -542,7 +543,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                             },
                             child: SlidableAutoCloseBehavior(
                               key: ValueKey(
-                                'task_tab_slidable_${_slidableResetKey}',
+                                'task_tab_slidable_$_slidableResetKey',
                               ),
                               // 弹簧景深轨道（B 方案）：页面跟随顶部滑块弹簧
                               child: SpringDepthPageTrack(
@@ -650,7 +651,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                   .currentTheme
                   .bottomNavigationBarTheme
                   .backgroundColor
-                  ?.withOpacity(1) ??
+                  ?.withValues(alpha: 1) ??
               Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
               Colors.black,
       builder: (BuildContext context) {
@@ -955,7 +956,7 @@ class ListBodyWidget extends ConsumerStatefulWidget {
   final bool onlyShowPullRepo;
 
   const ListBodyWidget({
-    Key? key,
+    super.key,
     required this.model,
     required this.list,
     required this.searchText,
@@ -963,7 +964,7 @@ class ListBodyWidget extends ConsumerStatefulWidget {
     required this.checked,
     required this.changed,
     required this.onlyShowPullRepo,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<ListBodyWidget> createState() => _ListBodyState();
@@ -982,7 +983,6 @@ class _ListBodyState extends ConsumerState<ListBodyWidget>
   Widget build(BuildContext context) {
     super.build(context);
     final lowerSearch = widget.searchText.toLowerCase();
-    final isCyber = ref.read(themeProvider).themeMode == modeCyber;
     final globalFw = FontWeight(ref.watch(textWeightProvider));
     // 预过滤列表，避免为不匹配项构建 SizedBox.shrink 浪费资源
     final filteredList =
@@ -1033,12 +1033,12 @@ class TaskItemCell extends StatelessWidget {
   const TaskItemCell(
     this.bean,
     this.ref, {
-    Key? key,
+    super.key,
     required this.fontWeight,
     this.editMode = false,
     required this.checkedCallback,
     required this.checked,
-  }) : super(key: key);
+  });
 
   bool get isCyber => ref.read(themeProvider).themeMode == modeCyber;
 
@@ -1110,7 +1110,10 @@ class TaskItemCell extends StatelessWidget {
               color: const Color(0xFFFFC107),
               onTap: () {
                 WidgetsBinding.instance.endOfFrame.then(
-                  (_) => pinTask(context),
+                  (_) {
+                    if (!context.mounted) return;
+                    pinTask(context);
+                  },
                 );
               },
             ),
@@ -1123,7 +1126,10 @@ class TaskItemCell extends StatelessWidget {
               color: const Color(0xFF333333),
               onTap: () {
                 WidgetsBinding.instance.endOfFrame.then(
-                  (_) => enableTask(context),
+                  (_) {
+                    if (!context.mounted) return;
+                    enableTask(context);
+                  },
                 );
               },
             ),
@@ -1134,7 +1140,10 @@ class TaskItemCell extends StatelessWidget {
               onTap: () {
                 HapticFeedback.mediumImpact();
                 WidgetsBinding.instance.endOfFrame.then(
-                  (_) => delTask(context, ref),
+                  (_) {
+                    if (!context.mounted) return;
+                    delTask(context, ref);
+                  },
                 );
               },
             ),
@@ -1192,7 +1201,10 @@ class TaskItemCell extends StatelessWidget {
                 width: double.infinity,
                 onTap: () {
                   WidgetsBinding.instance.endOfFrame.then(
-                    (_) => pinTask(context),
+                    (_) {
+                      if (!context.mounted) return;
+                      pinTask(context);
+                    },
                   );
                 },
               ),
@@ -1208,7 +1220,10 @@ class TaskItemCell extends StatelessWidget {
                 width: double.infinity,
                 onTap: () {
                   WidgetsBinding.instance.endOfFrame.then(
-                    (_) => enableTask(context),
+                    (_) {
+                      if (!context.mounted) return;
+                      enableTask(context);
+                    },
                   );
                 },
               ),
@@ -1221,7 +1236,10 @@ class TaskItemCell extends StatelessWidget {
                 width: double.infinity,
                 onTap: () {
                   WidgetsBinding.instance.endOfFrame.then(
-                    (_) => delTask(context, ref),
+                    (_) {
+                      if (!context.mounted) return;
+                      delTask(context, ref);
+                    },
                   );
                 },
               ),
@@ -1596,6 +1614,7 @@ class TaskItemCell extends StatelessWidget {
           ).notifier,
         )
         .runCrons(context, [bean.sId!]);
+    if (!context.mounted) return;
     if (showLog) {
       logCron(context, ref);
     }
@@ -1626,6 +1645,7 @@ class TaskItemCell extends StatelessWidget {
         )
         .then((value) {
           Future.delayed(const Duration(milliseconds: 500), () {
+            if (!context.mounted) return;
             ref
                 .read(
                   SingleAccountPageState.ofTaskProvider(context)(
@@ -1669,6 +1689,7 @@ class TaskItemCell extends StatelessWidget {
       danger: true,
     );
     if (confirmed != true) return;
+    if (!context1.mounted) return;
     ref
         .read(
           SingleAccountPageState.ofTaskProvider(context1)(

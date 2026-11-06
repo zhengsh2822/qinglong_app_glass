@@ -2,12 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/cupertino_sheet.dart';
 import 'package:qinglong_app/base/http/http_cache.dart';
 import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/home/system_bean.dart';
@@ -130,9 +128,6 @@ Future<bool> deleteConfigFile(BuildContext context, ConfigBean bean) async {
     return false;
   }
 
-  final bool isCyber =
-      ProviderScope.containerOf(context).read(themeProvider).themeMode ==
-      modeCyber;
   final String tip = '确认删除配置文件 $name 吗？\n该操作不可撤销';
   final dynamic confirmed = await showConfirmDialog(
     context,
@@ -165,7 +160,9 @@ Future<bool> _deleteByTempTask(BuildContext context, String name) async {
     return false;
   }
 
-  final String? id = await _findTaskId(context, taskName);
+  final String? id;
+  if (!context.mounted) return false;
+  id = await _findTaskId(context, taskName);
   if (id == null || id.isEmpty) {
     '未找到临时任务，删除已中止'.toast();
     return false;
@@ -208,6 +205,7 @@ Future<bool> _deleteByTempTask(BuildContext context, String name) async {
   // 兜底：任务机制在本面板不可用时，改用纯 HTTP 的"另存为"链路删除
   // （借面板自身的 rmPath 删掉 origin，完全不依赖调度器）
   if (!removed) {
+    if (!context.mounted) return false;
     await _deleteBySaveAs(context, name);
     removed = await _pollRemoved(api, accountIndex, name, 4);
   }

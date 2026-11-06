@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,15 +7,14 @@ import 'package:qinglong_app/base/commit_button.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/selector_sheet.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_viewmodel.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 class AddDependencyPage extends ConsumerStatefulWidget {
   const AddDependencyPage({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   ConsumerState<AddDependencyPage> createState() => _AddDependencyPageState();
@@ -25,7 +23,7 @@ class AddDependencyPage extends ConsumerStatefulWidget {
 class _AddDependencyPageState extends ConsumerState<AddDependencyPage> {
   final TextEditingController _nameController = TextEditingController();
 
-  DepedencyEnum depedencyType = DepedencyEnum.NodeJS;
+  DepedencyEnum depedencyType = DepedencyEnum.nodejs;
 
   @override
   void initState() {
@@ -81,14 +79,14 @@ class _AddDependencyPageState extends ConsumerState<AddDependencyPage> {
                 // 依赖类型选择：改用弹窗选择器（与 push_setting_page 风格一致）
                 SelectorFieldCard(
                   hintText: "请选择依赖类型",
-                  currentValue: depedencyType.name,
+                  currentValue: depedencyType.label,
                   emptyHint: "请选择",
                   onTap: () async {
                     final options = DepedencyEnum.values
                         .map(
                           (e) => SelectorOption<DepedencyEnum>(
                             value: e,
-                            label: e.name,
+                            label: e.label,
                           ),
                         )
                         .toList();
@@ -164,9 +162,11 @@ class _AddDependencyPageState extends ConsumerState<AddDependencyPage> {
           )
           .toList());
       await EasyLoading.show(status: " 提交中");
+      if (!mounted) return;
       HttpResponse<String> response = await SingleAccountPageState.ofApi(context).addDependency(list);
 
       await EasyLoading.dismiss();
+      if (!mounted) return;
       if (response.success) {
         Map<String, dynamic> data = {};
 

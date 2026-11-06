@@ -31,12 +31,13 @@ class SubscribeViewModel extends BaseViewModel {
 
       List<dynamic> tempList = jsonDecode(result.bean ?? "[]");
 
-      if (tempList != null && tempList.isNotEmpty) {
+      if (tempList.isNotEmpty) {
         for (int i = 0; i < tempList.length; i++) {
           list.add(tempList[i] as Map<String, dynamic>);
         }
       }
       if (list.isNotEmpty) {
+        if (!context.mounted) return;
         notifyICloud(context, result.bean ?? "");
       }
 
@@ -67,6 +68,7 @@ class SubscribeViewModel extends BaseViewModel {
       context,
     ).startSubscribes([cron]);
     if (result.success) {
+      if (!context.mounted) return;
       loadData(context, false);
     } else {
       failToast(result.message, notify: true);
@@ -78,6 +80,7 @@ class SubscribeViewModel extends BaseViewModel {
       context,
     ).stopSubscribes([cron]);
     if (result.success) {
+      if (!context.mounted) return;
       loadData(context, false);
     } else {
       failToast(result.message, notify: true);
@@ -90,6 +93,7 @@ class SubscribeViewModel extends BaseViewModel {
     ).delSubscribe(id);
     if (result.success) {
       "删除成功".toast();
+      if (!context.mounted) return;
       loadData(context, false);
     } else {
       failToast(result.message, notify: true);
@@ -108,6 +112,7 @@ class SubscribeViewModel extends BaseViewModel {
 
       if (response.success) {
         "禁用成功".toast();
+        if (!context.mounted) return;
         loadData(context, false);
       } else {
         failToast(response.message, notify: true);
@@ -119,6 +124,7 @@ class SubscribeViewModel extends BaseViewModel {
 
       if (response.success) {
         "启用成功".toast();
+        if (!context.mounted) return;
         loadData(context, false);
       } else {
         failToast(response.message, notify: true);

@@ -9,11 +9,11 @@ class BreathingGlow extends StatefulWidget {
   final Color glowColor;
 
   const BreathingGlow({
-    Key? key,
+    super.key,
     required this.child,
     this.active = false,
     this.glowColor = CyberColors.cyan,
-  }) : super(key: key);
+  });
 
   @override
   State<BreathingGlow> createState() => _BreathingGlowState();
@@ -114,7 +114,7 @@ class HoloTaskCard extends StatefulWidget {
   final ValueChanged<String>? onChecked;
 
   const HoloTaskCard({
-    Key? key,
+    super.key,
     required this.name,
     this.command,
     this.schedule,
@@ -125,7 +125,7 @@ class HoloTaskCard extends StatefulWidget {
     this.lastTime,
     this.onTap,
     this.onChecked,
-  }) : super(key: key);
+  });
 
   @override
   State<HoloTaskCard> createState() => _HoloTaskCardState();

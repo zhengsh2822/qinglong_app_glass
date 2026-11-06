@@ -17,11 +17,11 @@ class CyberBackground extends StatelessWidget {
   final bool showGradient;
 
   const CyberBackground({
-    Key? key,
+    super.key,
     required this.child,
     this.showGrid = false,
     this.showGradient = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

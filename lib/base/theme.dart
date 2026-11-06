@@ -177,11 +177,11 @@ class ThemeViewModel extends ChangeNotifier {
   Color? get cyberSecondaryTextColor =>
       _readCustom(spCyberSecondaryTextColor);
   void setCyberPrimaryTextColor(Color? color) {
-    SpUtil.putInt(spCyberPrimaryTextColor, color?.value ?? -1);
+    SpUtil.putInt(spCyberPrimaryTextColor, color?.toARGB32() ?? -1);
     notifyListeners();
   }
   void setCyberSecondaryTextColor(Color? color) {
-    SpUtil.putInt(spCyberSecondaryTextColor, color?.value ?? -1);
+    SpUtil.putInt(spCyberSecondaryTextColor, color?.toARGB32() ?? -1);
     notifyListeners();
   }
 
@@ -191,11 +191,11 @@ class ThemeViewModel extends ChangeNotifier {
   Color? get themeSecondaryTextColor =>
       _readCustom(spThemeSecondaryTextColor);
   void setThemePrimaryTextColor(Color? color) {
-    SpUtil.putInt(spThemePrimaryTextColor, color?.value ?? -1);
+    SpUtil.putInt(spThemePrimaryTextColor, color?.toARGB32() ?? -1);
     notifyListeners();
   }
   void setThemeSecondaryTextColor(Color? color) {
-    SpUtil.putInt(spThemeSecondaryTextColor, color?.value ?? -1);
+    SpUtil.putInt(spThemeSecondaryTextColor, color?.toARGB32() ?? -1);
     notifyListeners();
   }
 

@@ -12,7 +12,7 @@ import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 class UpdatePasswordPage extends ConsumerStatefulWidget {
-  const UpdatePasswordPage({Key? key}) : super(key: key);
+  const UpdatePasswordPage({super.key});
 
   @override
   ConsumerState<UpdatePasswordPage> createState() => _UpdatePasswordPageState();
@@ -140,6 +140,7 @@ class _UpdatePasswordPageState extends ConsumerState<UpdatePasswordPage>
       context,
     ).updatePassword(name, password);
 
+    if (!mounted) return;
     if (response.success) {
       "更新成功".toast();
 

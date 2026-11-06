@@ -23,8 +23,7 @@ class DashboardTaskResultPage extends ConsumerStatefulWidget {
   /// true = 今日成功，false = 今日失败
   final bool isSuccess;
 
-  const DashboardTaskResultPage({Key? key, required this.isSuccess})
-    : super(key: key);
+  const DashboardTaskResultPage({super.key, required this.isSuccess});
 
   @override
   DashboardTaskResultPageState createState() => DashboardTaskResultPageState();

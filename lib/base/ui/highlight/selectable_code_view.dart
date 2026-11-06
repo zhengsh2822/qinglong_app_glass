@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:ui' show BoxHeightStyle, BoxWidthStyle;
 
 import 'package:flutter/cupertino.dart';
@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highlight/highlight.dart' show highlight, Node;
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/highlight/themes/atom-one-dark.dart';
+import 'package:qinglong_app/base/ui/highlight/themes/atom_one_dark.dart';
 import 'package:qinglong_app/base/ui/highlight/themes/github.dart';
 
 /// 可选择的代码视图

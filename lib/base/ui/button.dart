@@ -32,7 +32,7 @@ class ButtonWidget extends StatelessWidget {
                       colors: [Color(0xffFF6B6B), Color(0xffEE5A24)],
                     )
                   : LinearGradient(
-                      colors: [primaryColor, primaryColor.withOpacity(0.85)],
+                      colors: [primaryColor, primaryColor.withValues(alpha: 0.85)],
                     ),
             ),
             padding: const EdgeInsets.symmetric(vertical: 10),

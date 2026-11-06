@@ -10,24 +10,21 @@ import 'package:qinglong_app/base/cupertino_sheet.dart';
 
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/upload_pill_button.dart';
 import 'package:qinglong_app/module/others/scripts/script_download_page.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/file_picker_utils.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 
-import '../../main.dart';
 import '../others/scripts/script_code_detail_page.dart';
 import 'package:qinglong_app/base/ui/script_image_preview_page.dart';
 import '../../base/ui/container_page_route.dart';
 
 class AddConfigPage extends ConsumerStatefulWidget {
   const AddConfigPage({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   ConsumerState<AddConfigPage> createState() => _AddConfigPageState();
@@ -183,9 +180,12 @@ class _AddConfigPageState extends ConsumerState<AddConfigPage> {
 
     try {
       await EasyLoading.show(status: " 提交中");
+      if (!mounted) return;
       final contents = await file!.readAsString();
+      if (!mounted) return;
       var response = await SingleAccountPageState.ofApi(context).saveFile(_nameController.text, contents);
       await EasyLoading.dismiss();
+      if (!mounted) return;
       if (response.success) {
         "上传成功".toast();
         Navigator.of(context).pop(true);
@@ -260,6 +260,7 @@ class _AddConfigPageState extends ConsumerState<AddConfigPage> {
             return;
           }
           String content = await file!.readAsString();
+          if (!context.mounted) return;
           Navigator.of(context).push(
             ContainerPageRoute(
               builder: (context) => ScriptCodeDetailPage(

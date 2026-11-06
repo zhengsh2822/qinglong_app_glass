@@ -22,12 +22,12 @@ class ScriptCodeDetailPage extends ConsumerStatefulWidget {
   final String? absPath;
 
   const ScriptCodeDetailPage({
-    Key? key,
+    super.key,
     required this.title,
     required this.content,
     this.absPath,
     this.canRestore = false,
-  }) : super(key: key);
+  });
 
   @override
   ScriptCodeDetailPageState createState() => ScriptCodeDetailPageState();
@@ -81,6 +81,7 @@ class ScriptCodeDetailPageState extends ConsumerState<ScriptCodeDetailPage>
                     danger: false,
                   ).then((confirmed) {
                     if (confirmed != true) return;
+                    if (!context.mounted) return;
                     Navigator.of(context).pop();
                     if (widget.title.endsWith(".${FileUtil.env}")) {
                       getIt<ICloudUtils>(
@@ -106,7 +107,6 @@ class ScriptCodeDetailPageState extends ConsumerState<ScriptCodeDetailPage>
                       "不支持还原该文件".toast();
                     }
                   });
-                  ;
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 15),

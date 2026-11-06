@@ -53,17 +53,17 @@ class DependencyViewModel extends BaseViewModel {
     await Future.wait([
       loadData(
         context,
-        DepedencyEnum.NodeJS.name.toLowerCase().toString(),
+        DepedencyEnum.nodejs.name.toLowerCase().toString(),
         true,
       ),
       loadData(
         context,
-        DepedencyEnum.Python3.name.toLowerCase().toString(),
+        DepedencyEnum.python3.name.toLowerCase().toString(),
         true,
       ),
       loadData(
         context,
-        DepedencyEnum.Linux.name.toLowerCase().toString(),
+        DepedencyEnum.linux.name.toLowerCase().toString(),
         true,
       ),
     ]);
@@ -71,10 +71,10 @@ class DependencyViewModel extends BaseViewModel {
 
   List<DependencyBean> getListByType(int index) {
     if (DependcyPageState.types[index].name ==
-        DepedencyEnum.NodeJS.name.toString()) {
+        DepedencyEnum.nodejs.name.toString()) {
       return nodeJsList;
     } else if (DependcyPageState.types[index].name ==
-        DepedencyEnum.Python3.name.toString()) {
+        DepedencyEnum.python3.name.toString()) {
       return python3List;
     }
     return linuxList;
@@ -109,6 +109,7 @@ class DependencyViewModel extends BaseViewModel {
         linuxList.addAll(response.bean!);
       }
       success();
+      if (!context.mounted) return;
       _syncInstallStatus(context);
     } else {
       if (showLoading) {
@@ -157,6 +158,7 @@ class DependencyViewModel extends BaseViewModel {
     await SingleAccountPageState.ofApi(
       context,
     ).dependencyReinstall(sId ?? [], id ?? []);
+    if (!context.mounted) return;
     await loadData(context, type);
   }
 
@@ -200,4 +202,18 @@ class DependencyViewModel extends BaseViewModel {
   }
 }
 
-enum DepedencyEnum { NodeJS, Python3, Linux }
+enum DepedencyEnum { nodejs, python3, linux }
+
+extension DepedencyEnumLabel on DepedencyEnum {
+  /// 界面展示用的原始大小写名称（接口参数仍用 [name] 的小写形式）。
+  String get label {
+    switch (this) {
+      case DepedencyEnum.nodejs:
+        return 'NodeJS';
+      case DepedencyEnum.python3:
+        return 'Python3';
+      case DepedencyEnum.linux:
+        return 'Linux';
+    }
+  }
+}

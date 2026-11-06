@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:qinglong_app/utils/share_utils.dart';
 import 'package:flutter/cupertino.dart';
@@ -22,13 +21,13 @@ class InTimeHistoryLogPage extends StatefulWidget {
   final String path;
 
   const InTimeHistoryLogPage({
-    Key? key,
+    super.key,
     required this.title,
     required this.path,
-  }) : super(key: key);
+  });
 
   @override
-  _InTimeHistoryLogPageState createState() => _InTimeHistoryLogPageState();
+  State<InTimeHistoryLogPage> createState() => _InTimeHistoryLogPageState();
 }
 
 class _InTimeHistoryLogPageState extends State<InTimeHistoryLogPage>
@@ -47,9 +46,7 @@ class _InTimeHistoryLogPageState extends State<InTimeHistoryLogPage>
       content = response.bean;
     } else {
       // 拉取失败也落地空态（toast 一次），避免永久加载
-      if (content == null) {
-        content = "";
-      }
+      content ??= "";
       (response.message ?? "").toast();
     }
     if (mounted) setState(() {});
@@ -140,6 +137,7 @@ class _InTimeHistoryLogPageState extends State<InTimeHistoryLogPage>
       context,
     ).deleteLog(title, path);
     EasyLoading.dismiss();
+    if (!mounted) return;
     if (temp.success) {
       "已删除".toast();
       Navigator.of(context).pop(true);

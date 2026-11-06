@@ -60,7 +60,7 @@ class GlassTextField extends ConsumerWidget {
       decoration: BoxDecoration(
         color: isDark
             ? (blurEnabled
-                ? CyberColors.cardBg.withOpacity(0.5)
+                ? CyberColors.cardBg.withValues(alpha: 0.5)
                 : CyberColors.cardBg)
             : AppleColors.bgSecondary,
         borderRadius: BorderRadius.circular(radius),

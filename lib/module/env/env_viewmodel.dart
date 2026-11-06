@@ -41,6 +41,7 @@ class EnvViewModel extends BaseViewModel {
       );
       enabledList.clear();
       enabledList.addAll(list.where((element) => element.status == 0).toList());
+      if (!context.mounted) return;
       notifyICloud(context, list);
       success();
     } else {
@@ -68,6 +69,7 @@ class EnvViewModel extends BaseViewModel {
     ).delEnvs(id);
     if (result.success) {
       "删除成功".toast();
+      if (!context.mounted) return;
       loadData(context, false);
     } else {
       failed(result.message, notify: true);
@@ -80,6 +82,7 @@ class EnvViewModel extends BaseViewModel {
     ).delEnv(id);
     if (result.success) {
       "删除成功".toast();
+      if (!context.mounted) return;
       loadData(context, false);
     } else {
       failed(result.message, notify: true);
@@ -102,6 +105,7 @@ class EnvViewModel extends BaseViewModel {
 
       if (response.success) {
         "启用成功".toast();
+        if (!context.mounted) return;
         loadData(context, false);
       } else {
         failToast(response.message, notify: true);
@@ -113,6 +117,7 @@ class EnvViewModel extends BaseViewModel {
 
       if (response.success) {
         "禁用成功".toast();
+        if (!context.mounted) return;
         loadData(context, false);
       } else {
         failToast(response.message, notify: true);
@@ -127,6 +132,7 @@ class EnvViewModel extends BaseViewModel {
     int oldIndex,
   ) async {
     await SingleAccountPageState.ofApi(context).moveEnv(id, oldIndex, newIndex);
+    if (!context.mounted) return;
     loadData(context, false);
   }
 }

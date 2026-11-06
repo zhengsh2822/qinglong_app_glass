@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +11,7 @@ import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 
 class UpdateMaxAccountPage extends ConsumerStatefulWidget {
-  const UpdateMaxAccountPage({Key? key}) : super(key: key);
+  const UpdateMaxAccountPage({super.key});
 
   @override
   ConsumerState<UpdateMaxAccountPage> createState() =>

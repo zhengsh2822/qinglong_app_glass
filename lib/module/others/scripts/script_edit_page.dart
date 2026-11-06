@@ -25,11 +25,10 @@ class ScriptEditPage extends ConsumerStatefulWidget {
   final String title;
   final String path;
 
-  const ScriptEditPage(this.title, this.path, this.content, {Key? key})
-    : super(key: key);
+  const ScriptEditPage(this.title, this.path, this.content, {super.key});
 
   @override
-  _ScriptEditPageState createState() => _ScriptEditPageState();
+  ConsumerState<ScriptEditPage> createState() => _ScriptEditPageState();
 }
 
 class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
@@ -121,14 +120,12 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
           const SizedBox(width: 4),
           CupertinoButton(
             padding: EdgeInsets.zero,
-            minSize: 0,
-            onPressed: _onSearchPrev,
+            onPressed: _onSearchPrev, minimumSize: Size(0, 0),
             child: Icon(CupertinoIcons.chevron_up, size: 20, color: iconColor),
           ),
           CupertinoButton(
             padding: EdgeInsets.zero,
-            minSize: 0,
-            onPressed: _onSearchNext,
+            onPressed: _onSearchNext, minimumSize: Size(0, 0),
             child: Icon(
               CupertinoIcons.chevron_down,
               size: 20,
@@ -138,12 +135,11 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
           const SizedBox(width: 4),
           CupertinoButton(
             padding: EdgeInsets.zero,
-            minSize: 0,
-            onPressed: _closeSearchBar,
+            onPressed: _closeSearchBar, minimumSize: Size(0, 0),
             child: Icon(
               CupertinoIcons.xmark_circle_fill,
               size: 22,
-              color: iconColor.withOpacity(0.5),
+              color: iconColor.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -231,12 +227,15 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
             onPressed: () async {
               try {
                 await hideKeyboardFocus();
+                if (!context.mounted) return;
                 await EasyLoading.show(status: " 提交中");
+                if (!context.mounted) return;
                 HttpResponse<NullResponse> response =
                     await SingleAccountPageState.ofApi(
                       context,
                     ).updateScript(widget.title, widget.path, result);
                 await EasyLoading.dismiss();
+                if (!context.mounted) return;
                 if (response.success) {
                   "提交成功".toast();
                   Navigator.of(context).pop(result);
@@ -314,6 +313,7 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
       danger: false,
     ).then((confirmed) {
       if (confirmed != true) return;
+      if (!mounted) return;
       Navigator.of(context).pop();
     });
   }

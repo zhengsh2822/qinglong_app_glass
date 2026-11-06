@@ -2,19 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/commit_button.dart';
-import 'package:qinglong_app/base/http/api.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/button.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/selection_follow_text_field.dart';
-import 'package:qinglong_app/module/config/config_viewmodel.dart';
 import 'package:qinglong_app/module/env/env_bean.dart';
-import 'package:qinglong_app/module/env/env_viewmodel.dart';
 import 'package:qinglong_app/utils/extension.dart';
-import 'package:qinglong_app/utils/utils.dart';
 
 import '../config/config_detail_page.dart';
 import '../subscribe/add_subscribe_page.dart';
@@ -25,8 +19,7 @@ class AddEnvPage extends ConsumerStatefulWidget {
   /// 是否为复制模式：预填原变量字段，但新建不带 id 的 EnvBean（走"新增"而非"编辑"）
   final bool isCopy;
 
-  const AddEnvPage({Key? key, this.envBean, this.isCopy = false})
-    : super(key: key);
+  const AddEnvPage({super.key, this.envBean, this.isCopy = false});
 
   @override
   ConsumerState<AddEnvPage> createState() => _AddEnvPageState();
@@ -180,6 +173,7 @@ class _AddEnvPageState extends ConsumerState<AddEnvPage>
       envBean.remarks = _remarkController.text;
 
       await EasyLoading.show(status: " 提交中");
+      if (!mounted) return;
       HttpResponse<NullResponse> response = await SingleAccountPageState.ofApi(
         context,
       ).addEnv(
@@ -189,11 +183,14 @@ class _AddEnvPageState extends ConsumerState<AddEnvPage>
         id: envBean.id,
         nId: envBean.nId,
       );
+      if (!mounted) return;
       await EasyLoading.show(status: " 提交中");
+      if (!mounted) return;
       if (envBean.sId != null && envBean.sId!.isNotEmpty) {
         await SingleAccountPageState.ofApi(context).enableEnv([envBean.sId!]);
       }
       await EasyLoading.dismiss();
+      if (!mounted) return;
       if (response.success) {
         (envBean.sId == null || envBean.sId!.isEmpty)
             ? "新增成功"

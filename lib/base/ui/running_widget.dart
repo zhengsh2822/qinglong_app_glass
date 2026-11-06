@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 
@@ -9,7 +8,7 @@ class RunningWidget extends ConsumerWidget {
   /// 徽章文案：默认「运行中」；依赖管理卡片传「安装中」等场景化文案
   final String text;
 
-  const RunningWidget({Key? key, this.text = "运行中"}) : super(key: key);
+  const RunningWidget({super.key, this.text = "运行中"});
 
   @override
   Widget build(BuildContext context, ref) {
