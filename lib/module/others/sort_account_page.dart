@@ -78,7 +78,7 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
           physics: const NeverScrollableScrollPhysics(),
           autoScroll: false,
           itemBuilder: (BuildContext context, TokenBean e, int index) {
-            return CapsuleGlowCard(
+            return CapsuleGlowCard.continuous(
               isCyber: isCyber,
               isPinned: false,
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

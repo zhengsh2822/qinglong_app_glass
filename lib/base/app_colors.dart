@@ -74,6 +74,9 @@ class AppleColors {
   /// 主背景（页面 scaffold）
   static const Color bgPrimary = Color(0xFFF9F9F9);
 
+  /// 浅色/白色模式的页面背景（scaffold）
+  static const Color bgPage = Color(0xFFF3F3F3);
+
   /// 卡片/内容背景
   static const Color bgSecondary = Color(0xFFFFFFFF);
 

@@ -8,6 +8,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/ui/selector_card.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
@@ -136,7 +137,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
 
                         if ((item.isDir ?? false)) {
                           if (isCyber) {
-                            return CapsuleGlowCard(
+                            return CapsuleGlowCard.continuous(
                               isCyber: true,
                               isPinned: false,
                               // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
@@ -224,13 +225,15 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                               ),
                             );
                           }
-                          return CapsuleGlowCard(
+                          return CapsuleGlowCard.continuous(
                             isCyber: false,
                             isPinned: false,
                             // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
                             margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(18),
+                            child: ClipPath(
+                              clipper: ShapeBorderClipper(
+                                shape: appCornerBorder(radius: 18),
+                              ),
                               child: Slidable(
                                 key: ValueKey(item.name ?? ""),
                                 endActionPane: ActionPane(
@@ -326,7 +329,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                           );
                         } else {
                           if (isCyber) {
-                            return CapsuleGlowCard(
+                            return CapsuleGlowCard.continuous(
                               isCyber: true,
                               isPinned: false,
                               // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
@@ -384,13 +387,15 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                               ),
                             );
                           }
-                          return CapsuleGlowCard(
+                          return CapsuleGlowCard.continuous(
                             isCyber: false,
                             isPinned: false,
                             // 卡片化：与壁纸版一致的逐项卡片（主题版卡片语言）
                             margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(18),
+                            child: ClipPath(
+                              clipper: ShapeBorderClipper(
+                                shape: appCornerBorder(radius: 18),
+                              ),
                               child: Slidable(
                                 key: ValueKey(item.name ?? ""),
                                 endActionPane: ActionPane(

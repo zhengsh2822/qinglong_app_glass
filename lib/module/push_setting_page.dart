@@ -86,7 +86,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                         ),
                         const SizedBox(height: 10),
                         // 通知方式选择 — 统一卡内展开选择器（B 方案）
-                        OtherPageCard(
+                        OtherPageCard.continuous(
                           margin: EdgeInsets.zero,
                           padding: EdgeInsets.zero,
                           child: SelectorCard(

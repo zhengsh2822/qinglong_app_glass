@@ -25,6 +25,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 
@@ -238,7 +239,7 @@ class OtherPageState extends ConsumerState<OtherPage>
           child: Column(
             children: [
               // 顶部用户信息卡片（替代原 250px 色块，与下方卡片样式统一）
-              OtherPageCard(
+              OtherPageCard.continuous(
                 margin: const EdgeInsets.fromLTRB(
                   AppleColors.spaceMd,
 
@@ -260,7 +261,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                 ),
               ),
 
-              OtherPageCard(
+              OtherPageCard.continuous(
                 margin: const EdgeInsets.only(
                   left: AppleColors.spaceMd,
 
@@ -310,7 +311,7 @@ class OtherPageState extends ConsumerState<OtherPage>
 
               const SizedBox(height: AppleColors.spaceLg),
 
-              OtherPageCard(
+              OtherPageCard.continuous(
                 padding: const EdgeInsets.symmetric(
                   vertical: 10,
 
@@ -397,7 +398,7 @@ class OtherPageState extends ConsumerState<OtherPage>
               ),
               const SizedBox(height: AppleColors.spaceLg),
 
-              OtherPageCard(
+              OtherPageCard.continuous(
                 padding: const EdgeInsets.symmetric(
                   vertical: 11,
 
@@ -490,7 +491,7 @@ class OtherPageState extends ConsumerState<OtherPage>
 
               const SizedBox(height: AppleColors.spaceLg),
 
-              OtherPageCard(
+              OtherPageCard.continuous(
                 padding: const EdgeInsets.symmetric(
                   vertical: 10,
 
@@ -580,7 +581,7 @@ class OtherPageState extends ConsumerState<OtherPage>
 
               const SizedBox(height: AppleColors.spaceLg),
 
-              OtherPageCard(
+              OtherPageCard.continuous(
                 padding: const EdgeInsets.symmetric(
                   vertical: 10,
 
@@ -1035,8 +1036,10 @@ class OtherPageState extends ConsumerState<OtherPage>
             crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+              ClipPath(
+                clipper: ShapeBorderClipper(
+                  shape: appCornerBorder(radius: 18),
+                ),
 
                 child:
                     (userIcon != null && userIcon!.isNotEmpty)

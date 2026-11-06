@@ -43,7 +43,7 @@ class _BackupHubPageState extends ConsumerState<BackupHubPage>
                 padding: EdgeInsets.symmetric(horizontal: 15),
               ),
               const SizedBox(height: 5),
-              OtherPageCard(
+              OtherPageCard.continuous(
                 margin: EdgeInsets.zero,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

@@ -13,6 +13,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/add_select_all_button.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
@@ -899,8 +900,10 @@ class TaskPageState extends ConsumerState<TaskPage>
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 7),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(5),
+                child: ClipPath(
+                  clipper: ShapeBorderClipper(
+                    shape: appCornerBorder(radius: 12),
+                  ),
                   child: Image.asset("assets/images/ql.png", height: 45),
                 ),
               ),
@@ -1047,7 +1050,7 @@ class TaskItemCell extends StatelessWidget {
     if (isCyber) {
       // 复用 CyberSlidable 组件（与 appkey_page/change_account_page 一致），
       // 它的 CustomSlidableAction 用 Material elevation 渲染赛博按钮光晕
-      return CapsuleGlowCard(
+      return CapsuleGlowCard.continuous(
         isCyber: true,
         isPinned: bean.isPinned == 1,
         newPinnedStyle: true,
@@ -1142,14 +1145,16 @@ class TaskItemCell extends StatelessWidget {
     }
 
     final bool isPinnedT = bean.isPinned == 1;
-    return CapsuleGlowCard(
+    return CapsuleGlowCard.continuous(
       isCyber: false,
       isPinned: isPinnedT,
       newPinnedStyle: true,
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
       borderRadius: const BorderRadius.all(Radius.circular(18)),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+      child: ClipPath(
+        clipper: ShapeBorderClipper(
+          shape: appCornerBorder(radius: 18),
+        ),
         child: Slidable(
           enabled: !editMode,
           key: ValueKey(bean.sId),

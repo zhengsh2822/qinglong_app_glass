@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/base_state_widget.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/add_select_all_button.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
@@ -857,7 +858,7 @@ class _DependencyCellState extends ConsumerState<DependencyCell> {
     }
 
     if (isCyber) {
-      return CapsuleGlowCard(
+      return CapsuleGlowCard.continuous(
         isCyber: true,
         isPinned: false,
         margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
@@ -895,12 +896,14 @@ class _DependencyCellState extends ConsumerState<DependencyCell> {
       );
     }
 
-    return CapsuleGlowCard(
+    return CapsuleGlowCard.continuous(
       isCyber: false,
       isPinned: false,
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+      child: ClipPath(
+        clipper: ShapeBorderClipper(
+          shape: appCornerBorder(radius: 18),
+        ),
         child: Slidable(
           key: ValueKey(bean.mustId),
           enabled: !editMode && !deleting,

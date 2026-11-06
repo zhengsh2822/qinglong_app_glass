@@ -7,6 +7,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/utils/codeeditor_theme.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -388,9 +389,7 @@ class ThemeViewModel extends ChangeNotifier {
       buttonTheme: ButtonThemeData(
         buttonColor: _primaryColor,
         textTheme: ButtonTextTheme.primary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppleColors.radiusButton),
-        ),
+        shape: appCornerBorder(radius: AppleColors.radiusButton),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -497,7 +496,7 @@ class ThemeViewModel extends ChangeNotifier {
           borderRadius: BorderRadius.circular(AppleColors.radiusSmall),
         ),
       ),
-      scaffoldBackgroundColor: AppleColors.bgPrimary,
+      scaffoldBackgroundColor: AppleColors.bgPage,
       dividerColor: const Color(0xFFE5E5EA),
       dividerTheme: const DividerThemeData(color: Color(0xFFE5E5EA)),
       inputDecorationTheme: InputDecorationTheme(
@@ -550,9 +549,7 @@ class ThemeViewModel extends ChangeNotifier {
       buttonTheme: ButtonThemeData(
         buttonColor: _primaryColor,
         textTheme: ButtonTextTheme.primary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppleColors.radiusButton),
-        ),
+        shape: appCornerBorder(radius: AppleColors.radiusButton),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -916,7 +913,7 @@ class LightThemeColors extends ThemeColors {
   Color hintColor() => _customThemeSecondaryOf(AppleColors.textTertiary);
 
   @override
-  Color bg2Color() => AppleColors.bgSecondary;
+  Color bg2Color() => AppleColors.bgPage;
 
   @override
   Color segmentedUnCheckBg() => AppleColors.bgTertiary;

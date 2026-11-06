@@ -271,7 +271,7 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
   // 保留策略
   Widget _buildPolicyCard(bool isCyber) {
     final Color desc = ref.watch(themeProvider).themeColor.descColor();
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,7 +322,7 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
     final Color desc = ref.watch(themeProvider).themeColor.descColor();
     final Map<String, dynamic>? p = _preview;
 
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

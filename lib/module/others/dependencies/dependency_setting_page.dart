@@ -392,7 +392,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
     required Color subtitleColor,
     required Color inputColor,
   }) {
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,7 +431,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
   Widget _buildSaveButton(Color accentColor) {
     return SizedBox(
       width: double.infinity,
-      child: OtherPageCard(
+      child: OtherPageCard.continuous(
         padding: const EdgeInsets.symmetric(vertical: 14),
         onTap: _saving ? null : _saveAll,
         child: Center(

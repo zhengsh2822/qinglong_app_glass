@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/account_page_transition.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
@@ -149,7 +150,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       _buildHeader(isCyber),
                       SizedBox(height: MediaQuery.of(context).size.height / 18),
                       // 表单卡片（统一高光内发光设计）
-                      CapsuleGlowCard(
+                      CapsuleGlowCard.continuous(
                         isCyber: isCyber,
                         isPinned: false,
                         glowIntensity: 0.5,
@@ -307,8 +308,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
           GestureDetector(
             onDoubleTap: () {},
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(5),
+            child: ClipPath(
+              clipper: ShapeBorderClipper(
+                shape: appCornerBorder(radius: 12),
+              ),
               child: Image.asset("assets/images/ql.png", height: 45),
             ),
           ),
@@ -613,9 +616,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.7,
           ),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
+            shape: appCornerBorder(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(18),
+              ),
+            ),
             color: sheetBg,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
           ),
           child: SafeArea(
             top: false,
@@ -679,14 +686,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   /// 历史账号卡片（统一高光内发光设计）
   Widget _buildHistoryAccountCard(UserInfoBean bean, bool isCyber) {
-    return CapsuleGlowCard(
+    return CapsuleGlowCard.continuous(
       isCyber: isCyber,
       isPinned: false,
       glowIntensity: 0.5,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       borderRadius: const BorderRadius.all(Radius.circular(18)),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+      child: ClipPath(
+        clipper: ShapeBorderClipper(
+          shape: appCornerBorder(radius: 18),
+        ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(

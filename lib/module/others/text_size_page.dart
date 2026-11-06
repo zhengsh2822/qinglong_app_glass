@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/commit_button.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/hsl_color_picker.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
@@ -205,7 +206,7 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
               const SizedBox(height: 4),
 
               // 卡片1：预览（3 行内容 + 右上角时间）
-              OtherPageCard(
+              OtherPageCard.continuous(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 15,
                   vertical: 15,
@@ -275,7 +276,7 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
               const SizedBox(height: 12),
 
               // 卡片2：字体大小调整
-              OtherPageCard(
+              OtherPageCard.continuous(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 15,
                   vertical: 15,
@@ -327,7 +328,7 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
               const SizedBox(height: 12),
 
               // 卡片2.5：字体粗细调整（四档：w400/w500/w600/w700，与字体大小滑块同风格）
-              OtherPageCard(
+              OtherPageCard.continuous(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 15,
                   vertical: 15,
@@ -374,7 +375,7 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
               const SizedBox(height: 12),
 
               // 卡片3：当前分段的字体颜色自定义
-              OtherPageCard(
+              OtherPageCard.continuous(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 15,
                   vertical: 12,
@@ -448,13 +449,15 @@ class _TextSizePageState extends ConsumerState<TextSizePage>
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: theme.themeColor.settingBordorColor(),
-                  width: 1,
+              decoration: ShapeDecoration(
+                shape: appCornerBorder(
+                  radius: 10,
+                  side: BorderSide(
+                    color: theme.themeColor.settingBordorColor(),
+                    width: 1,
+                  ),
                 ),
+                color: color,
               ),
             ),
             const SizedBox(width: 8),
@@ -496,7 +499,7 @@ class _ColorPickerSheetState extends ConsumerState<_ColorPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = ref.watch(themeProvider);
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       margin: const EdgeInsets.all(15),
       padding: const EdgeInsets.fromLTRB(20, 15, 20, 20),
       child: Column(
@@ -557,13 +560,28 @@ class _ColorPickerSheetState extends ConsumerState<_ColorPickerSheet> {
               Expanded(
                 child: CupertinoButton(
                   color: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  padding: EdgeInsets.zero,
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    "取消",
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: theme.customPrimaryTextColor,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: ShapeDecoration(
+                      shape: appCornerBorder(
+                        radius: 12,
+                        side: BorderSide(
+                          color: theme.customPrimaryTextColor.withValues(
+                            alpha: 0.25,
+                          ),
+                        ),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        "取消",
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: theme.customPrimaryTextColor,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -572,15 +590,24 @@ class _ColorPickerSheetState extends ConsumerState<_ColorPickerSheet> {
               Expanded(
                 flex: 2,
                 child: CupertinoButton(
-                  color: theme.primaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  color: Colors.transparent,
+                  padding: EdgeInsets.zero,
                   onPressed: () {
                     widget.onConfirm(_currentColor);
                     Navigator.of(context).pop();
                   },
-                  child: const Text(
-                    "确认",
-                    style: TextStyle(fontSize: 15, color: Colors.white),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: ShapeDecoration(
+                      shape: appCornerBorder(radius: 12),
+                      color: theme.primaryColor,
+                    ),
+                    child: const Center(
+                      child: Text(
+                        "确认",
+                        style: TextStyle(fontSize: 15, color: Colors.white),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -603,10 +630,10 @@ class _ColorPreviewBlock extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: 80,
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
+        shape: appCornerBorder(radius: 12),
         color: color,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
+        shadows: [
           BoxShadow(
             color: color.withOpacity(0.3),
             blurRadius: 12,
@@ -617,9 +644,9 @@ class _ColorPreviewBlock extends StatelessWidget {
       child: Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
+            shape: appCornerBorder(radius: 8),
             color: Colors.black.withOpacity(0.25),
-            borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
             '#${hex.substring(2)}',

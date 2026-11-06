@@ -13,6 +13,7 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/button.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
@@ -414,6 +415,7 @@ class _SettingPageState extends ConsumerState<SettingPage>
                   const SectionHeader(title: "VIP功能"),
                   const SizedBox(height: 10),
                   OtherPageCard(
+                    cornerStyle: AppCornerStyle.continuous,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -490,6 +492,7 @@ class _SettingPageState extends ConsumerState<SettingPage>
             const SectionHeader(title: "通用功能"),
             const SizedBox(height: 10),
             OtherPageCard(
+              cornerStyle: AppCornerStyle.continuous,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

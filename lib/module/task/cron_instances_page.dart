@@ -246,7 +246,7 @@ class CronInstancesPageState extends ConsumerState<CronInstancesPage> {
     final Color statusColor = _statusColor(status);
     final bool running = status == 0;
 
-    return CapsuleGlowCard(
+    return CapsuleGlowCard.continuous(
       isCyber: isCyber,
       isPinned: false,
       padding: const EdgeInsets.all(14),

@@ -10,6 +10,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
@@ -275,12 +276,14 @@ class TaskItemCell extends StatelessWidget {
   /// 赛博模式：Slidable + 赛博颜色（与非赛博模式结构一致）
   Widget _buildCyber(BuildContext context) {
     final bool isCyber = true; // build() 已判断为赛博模式
-    return CapsuleGlowCard(
+    return CapsuleGlowCard.continuous(
       isCyber: true,
       isPinned: false,
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+      child: ClipPath(
+        clipper: ShapeBorderClipper(
+          shape: appCornerBorder(radius: 18),
+        ),
         child: Slidable(
           key: ValueKey(bean["id"] as int),
           endActionPane: ActionPane(
@@ -394,12 +397,14 @@ class TaskItemCell extends StatelessWidget {
   /// 非赛博模式：保留原 Slidable 实现
   Widget _buildNormal(BuildContext context) {
     final bool isCyber = false; // build() 已判断为非赛博模式
-    return CapsuleGlowCard(
+    return CapsuleGlowCard.continuous(
       isCyber: false,
       isPinned: false,
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
+      child: ClipPath(
+        clipper: ShapeBorderClipper(
+          shape: appCornerBorder(radius: AppleColors.radiusCard),
+        ),
         child: Slidable(
           key: ValueKey(bean["id"] as int),
           endActionPane: ActionPane(

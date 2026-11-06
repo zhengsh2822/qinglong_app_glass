@@ -12,6 +12,7 @@ import 'package:qinglong_app/module/config/config_detail_page.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/empty_widget.dart';
@@ -294,15 +295,17 @@ class ConfigCell extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CapsuleGlowCard(
+          CapsuleGlowCard.continuous(
             isCyber: isCyber,
             isPinned: false,
             margin: EdgeInsets.symmetric(
               horizontal: AppleColors.spaceMd,
               vertical: 6,
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppleColors.radiusCard),
+            child: ClipPath(
+              clipper: ShapeBorderClipper(
+                shape: appCornerBorder(radius: AppleColors.radiusCard),
+              ),
               child: Material(
                 color: Colors.transparent,
                 child: CardTransitionSource(

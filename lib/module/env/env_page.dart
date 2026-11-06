@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/add_select_all_button.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
@@ -867,7 +868,7 @@ class EnvItemCell extends StatelessWidget {
     );
     if (isCyber) {
       // 赛博模式：用 CyberSlidable（Material elevation 光晕）
-      return CapsuleGlowCard(
+      return CapsuleGlowCard.continuous(
         isCyber: true,
         isPinned: false,
         margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
@@ -932,12 +933,14 @@ class EnvItemCell extends StatelessWidget {
       );
     }
 
-    return CapsuleGlowCard(
+    return CapsuleGlowCard.continuous(
       isCyber: false,
       isPinned: false,
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
+      child: ClipPath(
+        clipper: ShapeBorderClipper(
+          shape: appCornerBorder(radius: AppleColors.radiusCard),
+        ),
         child: Slidable(
           enabled: !editMode,
           key: ValueKey(bean.sId),

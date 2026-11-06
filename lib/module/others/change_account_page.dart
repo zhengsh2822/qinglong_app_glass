@@ -256,7 +256,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     }
 
     // 卡片容器（复用 CapsuleGlowCard 高光内发光设计，与账号排序页统一）
-    Widget card = CapsuleGlowCard(
+    Widget card = CapsuleGlowCard.continuous(
       isCyber: isCyber,
       isPinned: false,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -427,7 +427,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: CardTransitionSource(
-        child: CapsuleGlowCard(
+        child: CapsuleGlowCard.continuous(
           isCyber: isCyber,
           isPinned: false,
           child: Material(

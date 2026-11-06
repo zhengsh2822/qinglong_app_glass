@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 
 /// 只读标签 chip 组件
 ///
@@ -29,10 +30,12 @@ class TagChip extends ConsumerWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
+        shape: appCornerBorder(
+          radius: 10,
+          side: BorderSide(color: accentColor.withValues(alpha: 0.4)),
+        ),
         color: accentColor.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: accentColor.withValues(alpha: 0.4)),
       ),
       child: Text(
         label,
@@ -40,7 +43,7 @@ class TagChip extends ConsumerWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight(ref.watch(textWeightProvider)),
           color: accentColor,
         ),
       ),

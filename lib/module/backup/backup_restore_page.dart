@@ -136,7 +136,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
                     padding: EdgeInsets.symmetric(horizontal: 15),
                   ),
                   const SizedBox(height: 5),
-                  OtherPageCard(
+                  OtherPageCard.continuous(
                     margin: EdgeInsets.zero,
                     child: SettingsTapRow(
                       title: "备份文件删除频率",
@@ -202,7 +202,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
   // ==================== 三件套本地备份（原文件备份页内容） ====================
 
   Widget _buildAutoCard() {
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       margin: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -252,7 +252,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
   }
 
   Widget _buildEnvCard() {
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       margin: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -291,7 +291,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
   }
 
   Widget _buildConfigCard() {
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       margin: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -336,7 +336,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
   }
 
   Widget _buildSubscribeCard() {
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       margin: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -452,7 +452,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
   }
 
   Widget _buildTgzBackupSection() {
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
@@ -517,7 +517,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
   }
 
   Widget _buildTgzRestoreSection() {
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(

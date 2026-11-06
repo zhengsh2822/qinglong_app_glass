@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/base_state_widget.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
@@ -267,12 +268,14 @@ class AppKeyItemCell extends StatelessWidget {
     );
     // 统一结构：CapsuleGlowCard（外层阴影/高光，赛博/非赛博一致）→
     // ClipRRect(18) → Slidable → 纯内容卡片（与 subscribe/env 对齐）
-    return CapsuleGlowCard(
+    return CapsuleGlowCard.continuous(
       isCyber: isCyber,
       isPinned: false,
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
+      child: ClipPath(
+        clipper: ShapeBorderClipper(
+          shape: appCornerBorder(radius: AppleColors.radiusCard),
+        ),
         child: Slidable(
           key: ValueKey(getAppKeyId(bean)),
           endActionPane: ActionPane(

@@ -8,6 +8,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/container_page_route.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
@@ -82,8 +83,10 @@ class _AboutPageState extends ConsumerState<AboutPage>
             children: [
               SizedBox(height: MediaQuery.of(context).size.height / 25),
               Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
+                child: ClipPath(
+                  clipper: ShapeBorderClipper(
+                    shape: appCornerBorder(radius: 18),
+                  ),
                   child: Image.asset("assets/images/ql.png", height: 60),
                 ),
               ),
@@ -109,7 +112,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
                 ),
               ),
               const SizedBox(height: 30),
-              OtherPageCard(
+              OtherPageCard.continuous(
                 child: Column(
                   children: [
                     Material(
@@ -225,7 +228,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
                 padding: EdgeInsets.symmetric(horizontal: 30),
               ),
               const SizedBox(height: 10),
-              OtherPageCard(
+              OtherPageCard.continuous(
                 padding: const EdgeInsets.symmetric(
                   vertical: 12,
                   horizontal: 15,
@@ -255,7 +258,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
                 padding: EdgeInsets.symmetric(horizontal: 30),
               ),
               const SizedBox(height: 10),
-              OtherPageCard(
+              OtherPageCard.continuous(
                 child: Column(
                   children: [
                     QlVisible(

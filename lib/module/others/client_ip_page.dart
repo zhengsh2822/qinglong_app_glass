@@ -233,7 +233,7 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
   Widget _buildErrorCard(bool isCyber) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppleColors.spaceMd),
-      child: OtherPageCard(
+      child: OtherPageCard.continuous(
         padding: const EdgeInsets.all(14),
         child: Text(
           _errorMsg ?? '',
@@ -264,7 +264,7 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
         ? '环境变量 QL_TRUST_PROXY'
         : (_source == 'system' ? '系统设置' : '默认值 loopback');
 
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,7 +339,7 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
     final List forwarded = (d?['forwardedFor'] as List?) ?? const [];
     final List expressIps = (d?['expressIps'] as List?) ?? const [];
 
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -444,7 +444,7 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
   Widget _buildBlacklistCard(bool isCyber) {
     final Color desc = ref.watch(themeProvider).themeColor.descColor();
 
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

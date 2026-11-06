@@ -133,7 +133,7 @@ class _WebDavPageState extends ConsumerState<WebDavPage>
   // ==================== 服务器配置 ====================
 
   Widget _buildServerCard() {
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       margin: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -229,7 +229,7 @@ class _WebDavPageState extends ConsumerState<WebDavPage>
   // ==================== 自动备份 ====================
 
   Widget _buildAutoCard() {
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       margin: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -261,7 +261,7 @@ class _WebDavPageState extends ConsumerState<WebDavPage>
   // ==================== 数据快照 ====================
 
   Widget _buildSnapshotCard() {
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       margin: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -389,7 +389,7 @@ class _WebDavPageState extends ConsumerState<WebDavPage>
   // ==================== 全量面板包 ====================
 
   Widget _buildFullCard() {
-    return OtherPageCard(
+    return OtherPageCard.continuous(
       margin: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,

@@ -58,7 +58,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                 padding: EdgeInsets.symmetric(horizontal: 15),
               ),
               const SizedBox(height: 5),
-              OtherPageCard(
+              OtherPageCard.continuous(
                 margin: EdgeInsets.zero,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -93,7 +93,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                 padding: EdgeInsets.symmetric(horizontal: 15),
               ),
               const SizedBox(height: 5),
-              OtherPageCard(
+              OtherPageCard.continuous(
                 margin: EdgeInsets.zero,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -175,7 +175,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                 padding: const EdgeInsets.symmetric(horizontal: 15),
               ),
               const SizedBox(height: 5),
-              OtherPageCard(
+              OtherPageCard.continuous(
                 margin: EdgeInsets.zero,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -268,7 +268,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                 padding: EdgeInsets.symmetric(horizontal: 15),
               ),
               const SizedBox(height: 5),
-              OtherPageCard(
+              OtherPageCard.continuous(
                 margin: EdgeInsets.zero,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -354,7 +354,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                 padding: EdgeInsets.symmetric(horizontal: 15),
               ),
               const SizedBox(height: 5),
-              OtherPageCard(
+              OtherPageCard.continuous(
                 margin: EdgeInsets.zero,
                 child: SettingsTapRow(
                   title: "备份文件删除频率",

@@ -1137,7 +1137,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
   Widget _buildCard({required bool isCyber, required Widget child}) {
     return SizedBox(
       width: double.infinity,
-      child: CapsuleGlowCard(
+      child: CapsuleGlowCard.continuous(
         isCyber: isCyber,
         isPinned: false,
         padding: const EdgeInsets.all(16),

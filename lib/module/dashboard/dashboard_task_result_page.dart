@@ -195,7 +195,7 @@ class DashboardTaskResultPageState extends ConsumerState<DashboardTaskResultPage
     final Color countColor =
         widget.isSuccess ? CyberColors.neonGreen : CyberColors.neonRed;
 
-    return CapsuleGlowCard(
+    return CapsuleGlowCard.continuous(
       isCyber: isCyber,
       isPinned: false,
       padding: const EdgeInsets.all(14),

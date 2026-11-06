@@ -37,13 +37,14 @@ class SelectableChip extends ConsumerWidget {
 
     final Color accentColor =
         ref.watch(themeProvider).primaryColor;
-    final Color titleColor =
-        isCyber ? CyberColors.titleWhite : AppleColors.textPrimary;
     final Color descColor =
         isCyber ? CyberColors.descColor : AppleColors.textSecondary;
-    // 未选中态字体跟随自定义"次字体颜色"设置（未设置时回退到默认次色）
+    // 选中态字体跟随自定义"主字体颜色"，未选中跟随"次字体颜色"
+    final Color selectedText =
+        ref.watch(themeProvider).customPrimaryTextColor;
     final Color unselectedText =
         ref.watch(themeProvider).customSecondaryTextColor;
+    final FontWeight fw = FontWeight(ref.watch(textWeightProvider));
 
     // 选中态颜色
     final Color selectedBg = accentColor.withValues(alpha: 0.15);
@@ -84,8 +85,9 @@ class SelectableChip extends ConsumerWidget {
               label,
               style: TextStyle(
                 fontSize: 12,
+                fontWeight: fw,
                 color: selected
-                    ? titleColor
+                    ? selectedText
                     : (disabled ? descColor.withValues(alpha: 0.5) : unselectedText),
               ),
             ),

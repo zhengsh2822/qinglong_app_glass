@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
@@ -63,9 +64,11 @@ class CyberDialog {
                         scale: 0.92 + 0.08 * t,
                         child: Padding(
                           padding: padding,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(
-                              CyberDialog.borderRadius,
+                          child: ClipPath(
+                            clipper: ShapeBorderClipper(
+                              shape: appCornerBorder(
+                                radius: CyberDialog.borderRadius,
+                              ),
                             ),
                             child:
                                 blurEnabled
@@ -100,13 +103,15 @@ class CyberDialog {
 Widget _cyberDialogCard(double cardAlpha, Widget child) {
   return Container(
     padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
-    decoration: BoxDecoration(
-      color: CyberColors.bg.withValues(alpha: cardAlpha),
-      borderRadius: BorderRadius.circular(CyberDialog.borderRadius),
-      border: Border.all(
-        color: CyberColors.cyan.withValues(alpha: 0.2),
-        width: 0.5,
+    decoration: ShapeDecoration(
+      shape: appCornerBorder(
+        radius: CyberDialog.borderRadius,
+        side: BorderSide(
+          color: CyberColors.cyan.withValues(alpha: 0.2),
+          width: 0.5,
+        ),
       ),
+      color: CyberColors.bg.withValues(alpha: cardAlpha),
     ),
     child: child,
   );

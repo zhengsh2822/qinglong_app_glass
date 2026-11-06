@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 
 /// "我的"页面通用卡片
@@ -18,13 +19,26 @@ class OtherPageCard extends ConsumerWidget {
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
 
+  /// 圆角曲线类型；默认普通圆角，设置页可按需切换连续曲率。
+  final AppCornerStyle cornerStyle;
+
   const OtherPageCard({
     super.key,
     required this.child,
     this.margin,
     this.padding,
     this.onTap,
+    this.cornerStyle = AppCornerStyle.circular,
   });
+
+  /// 连续曲率圆角卡片：设置子页统一使用，其他页面保持默认普通圆角。
+  const OtherPageCard.continuous({
+    super.key,
+    required this.child,
+    this.margin,
+    this.padding,
+    this.onTap,
+  }) : cornerStyle = AppCornerStyle.continuous;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,6 +54,7 @@ class OtherPageCard extends ConsumerWidget {
       borderRadius: const BorderRadius.all(
         Radius.circular(AppleColors.radiusCard),
       ),
+      cornerStyle: cornerStyle,
       onTap: onTap,
       child: child,
     );
