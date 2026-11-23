@@ -1488,6 +1488,27 @@ class TaskItemCell extends StatelessWidget {
                               ),
                             ),
                           ),
+                          // 附加规则数徽章（青龙 2.24+ 一任务多规则，Issue #3）
+                          if ((bean.extraSchedules?.length ?? 0) > 0)
+                            Container(
+                              margin: const EdgeInsets.only(left: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: cronColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: cronColor.withValues(alpha: 0.4),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Text(
+                                "+${bean.extraSchedules!.length}",
+                                style: TextStyle(fontSize: 10, color: cronColor),
+                              ),
+                            ),
                         ],
                       ),
                       const SizedBox(height: 3),

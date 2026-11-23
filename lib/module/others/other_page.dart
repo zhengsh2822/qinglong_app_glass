@@ -267,7 +267,8 @@ class OtherPageState extends ConsumerState<OtherPage>
 
                   right: AppleColors.spaceMd,
 
-                  top: AppleColors.spaceLg,
+                  // 卡片间距对齐列表页标准（12px，此前 24px 明显宽于其他页）
+                  top: 12,
                 ),
 
                 onTap: () {
@@ -309,7 +310,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                 ),
               ),
 
-              const SizedBox(height: AppleColors.spaceLg),
+              const SizedBox(height: 12),
 
               OtherPageCard.continuous(
                 padding: const EdgeInsets.symmetric(
@@ -325,7 +326,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                     const SizedBox(height: 5),
 
                     Text(
-                      "多帐号设置/第三方功能",
+                      "账号设置/第三方功能",
 
                       style: TextStyle(
                         fontWeight: FontWeight(ref.watch(textWeightProvider)),
@@ -365,6 +366,21 @@ class OtherPageState extends ConsumerState<OtherPage>
                           },
                         ),
 
+                        if (!SpUtil.getBool(spSingleInstance, defValue: false))
+                          _buildFeatureButton(
+                            title: "账号排序",
+
+                            icon: CupertinoIcons.arrow_swap,
+
+                            onTap: () {
+                              Navigator.of(context).push(
+                                ContainerPageRoute(
+                                  builder: (context) => const SortAccountPage(),
+                                ),
+                              );
+                            },
+                          ),
+
                         _buildFeatureButton(
                           title: "京东助手",
 
@@ -396,7 +412,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                   ],
                 ),
               ),
-              const SizedBox(height: AppleColors.spaceLg),
+              const SizedBox(height: 12),
 
               OtherPageCard.continuous(
                 padding: const EdgeInsets.symmetric(
@@ -469,18 +485,14 @@ class OtherPageState extends ConsumerState<OtherPage>
 
                         if (!SpUtil.getBool(spSingleInstance, defValue: false))
                           _buildFeatureButton(
-                            title: "账号排序",
+                            title: "AI 助手",
 
-                            icon: CupertinoIcons.arrow_swap,
+                          icon: Icons.auto_awesome_outlined,
 
-                            onTap: () {
-                              Navigator.of(context).push(
-                                ContainerPageRoute(
-                                  builder: (context) => const SortAccountPage(),
-                                ),
-                              );
-                            },
-                          ),
+                          onTap: () {
+                            Navigator.of(context).pushNamed(Routes.routeAgent);
+                          },
+                        ),
                       ],
                     ),
 
@@ -489,7 +501,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                 ),
               ),
 
-              const SizedBox(height: AppleColors.spaceLg),
+              const SizedBox(height: 12),
 
               OtherPageCard.continuous(
                 padding: const EdgeInsets.symmetric(
@@ -579,7 +591,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                 ),
               ),
 
-              const SizedBox(height: AppleColors.spaceLg),
+              const SizedBox(height: 12),
 
               OtherPageCard.continuous(
                 padding: const EdgeInsets.symmetric(

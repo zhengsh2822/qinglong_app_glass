@@ -30,6 +30,7 @@ import '../../../main.dart';
 import '../../config/config_detail_page.dart';
 import '../../home/system_bean.dart';
 import 'script_upload_page.dart';
+import 'script_history_page.dart';
 import '../../../base/ui/container_page_route.dart';
 
 class ScriptDetailPage extends ConsumerStatefulWidget {
@@ -85,6 +86,11 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
           );
         },
       ),
+      // 2.23.0+ 面板支持脚本编辑历史（API 密钥方式无该路由，故一并排除）
+      if (_supportsHistory()) ...[
+        addDivider(),
+        CupertinoSheer(title: "历史版本", onTap: _openHistory),
+      ],
       addDivider(),
       CupertinoSheer(
         title: "编辑",
@@ -148,6 +154,39 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
         },
       ),
     ]);
+  }
+
+  /// 面板是否支持脚本历史（2.23.0+ 且为账号密码登录）
+  bool _supportsHistory() {
+    try {
+      if (SingleAccountPageState.ofUserInfo(context).useSecretLogined) {
+        return false;
+      }
+      return getIt<SystemBean>(
+        instanceName:
+            (SingleAccountPageState.of(context)?.index ?? 0).toString(),
+      ).isUpperVersion2_23_0();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// 打开历史版本页；恢复成功时同步页面内容
+  Future<void> _openHistory() async {
+    final dynamic value = await Navigator.of(context).push(
+      ContainerPageRoute(
+        builder:
+            (context) => ScriptHistoryPage(
+              title: widget.title,
+              path: widget.path,
+            ),
+      ),
+    );
+    if (!mounted) return;
+    if (value is String && value != content) {
+      content = value;
+      setState(() {});
+    }
   }
 
   /// 删除脚本（提取公共逻辑，供赛博/非赛博弹窗共用）

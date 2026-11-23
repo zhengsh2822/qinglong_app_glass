@@ -185,7 +185,11 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage>
                       ),
                       TaskDetailCell(
                         title: "任务定时",
-                        desc: widget.taskBean.schedule ?? "",
+                        // 一任务多规则（青龙 2.24+，Issue #3）：主规则 + 附加规则逐行显示
+                        desc: [
+                          widget.taskBean.schedule ?? "",
+                          ...?widget.taskBean.extraSchedules,
+                        ].where((s) => s.isNotEmpty).join("\n"),
                       ),
                       Obx(() {
                         return TaskDetailCell(
