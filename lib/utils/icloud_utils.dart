@@ -30,7 +30,7 @@ class ICloudUtils {
     try {
       if (list.isEmpty) return;
       if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
-      if (SpUtil.getBool(spICloud, defValue: true) == false &&
+      if (Utils.accountSpBool(spICloud, index, defValue: true) == false &&
           focusUpdate == false) {
         return;
       }
@@ -64,7 +64,7 @@ class ICloudUtils {
     try {
       if (list.isEmpty) return;
       if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
-      if (SpUtil.getBool(spICloud, defValue: true) == false &&
+      if (Utils.accountSpBool(spICloud, index, defValue: true) == false &&
           focusUpdate == false) {
         return;
       }
@@ -90,7 +90,7 @@ class ICloudUtils {
       if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
 
       if (content.isEmpty) return;
-      if (SpUtil.getBool(spICloud, defValue: true) == false &&
+      if (Utils.accountSpBool(spICloud, index, defValue: true) == false &&
           focusUpdate == false) {
         return;
       }

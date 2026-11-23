@@ -2,25 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/agent/agent_config.dart';
-import 'package:qinglong_app/agent/agent_capability.dart';
 import 'package:qinglong_app/agent/agent_mcp_server.dart';
 import 'package:qinglong_app/agent/agent_protocol.dart';
 import 'package:qinglong_app/agent/agent_session_store.dart';
 import 'package:qinglong_app/agent/agent_tools.dart';
 import 'package:qinglong_app/agent/mcp_client_formats.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
+import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/ui/agent_toast.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
 import 'package:qinglong_app/base/ui/selector_card.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/scope_picker.dart';
+import 'package:qinglong_app/main.dart';
 
 /// Agent 设置：四档后端在客户端里收敛为「内置 / 远程」两个入口。
 /// 远程入口服务于自建 HTTP 端点与 KSU Agent Core，
 /// 二者只要实现同一份 /v1/agent 事件协议即可。
 /// 取色、字重、沉浸与键盘处理全部按项目统一方案，不另起一套。
 class AgentSettingsPage extends ConsumerStatefulWidget {
-  const AgentSettingsPage({super.key});
+  /// 打开本页的账号槽位（由 AI 助手页显式传入）。
+  final int? accountIndex;
+
+  const AgentSettingsPage({super.key, this.accountIndex});
 
   @override
   ConsumerState<AgentSettingsPage> createState() => _AgentSettingsPageState();
@@ -49,6 +53,10 @@ class _AgentSettingsPageState extends ConsumerState<AgentSettingsPage>
   bool _loading = true;
   bool _saving = false;
 
+  /// 当前账号槽位（MCP 工具执行必须绑定本页所在账号，不能用全局第一个账号）
+  int _accountIndex = 0;
+  bool _slotResolved = false;
+
   final TextEditingController _mcpPortCtrl = TextEditingController(
     text: '9127',
   );
@@ -59,6 +67,17 @@ class _AgentSettingsPageState extends ConsumerState<AgentSettingsPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_slotResolved) return;
+    _slotResolved = true;
+    _accountIndex =
+        widget.accountIndex ??
+        SingleAccountPageState.of(context)?.index ??
+        MultiAccountPageState.currentAccountIndex;
     _load();
   }
 
@@ -143,12 +162,12 @@ class _AgentSettingsPageState extends ConsumerState<AgentSettingsPage>
     // MCP Server 随开关启停：启用则起本地 HTTP 服务，关闭则停
     if (_mcpEnabled) {
       try {
-        final index = AgentCapabilityService.resolveAccountIndex();
         await AgentMCPServer.instance.start(
           port: _mcpPort,
-          executor: QingLongToolExecutor(index, scopes: _scopes),
+          executor: QingLongToolExecutor(_accountIndex, scopes: _scopes),
           scopes: _scopes,
           lan: _mcpLan,
+          accountIndex: _accountIndex,
         );
         _mcpPort = AgentMCPServer.instance.port;
       } catch (_) {

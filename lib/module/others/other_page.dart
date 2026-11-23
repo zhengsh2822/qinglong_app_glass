@@ -490,7 +490,10 @@ class OtherPageState extends ConsumerState<OtherPage>
                           icon: Icons.auto_awesome_outlined,
 
                           onTap: () {
-                            Navigator.of(context).pushNamed(Routes.routeAgent);
+                            Navigator.of(context).pushNamed(
+                              Routes.routeAgent,
+                              arguments: SingleAccountPageState.ofIndex(context),
+                            );
                           },
                         ),
                       ],

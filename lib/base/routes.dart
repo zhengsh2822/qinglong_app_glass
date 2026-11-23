@@ -200,10 +200,25 @@ class Routes {
       case routeJdck:
         return ContainerPageRoute(builder: (context) => const JdckPage());
       case routeAgent:
-        return ContainerPageRoute(builder: (context) => const AgentPage());
+        // 入口显式传账号槽位，路由内不再猜「当前是哪个账号」
+        return ContainerPageRoute(
+          builder:
+              (context) => AgentPage(
+                accountIndex:
+                    settings.arguments is int
+                        ? settings.arguments! as int
+                        : null,
+              ),
+        );
       case routeAgentSettings:
         return ContainerPageRoute(
-          builder: (context) => const AgentSettingsPage(),
+          builder:
+              (context) => AgentSettingsPage(
+                accountIndex:
+                    settings.arguments is int
+                        ? settings.arguments! as int
+                        : null,
+              ),
         );
     }
 

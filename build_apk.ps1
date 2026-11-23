@@ -64,15 +64,22 @@ Write-Host "[1/4] build start (mode=$mode)..." -ForegroundColor Green
 Write-Host "command: flutter $($buildArgs -join ' ')" -ForegroundColor DarkGray
 
 $beforeTime = Get-Date
-& flutter @buildArgs | Out-Null
+# PowerShell 5 会把原生命令的 stderr 当成 NativeCommandError，在
+# $ErrorActionPreference="Stop" 下直接中断脚本（Gradle 的版本提示警告也会触发）。
+# 这里临时放宽，仅以 flutter 退出码判定构建成败。
+$prevEA = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+& flutter @buildArgs
+$buildExit = $LASTEXITCODE
+$ErrorActionPreference = $prevEA
 # 严禁忽略构建失败：一旦 flutter 编译出错（Gradle 被占用/代码报错），
 # 立即中止，绝不能复用 build 目录里上次成功的旧包复制改名（曾导致
 # release_32 = release_31 复制品，新改动全部丢失）
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "[ERROR] flutter build failed (exit code $LASTEXITCODE), abort. 不复制旧包!" -ForegroundColor Red
+if ($buildExit -ne 0) {
+    Write-Host "[ERROR] flutter build failed (exit code $buildExit), abort. 不复制旧包!" -ForegroundColor Red
     exit 1
 }
-Write-Host "flutter build finished (exit code $LASTEXITCODE)" -ForegroundColor DarkGray
+Write-Host "flutter build finished (exit code $buildExit)" -ForegroundColor DarkGray
 
 # 3. find APK
 $apkDir = Join-Path $projectRoot "build\app\outputs\flutter-apk"

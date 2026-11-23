@@ -30,6 +30,7 @@ import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/file_picker_utils.dart';
 import 'package:qinglong_app/utils/icloud_utils.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
+import 'package:qinglong_app/utils/utils.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// 备份与恢复页（合并页）：
@@ -210,9 +211,9 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
         children: [
           SettingsSwitchRow(
             title: "自动备份",
-            value: SpUtil.getBool(spICloud, defValue: true),
+            value: Utils.accountSpBool(spICloud, _index, defValue: true),
             onChanged: (v) {
-              SpUtil.putBool(spICloud, v);
+              SpUtil.putBool(Utils.accountSpKey(spICloud, _index), v);
               setState(() {});
             },
           ),
@@ -235,7 +236,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            SpUtil.getString(timeSpKey, defValue: ""),
+            Utils.accountSpString(timeSpKey, _index),
             style: TextStyle(
               fontSize: 16,
               color: ref.watch(themeProvider).themeColor.descColor(),
@@ -267,7 +268,10 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
                 await getIt<ICloudUtils>(
                   instanceName: _index.toString(),
                 ).asyncEnv(result.bean ?? [], focusUpdate: true);
-                SpUtil.putString(spEnvBackTime, ICloudUtils.now());
+                SpUtil.putString(
+                  Utils.accountSpKey(spEnvBackTime, _index),
+                  ICloudUtils.now(),
+                );
                 setState(() {});
               } catch (_) {}
             },
@@ -310,7 +314,10 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
                 await getIt<ICloudUtils>(
                   instanceName: _index.toString(),
                 ).asyncConfig("config.sh", content, focusUpdate: true);
-                SpUtil.putString(spConfigBackTime, ICloudUtils.now());
+                SpUtil.putString(
+                  Utils.accountSpKey(spConfigBackTime, _index),
+                  ICloudUtils.now(),
+                );
                 setState(() {});
               } else {
                 result.message!.toast();
@@ -351,7 +358,10 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
                 await getIt<ICloudUtils>(
                   instanceName: _index.toString(),
                 ).asyncSubscribe(result.bean ?? "", focusUpdate: true);
-                SpUtil.putString(spSubscribeBackTime, ICloudUtils.now());
+                SpUtil.putString(
+                  Utils.accountSpKey(spSubscribeBackTime, _index),
+                  ICloudUtils.now(),
+                );
                 setState(() {});
               } catch (_) {}
             },

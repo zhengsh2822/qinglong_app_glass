@@ -14,9 +14,11 @@ import 'package:qinglong_app/agent/agent_tools.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/routes.dart';
+import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
+import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 class _ChatEntry {
@@ -59,7 +61,10 @@ class _ChatEntry {
 /// 取色/字重走项目 themeProvider；键盘用 didChangeMetrics + View.of 取原始
 /// insets（main.dart 全局把 MediaQuery.viewInsets 归零了）。
 class AgentPage extends ConsumerStatefulWidget {
-  const AgentPage({super.key});
+  /// 打开本页的账号槽位（由入口页面显式传入，避免依赖路由内祖先查找）。
+  final int? accountIndex;
+
+  const AgentPage({super.key, this.accountIndex});
 
   @override
   ConsumerState<AgentPage> createState() => _AgentPageState();
@@ -76,9 +81,45 @@ class _AgentPageState extends ConsumerState<AgentPage>
   AgentPendingAction? _pendingAction;
   String _sessionKey = 'ai_session_default';
   int _accountIndex = 0;
+
+  /// 当前账号的面板主机（会话 key 的一部分，防止同一槽位换号后串数据）
+  String _accountHost = '';
+
+  /// 账号槽位只在首次依赖变化时解析（页面在本账号 Navigator 内）
+  bool _slotResolved = false;
   bool _busy = false;
   bool _ready = false;
   double _lastKeyboard = 0;
+
+  // ── 会话首屏性能（A 首帧直达底部 + C 按块读盘，同步自壁纸版）──
+  /// 恢复会话中：此期间不渲染空态，避免「空态闪一下再出内容」
+  bool _restoring = true;
+
+  /// 内存只保留一段窗口：_entries[0] 在整段会话中的绝对下标
+  int _windowStart = 0;
+
+  /// 已落盘条目数（绝对下标），用于只追加新消息、避免整段重写
+  int _persistedCount = 0;
+
+  /// 每页读盘 / 渲染条数
+  static const int _pageSize = 40;
+
+  /// 内存窗口上限：超过后从最旧侧丢弃（仅用户位于底部时）
+  static const int _maxWindow = 160;
+
+  bool _loadingEarlier = false;
+
+  /// 内置后端完整历史恢复（发送前 await，避免丢上下文）
+  Future<void>? _historyReady;
+
+  bool _persisting = false;
+  bool _persistPending = false;
+
+  /// 会话代际：清空/切换后端时自增，丢弃过期的异步落盘与历史恢复结果
+  int _sessionEpoch = 0;
+
+  /// 落盘防抖：流式回复期间每个事件都写盘会反复编码大 JSON
+  Timer? _persistTimer;
 
   // ── 悬浮输入框 · 弹簧接管（同步自 demos/kb_spring_demo v10）──
   // 只保留收起方向的落点回弹：一次性静态目标弹簧（目标=静止位，无斜坡滞后），
@@ -94,12 +135,17 @@ class _AgentPageState extends ConsumerState<AgentPage>
   double _velocity = 0; // IME 速度（px/s，正=升高）
   DateTime _lastInsetAt = DateTime.now();
 
-  /// 会话 key 用「后端 label + 固定账号索引」，不实时调 resolveAccountIndex()，
-  /// 避免账号 token 状态变化导致写入/读取 key 不一致（记录就丢了）。
+  /// 会话 key 用「后端 label + 页面所在账号槽位 + 面板主机」。
+  /// 槽位在页面首次挂载时由上下文固定，不再调 resolveAccountIndex()
+  /// （那会永远指向第一个已登录账号，导致多账号串会话/串面板执行）。
   String get _effectiveSessionKey {
     final backend = _backend;
     if (backend == null) return _sessionKey;
-    return AgentSessionStore.keyFor(backend.label, _accountIndex);
+    return AgentSessionStore.keyFor(
+      backend.label,
+      _accountIndex,
+      host: _accountHost,
+    );
   }
 
   @override
@@ -110,12 +156,30 @@ class _AgentPageState extends ConsumerState<AgentPage>
     _takeCtrl.addListener(() {
       if (mounted) setState(() => _takeoverValue = _takeCtrl.value);
     });
+    // 反向列表（0=底部）：滑到顶部附近时按页放出更早的记录
+    _scroll.addListener(_onScrollLoadEarlier);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_slotResolved) return;
+    _slotResolved = true;
+    // 优先用入口显式传入的槽位；否则取页面上下文，最后退回当前激活账号。
+    // 绝不能用 resolveAccountIndex()（永远第一个已登录账号 → 跨账号串数据）。
+    final SingleAccountPageState? slot = SingleAccountPageState.of(context);
+    _accountIndex =
+        widget.accountIndex ??
+        slot?.index ??
+        MultiAccountPageState.currentAccountIndex;
+    _accountHost = AgentCapabilityService.accountHost(_accountIndex);
     _initBackend();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _persistTimer?.cancel();
     // 退出前再落一次盘，避免最后一条消息只在内存里。
     _persist();
     _subscription?.cancel();
@@ -174,15 +238,14 @@ class _AgentPageState extends ConsumerState<AgentPage>
           ),
         )
         .whenComplete(() {
-      if (!mounted) return;
-      setState(() => _takeover = false);
-    });
+          if (!mounted) return;
+          setState(() => _takeover = false);
+        });
   }
 
   Future<void> _initBackend() async {
     final config = await AgentConfigStore.load();
-    final index = AgentCapabilityService.resolveAccountIndex();
-    _accountIndex = index; // 固定账号索引，写入/读取用同一个 key
+    final index = _accountIndex; // 已由页面上下文解析，固定不变
     final AgentBackend backend;
     if (config.backendType == AgentBackendType.builtin) {
       backend = BuiltinAgentBackend(
@@ -192,7 +255,11 @@ class _AgentPageState extends ConsumerState<AgentPage>
     } else {
       backend = RemoteAgentBackend(config: config);
     }
-    _sessionKey = AgentSessionStore.keyFor(backend.label, index);
+    _sessionKey = AgentSessionStore.keyFor(
+      backend.label,
+      index,
+      host: _accountHost,
+    );
 
     // 先让页面立刻可用，再异步恢复会话与探测能力，避免初始化阻塞发送。
     if (!mounted) return;
@@ -207,27 +274,98 @@ class _AgentPageState extends ConsumerState<AgentPage>
 
   Future<void> _restoreSession(AgentBackend backend) async {
     final key = _effectiveSessionKey;
-    final saved = await AgentSessionStore.load(key);
-    final entries = saved['entries'] ?? <Map<String, dynamic>>[];
+    // 按块读盘：只解最近 _pageSize 条，内存不加载整段会话
+    final AgentSessionWindow win = await AgentSessionStore.loadRecent(
+      key,
+      limit: _pageSize,
+    );
     if (!mounted || _backend != backend) return;
-    final history = saved['history'] ?? <Map<String, dynamic>>[];
-    if (backend is BuiltinAgentBackend) {
-      backend.restoreHistory(history);
-    }
     // 只在页面上还没有消息时才填充，避免把用户刚发的消息覆盖掉
-    // （此前无条件 _entries.clear()，恢复回来的历史是空，等于清空用户输入）。
     if (_entries.isEmpty) {
-      // 显式 lambda：factory constructor 直接 tear-off 会被推断成 dynamic，
-      // 导致 toList() 返回 List<dynamic>、addAll 抛类型异常，历史永远填不进去。
-      final parsed = <_ChatEntry>[];
-      for (final e in entries) {
+      final List<_ChatEntry> parsed = <_ChatEntry>[];
+      for (final e in win.entries) {
         parsed.add(_ChatEntry.fromJson(e));
       }
       setState(() {
         _entries.addAll(parsed);
+        _windowStart = win.startIndex;
+        _persistedCount = win.total;
+        _restoring = false;
       });
+    } else {
+      setState(() => _restoring = false);
     }
-    _scrollToBottom();
+    // 恢复完成：反向列表首帧直接停在底部，不做滚动动画
+    _scrollToBottom(force: true);
+    // 模型上下文（完整历史）后台恢复；发送前会 await，通常此时已完成
+    _historyReady = _restoreHistory(backend, key);
+  }
+
+  /// 后台恢复内置后端的完整对话历史（按块读盘 + 大 JSON 后台解码）
+  Future<void> _restoreHistory(AgentBackend backend, String key) async {
+    if (backend is! BuiltinAgentBackend) return;
+    final int epoch = _sessionEpoch;
+    final history = await AgentSessionStore.loadHistory(key);
+    if (!mounted || _backend != backend || epoch != _sessionEpoch) return;
+    backend.restoreHistory(history);
+  }
+
+  /// 反向列表滑到顶部附近：从磁盘读上一页更早记录
+  void _onScrollLoadEarlier() {
+    if (!_scroll.hasClients || _loadingEarlier || _windowStart <= 0) return;
+    final ScrollPosition p = _scroll.position;
+    if (p.pixels < p.maxScrollExtent - 240) return;
+    unawaited(_loadEarlier());
+  }
+
+  Future<void> _loadEarlier() async {
+    if (_loadingEarlier || _windowStart <= 0) return;
+    _loadingEarlier = true;
+    final int before = _windowStart;
+    try {
+      final earlier = await AgentSessionStore.loadEarlier(
+        _effectiveSessionKey,
+        beforeIndex: before,
+        count: _pageSize,
+      );
+      if (!mounted) return;
+      if (earlier.isEmpty) {
+        // 块缺失（存储异常）：停止继续向上请求，避免反复读盘
+        setState(() => _windowStart = 0);
+        return;
+      }
+      final List<_ChatEntry> parsed = <_ChatEntry>[];
+      for (final e in earlier) {
+        parsed.add(_ChatEntry.fromJson(e));
+      }
+      setState(() {
+        _entries.insertAll(0, parsed);
+        _windowStart = before - parsed.length;
+      });
+    } finally {
+      _loadingEarlier = false;
+    }
+  }
+
+  /// 内存窗口回收：仅在用户位于底部时，从最旧侧丢弃超出上限的部分。
+  /// 未落盘的条目一律不丢；反向列表下丢弃的是最上方内容，底部锚点不变。
+  void _trimWindow() {
+    if (_scroll.hasClients && _scroll.offset > 80) return;
+    if (_entries.length <= _maxWindow) return;
+    int drop = _entries.length - _maxWindow;
+    final int keepFrom = _persistedCount - _windowStart; // 未落盘起点
+    if (keepFrom >= 0 && drop > keepFrom) drop = keepFrom;
+    if (drop <= 0) return;
+    _entries.removeRange(0, drop);
+    _windowStart += drop;
+  }
+
+  /// 落盘防抖（流式事件频繁触发时合并写）
+  void _schedulePersist() {
+    _persistTimer?.cancel();
+    _persistTimer = Timer(const Duration(milliseconds: 400), () {
+      unawaited(_persist());
+    });
   }
 
   Future<void> _detectCapabilities(AgentBackend backend, int index) async {
@@ -244,6 +382,8 @@ class _AgentPageState extends ConsumerState<AgentPage>
   Future<void> _reload() async {
     // 先落盘，避免清空 _entries 时把未保存的消息丢掉
     await _persist();
+    _persistTimer?.cancel();
+    _sessionEpoch++;
     _subscription?.cancel();
     _backend?.dispose();
     setState(() {
@@ -251,32 +391,65 @@ class _AgentPageState extends ConsumerState<AgentPage>
       _backend = null;
       _pendingAction = null;
       _entries.clear();
+      _windowStart = 0;
+      _persistedCount = 0;
+      _historyReady = null;
+      _restoring = true;
     });
     await _initBackend();
   }
 
+  /// 追加落盘：只写尚未保存的新条目，重写末尾块；历史只重写变化块。
   Future<void> _persist() async {
-    if (_entries.isEmpty) return;
+    if (_persisting) {
+      _persistPending = true;
+      return;
+    }
+    _persisting = true;
+    try {
+      await _persistNow();
+    } finally {
+      _persisting = false;
+      if (_persistPending) {
+        _persistPending = false;
+        unawaited(_persist());
+      }
+    }
+  }
+
+  Future<void> _persistNow() async {
     final key = _effectiveSessionKey;
     // 还没完成初始化（key 仍是占位值）时不写，避免落到错误 key
     if (key == 'ai_session_default') return;
+    final int epoch = _sessionEpoch;
     final backend = _backend;
     try {
-      await AgentSessionStore.save(
-        key,
-        entries: _entries.map((e) => e.toJson()).toList(),
-        history:
-            backend is BuiltinAgentBackend
-                ? backend.historySnapshot()
-                : <Map<String, dynamic>>[],
-      );
+      // 未落盘起点在内存窗口中的位置
+      final int from = _persistedCount - _windowStart;
+      if (from >= 0 && from < _entries.length) {
+        final fresh = _entries.sublist(from).map((e) => e.toJson()).toList();
+        await AgentSessionStore.appendEntries(
+          key,
+          fresh,
+          atIndex: _persistedCount,
+        );
+        // 期间被清空/切换会话：丢弃本次计数（写入的孤立块无 meta 引用，不影响读取）
+        if (epoch != _sessionEpoch) return;
+        _persistedCount += fresh.length;
+      }
+      if (backend is BuiltinAgentBackend) {
+        await AgentSessionStore.saveHistory(key, backend.historySnapshot());
+      }
     } catch (_) {
       // 保存失败不阻断对话
     }
   }
 
   Future<void> _clearSession() async {
-    await AgentSessionStore.clear(_sessionKey);
+    _persistTimer?.cancel();
+    _sessionEpoch++;
+    final key = _effectiveSessionKey;
+    await AgentSessionStore.clear(key);
     if (_backend is BuiltinAgentBackend) {
       (_backend as BuiltinAgentBackend).restoreHistory(
         <Map<String, dynamic>>[],
@@ -285,22 +458,23 @@ class _AgentPageState extends ConsumerState<AgentPage>
     setState(() {
       _entries.clear();
       _pendingAction = null;
+      _windowStart = 0;
+      _persistedCount = 0;
+      _historyReady = null;
     });
   }
 
-  void _scrollToBottom() {
+  /// 定位到最新记录。反向列表下 offset 0 即底部，用 jumpTo 无滚动过程；
+  /// 非强制时仅当用户已在底部附近才跟随，避免打断向上翻看历史。
+  void _scrollToBottom({bool force = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scroll.hasClients) {
-        _scroll.animateTo(
-          _scroll.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-        );
-      }
+      if (!_scroll.hasClients) return;
+      if (!force && _scroll.offset > 80) return;
+      _scroll.jumpTo(0);
     });
   }
 
-  void _send() {
+  Future<void> _send() async {
     final text = _input.text.trim();
     if (text.isEmpty || _busy) return;
     final backend = _backend;
@@ -308,15 +482,24 @@ class _AgentPageState extends ConsumerState<AgentPage>
       '正在初始化，请稍候…'.toast();
       return;
     }
+    // 历史上下文可能还在按块恢复：等它完成再发送，避免模型丢上下文
+    final historyReady = _historyReady;
+    if (historyReady != null) {
+      try {
+        await historyReady;
+      } catch (_) {}
+      if (!mounted) return;
+    }
     _input.clear();
     _subscription?.cancel();
     setState(() {
       _entries.add(_ChatEntry(fromUser: true, text: text));
       _busy = true;
       _pendingAction = null;
+      _trimWindow();
     });
-    _scrollToBottom();
-    unawaited(_persist());
+    _scrollToBottom(force: true);
+    _schedulePersist();
 
     _subscription = backend
         .send(text)
@@ -354,9 +537,10 @@ class _AgentPageState extends ConsumerState<AgentPage>
                     _entries.add(_ChatEntry(fromUser: false, text: event.text));
                   }
               }
+              _trimWindow();
             });
             _scrollToBottom();
-            _persist();
+            _schedulePersist();
           },
           onError: (Object error) {
             if (!mounted) return;
@@ -366,12 +550,12 @@ class _AgentPageState extends ConsumerState<AgentPage>
               );
               _busy = false;
             });
-            _persist();
+            _schedulePersist();
           },
           onDone: () {
             if (!mounted) return;
             setState(() => _busy = false);
-            _persist();
+            _schedulePersist();
           },
         );
   }
@@ -397,7 +581,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
       );
       _busy = false;
     });
-    _scrollToBottom();
+    _scrollToBottom(force: true);
     await _persist();
   }
 
@@ -441,7 +625,9 @@ class _AgentPageState extends ConsumerState<AgentPage>
             tooltip: 'AI 设置',
             icon: const Icon(Icons.settings_outlined),
             onPressed: () async {
-              await Navigator.of(context).pushNamed(Routes.routeAgentSettings);
+              await Navigator.of(
+                context,
+              ).pushNamed(Routes.routeAgentSettings, arguments: _accountIndex);
               await _reload();
             },
           ),
@@ -460,40 +646,56 @@ class _AgentPageState extends ConsumerState<AgentPage>
                 Positioned.fill(
                   child: Padding(
                     padding: EdgeInsets.only(
-                      bottom:
-                          _entries.isEmpty ? navBottom + 58 : listPadding,
+                      bottom: _entries.isEmpty ? navBottom + 58 : listPadding,
                     ),
                     child:
                         _entries.isEmpty
-                            ? _buildEmpty(titleColor, descColor, accent)
-                            : ListView.builder(
-                              controller: _scroll,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
-                              ),
-                              itemCount: _entries.length + (_busy ? 1 : 0),
-                              itemBuilder: (context, index) {
-                                if (index >= _entries.length) {
-                                  return Padding(
-                                    padding: const EdgeInsets.all(14),
-                                    child: Center(
-                                      child: SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: accent,
+                            ? (_restoring
+                                // 恢复中：留白而非空态，避免「空态闪一下」
+                                ? const SizedBox.shrink()
+                                : _buildEmpty(titleColor, descColor, accent))
+                            : Builder(
+                              builder: (context) {
+                                // 内存中只有一段窗口，直接整段渲染即可
+                                final int visible = _entries.length;
+                                final int extra = _busy ? 1 : 0;
+                                return ListView.builder(
+                                  controller: _scroll,
+                                  // 反向列表：index 0 就是底部最新一条，
+                                  // 首帧 offset 0 = 天然停在最新记录，
+                                  // 无需「渲染后滚到底」的动画。
+                                  reverse: true,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  itemCount: visible + extra,
+                                  itemBuilder: (context, index) {
+                                    // 忙碌指示器固定在底部（最新一侧）
+                                    if (extra == 1 && index == 0) {
+                                      return Padding(
+                                        padding: const EdgeInsets.all(14),
+                                        child: Center(
+                                          child: SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: accent,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                  );
-                                }
-                                return _buildEntry(
-                                  _entries[index],
-                                  titleColor,
-                                  descColor,
-                                  accent,
+                                      );
+                                    }
+                                    final int i = index - extra;
+                                    // _entries 为时间正序：反向列表下从末尾往前取
+                                    return _buildEntry(
+                                      _entries[_entries.length - 1 - i],
+                                      titleColor,
+                                      descColor,
+                                      accent,
+                                    );
+                                  },
                                 );
                               },
                             ),
@@ -692,11 +894,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
     );
   }
 
-  Widget _buildComposer(
-    Color titleColor,
-    Color descColor,
-    Color accent,
-  ) {
+  Widget _buildComposer(Color titleColor, Color descColor, Color accent) {
     // 单一层次（对齐 demo）：胶囊是唯一视觉层，TextField 自身不画边框/底色。
     // 必须显式关闭 enabled/focused 等各状态 border —— 全局 InputDecorationTheme
     // 的 focusedBorder 会在聚焦时再画一个内层胶囊（"套着两层 UI"的来源）。
@@ -725,7 +923,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
                 onTap: () => AgentToast.hide(),
                 style: TextStyle(color: titleColor, fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: '说点什么，例如：今天运行了哪些任务？',
+                  hintText: '说点什么，如：今天运行哪些任务？',
                   hintStyle: TextStyle(fontSize: 13, color: descColor),
                   filled: false,
                   isDense: true,
