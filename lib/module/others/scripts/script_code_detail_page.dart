@@ -14,6 +14,7 @@ import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/language_utils.dart';
 import 'package:qinglong_app/utils/icloud_utils.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class ScriptCodeDetailPage extends ConsumerStatefulWidget {
   final String title;
@@ -142,9 +143,8 @@ class ScriptCodeDetailPageState extends ConsumerState<ScriptCodeDetailPage>
 
   Widget json() {
     return Center(
-      child: SelectableText(
+      child: CopyableSelectableText(
         getPrettyJSONString(),
-        selectionControls: cupertinoTextSelectionControls,
         selectionWidthStyle: BoxWidthStyle.max,
         selectionHeightStyle: BoxHeightStyle.max,
       ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_colors.dart';
 import '../theme.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// 固定顶部悬浮搜索框
 ///
@@ -47,8 +48,7 @@ class _SearchCellState extends ConsumerState<SearchCell> {
     final theme = ref.watch(themeProvider);
     final bool isCyber = theme.themeMode == modeCyber;
 
-    final Color bgColor =
-        isCyber ? const Color(0xFF12121A) : Colors.white;
+    final Color bgColor = isCyber ? const Color(0xFF12121A) : Colors.white;
     final Color borderColor =
         isCyber
             ? CyberColors.cyan.withValues(alpha: 0.28)
@@ -63,62 +63,62 @@ class _SearchCellState extends ConsumerState<SearchCell> {
     final List<BoxShadow> boxShadows =
         isCyber
             ? [
-                // 顶部青色高光（内发光）
-                BoxShadow(
-                  color: CyberColors.cyan.withValues(alpha: 0.18),
-                  blurRadius: 2,
-                  spreadRadius: 0.1,
-                  offset: const Offset(0, -1),
-                ),
-                // 底部青色内发光
-                BoxShadow(
-                  color: CyberColors.cyan.withValues(alpha: 0.06),
-                  blurRadius: 4,
-                  spreadRadius: 0.2,
-                  offset: const Offset(0, 1),
-                ),
-                // 青色外发光（悬浮）
-                BoxShadow(
-                  color: CyberColors.cyan.withValues(alpha: 0.04),
-                  blurRadius: 7,
-                  spreadRadius: 0.2,
-                  offset: const Offset(0, 3),
-                ),
-                // 青色远投影
-                BoxShadow(
-                  color: CyberColors.cyan.withValues(alpha: 0.015),
-                  blurRadius: 11,
-                  spreadRadius: 0.3,
-                  offset: const Offset(0, 5),
-                ),
-              ]
+              // 顶部青色高光（内发光）
+              BoxShadow(
+                color: CyberColors.cyan.withValues(alpha: 0.18),
+                blurRadius: 2,
+                spreadRadius: 0.1,
+                offset: const Offset(0, -1),
+              ),
+              // 底部青色内发光
+              BoxShadow(
+                color: CyberColors.cyan.withValues(alpha: 0.06),
+                blurRadius: 4,
+                spreadRadius: 0.2,
+                offset: const Offset(0, 1),
+              ),
+              // 青色外发光（悬浮）
+              BoxShadow(
+                color: CyberColors.cyan.withValues(alpha: 0.04),
+                blurRadius: 7,
+                spreadRadius: 0.2,
+                offset: const Offset(0, 3),
+              ),
+              // 青色远投影
+              BoxShadow(
+                color: CyberColors.cyan.withValues(alpha: 0.015),
+                blurRadius: 11,
+                spreadRadius: 0.3,
+                offset: const Offset(0, 5),
+              ),
+            ]
             : [
-                // 顶部浅灰高光（内发光）
-                BoxShadow(
-                  color: const Color(0xFFFAFAFA).withValues(alpha: 0.6),
-                  blurRadius: 2,
-                  spreadRadius: 0.1,
-                  offset: const Offset(0, -1),
-                ),
-                // 底部纯白内发光
-                BoxShadow(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  blurRadius: 3,
-                  spreadRadius: 0.2,
-                  offset: const Offset(0, 1),
-                ),
-                // 柔和外投影（极弱，几乎不遮下方列表第一项）
-                BoxShadow(
-                  color: const Color(0x0A000000),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-                BoxShadow(
-                  color: const Color(0x05000000),
-                  blurRadius: 2,
-                  offset: const Offset(0, 1),
-                ),
-              ];
+              // 顶部浅灰高光（内发光）
+              BoxShadow(
+                color: const Color(0xFFFAFAFA).withValues(alpha: 0.6),
+                blurRadius: 2,
+                spreadRadius: 0.1,
+                offset: const Offset(0, -1),
+              ),
+              // 底部纯白内发光
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.5),
+                blurRadius: 3,
+                spreadRadius: 0.2,
+                offset: const Offset(0, 1),
+              ),
+              // 柔和外投影（极弱，几乎不遮下方列表第一项）
+              BoxShadow(
+                color: const Color(0x0A000000),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+              BoxShadow(
+                color: const Color(0x05000000),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ];
 
     return Container(
       height: 38,
@@ -136,6 +136,7 @@ class _SearchCellState extends ConsumerState<SearchCell> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
+              contextMenuBuilder: copyableEditableTextMenu,
               controller: widget.controller,
               maxLines: 1,
               textAlign: TextAlign.left,

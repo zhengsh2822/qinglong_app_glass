@@ -17,6 +17,7 @@ import 'package:qinglong_app/utils/utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../config/config_detail_page.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class AddTaskPage extends ConsumerStatefulWidget {
   final TaskBean? taskBean;
@@ -91,6 +92,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
                   const TitleWidget("名称", required: true),
                   const SizedBox(height: 10),
                   TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     focusNode: focusNode,
                     controller: _nameController,
                     maxLines: 3,
@@ -112,6 +114,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
                   const TitleWidget("命令", required: true),
                   const SizedBox(height: 10),
                   TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     controller: _commandController,
                     maxLines: 4,
                     minLines: 1,
@@ -131,6 +134,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
                   const TitleWidget("定时规则", required: true),
                   const SizedBox(height: 10),
                   TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     controller: _cronController,
                     minLines: 1,
                     textAlignVertical: TextAlignVertical.center,
@@ -167,6 +171,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
                         children: [
                           Expanded(
                             child: TextField(
+                              contextMenuBuilder: copyableEditableTextMenu,
                               controller: _extraCronControllers[i],
                               minLines: 1,
                               textAlignVertical: TextAlignVertical.center,
@@ -297,10 +302,11 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
       taskBean.schedule = _cronController.text.trim();
       // 附加规则：丢弃空行；编辑场景总是全量提交（含空=清空），新增场景
       // 无附加规则时不带字段
-      final List<String> extras = _extraCronControllers
-          .map((c) => c.text.trim())
-          .where((s) => s.isNotEmpty)
-          .toList();
+      final List<String> extras =
+          _extraCronControllers
+              .map((c) => c.text.trim())
+              .where((s) => s.isNotEmpty)
+              .toList();
       taskBean.extraSchedules = extras;
 
       await EasyLoading.show(status: "提交中");

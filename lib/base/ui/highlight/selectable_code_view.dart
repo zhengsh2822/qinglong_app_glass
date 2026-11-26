@@ -1,11 +1,10 @@
 ﻿import 'dart:async';
-import 'dart:ui' show BoxHeightStyle, BoxWidthStyle;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highlight/highlight.dart' show highlight, Node;
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/base/ui/highlight/themes/atom_one_dark.dart';
 import 'package:qinglong_app/base/ui/highlight/themes/github.dart';
 
@@ -208,10 +207,10 @@ class _SelectableCodeViewState extends ConsumerState<SelectableCodeView> {
     ref.watch(themeProvider);
     _initTheme();
 
-    // SelectionArea：让所有分块共享一个选择会话，长按可跨块按字符自由框选复制；
+    // CopyableSelectionArea：让所有分块共享一个选择会话，长按可跨块按字符
+    // 自由框选复制，菜单统一为深色玻璃胶囊（复制 / 全选 + 已复制提示）；
     // 底层仍保留分块懒加载（ListView.builder），超长脚本性能不受影响。
-    return SelectionArea(
-      contextMenuBuilder: _buildContextMenu,
+    return CopyableSelectionArea(
       child: ColoredBox(
         color: _cachedBgColor ?? Colors.transparent,
         child: ListView.builder(
@@ -242,17 +241,14 @@ class _SelectableCodeViewState extends ConsumerState<SelectableCodeView> {
                   top: isFirst ? widget.padding.vertical / 2 : 0,
                   bottom: isLast ? widget.padding.vertical / 2 : 0,
                 ),
+                // 普通 Text.rich：选择交给外层 CopyableSelectionArea，
+                // 多个块共用同一个选择域，可跨块连续拖选
                 child: span == null
                     ? _PlaceholderText(
                         source: _chunks[index],
                         baseStyle: _baseStyle!,
                       )
-                    : SelectableText.rich(
-                        span,
-                        selectionControls: cupertinoTextSelectionControls,
-                        selectionWidthStyle: BoxWidthStyle.max,
-                        selectionHeightStyle: BoxHeightStyle.max,
-                      ),
+                    : Text.rich(span),
               ),
             );
           },
@@ -261,32 +257,6 @@ class _SelectableCodeViewState extends ConsumerState<SelectableCodeView> {
     );
   }
 
-  /// 长按/框选结束后的上下文菜单（中文：复制 / 全选）
-  Widget _buildContextMenu(
-    BuildContext context,
-    SelectableRegionState selectableRegionState,
-  ) {
-    return AdaptiveTextSelectionToolbar.buttonItems(
-      anchors: selectableRegionState.contextMenuAnchors,
-      buttonItems: [
-        ContextMenuButtonItem(
-          label: '复制',
-          onPressed: () {
-            // 官方 contextMenuBuilder 示例用法；SDK 对接口方法误标 deprecated，功能正常
-            // ignore: deprecated_member_use
-            selectableRegionState.copySelection(SelectionChangedCause.toolbar);
-            selectableRegionState.hideToolbar();
-          },
-        ),
-        ContextMenuButtonItem(
-          label: '全选',
-          onPressed: () {
-            selectableRegionState.selectAll(SelectionChangedCause.toolbar);
-          },
-        ),
-      ],
-    );
-  }
 }
 
 /// 占位文本：块尚未解析时显示纯文本（无高亮），解析完成后被 SelectableText 替换

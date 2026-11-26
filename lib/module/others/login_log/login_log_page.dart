@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/http/http.dart';
@@ -16,6 +15,7 @@ import 'package:qinglong_app/utils/utils.dart';
 
 import 'login_log_bean.dart';
 import 'package:qinglong_app/base/ui/content_entrance.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class LoginLogPage extends ConsumerStatefulWidget {
   const LoginLogPage({super.key});
@@ -98,9 +98,8 @@ class _LoginLogPageState extends ConsumerState<LoginLogPage>
                               ],
                             ),
                             const SizedBox(height: 10),
-                            SelectableText(
+                            CopyableSelectableText(
                               "${item.ip}",
-                              selectionControls: cupertinoTextSelectionControls,
                               selectionWidthStyle: BoxWidthStyle.max,
                               selectionHeightStyle: BoxHeightStyle.max,
                               style: TextStyle(

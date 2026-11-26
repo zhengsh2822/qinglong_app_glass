@@ -13,6 +13,7 @@ import '../../base/ql_app_bar.dart';
 import '../../base/single_account_page.dart';
 import '../../base/ui/selectable_chip.dart';
 import '../subscribe/add_subscribe_page.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class AddAppKeyPage extends ConsumerStatefulWidget {
   final Map<String, dynamic> bean;
@@ -128,6 +129,7 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
                   const TitleWidget("名称", required: true),
                   const SizedBox(height: 10),
                   TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     controller: _nameController,
                     maxLines: 3,
                     minLines: 1,
@@ -176,6 +178,7 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
                     children: [
                       Expanded(
                         child: TextField(
+                          contextMenuBuilder: copyableEditableTextMenu,
                           controller: _customScopeController,
                           textInputAction: TextInputAction.done,
                           onSubmitted: (_) => _addCustomScope(),

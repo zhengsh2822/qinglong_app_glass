@@ -11,7 +11,7 @@ import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:path/path.dart';
 import 'package:qinglong_app/utils/download_dir_utils.dart';
 import 'package:qinglong_app/utils/extension.dart';
-
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class ScriptDownloadPage extends ConsumerStatefulWidget {
   const ScriptDownloadPage({super.key});
@@ -60,6 +60,7 @@ class _ScriptDownloadPageState extends ConsumerState<ScriptDownloadPage> {
               const TitleWidget("远程地址"),
               const SizedBox(height: 15),
               TextField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 focusNode: focusNode,
                 controller: controller,
                 maxLines: 3,

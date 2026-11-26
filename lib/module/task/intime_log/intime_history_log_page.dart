@@ -1,4 +1,3 @@
-
 import 'package:qinglong_app/utils/share_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
+import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
@@ -37,17 +37,24 @@ class _InTimeHistoryLogPageState extends State<InTimeHistoryLogPage>
   bool isRequest = false;
   bool canRequest = true;
 
+  /// 上次拉取失败的提示；非空时页面显示错误态 + 重试，
+  /// 而不是伪装成"暂无日志"（日志文件可能是空的，两者必须区分开）
+  String? _loadError;
+
   getLogData() async {
     HttpResponse<String> response = await SingleAccountPageState.ofApi(
       context,
     ).taskLogDetail(widget.title, widget.path);
 
     if (response.success) {
-      content = response.bean;
+      content = response.bean ?? "";
+      _loadError = null;
     } else {
-      // 拉取失败也落地空态（toast 一次），避免永久加载
-      content ??= "";
-      (response.message ?? "").toast();
+      // 失败不再落地空态：保留可能已有的内容，首次失败则展示错误 + 重试。
+      // 原实现失败时 content = ""，用户看到的是"暂无日志"，
+      // 无法判断是日志真的为空还是请求失败（"有些直接显示没有日志"）。
+      _loadError = response.message ?? "日志读取失败";
+      _loadError!.toast();
     }
     if (mounted) setState(() {});
   }
@@ -55,6 +62,65 @@ class _InTimeHistoryLogPageState extends State<InTimeHistoryLogPage>
   @override
   void dispose() {
     super.dispose();
+  }
+
+  /// 日志内容区：加载中 / 读取失败（可重试） / 正常内容
+  Widget _buildBody(BuildContext context) {
+    if (_loadError != null && content == null) {
+      // 首次读取就失败：明确告知失败原因 + 重试，别显示成"暂无日志"
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                CupertinoIcons.exclamationmark_circle,
+                size: 34,
+                color: AppColors.warning,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                _loadError!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 14),
+              CupertinoButton(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
+                color: Theme.of(context).primaryColor,
+                borderRadius: BorderRadius.circular(999),
+                onPressed: () {
+                  setState(() {
+                    content = null;
+                    _loadError = null;
+                  });
+                  getLogData();
+                },
+                child: const Text(
+                  "重试",
+                  style: TextStyle(fontSize: 13, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (content == null) {
+      return const Center(child: LoadingWidget());
+    }
+    return CupertinoScrollbar(
+      child: LogTextView(
+        content: content,
+        accountIndex: SingleAccountPageState.of(context)?.index ?? 0,
+        // 真的读到空文件时才说"暂无日志"，与"读取失败"区分开
+        emptyText: "该日志文件为空",
+      ),
+    );
   }
 
   @override
@@ -99,15 +165,7 @@ class _InTimeHistoryLogPageState extends State<InTimeHistoryLogPage>
         ],
         title: widget.title,
       ),
-      body:
-          (content == null)
-              ? const Center(child: LoadingWidget())
-              : CupertinoScrollbar(
-                child: LogTextView(
-                  content: content,
-                  accountIndex: SingleAccountPageState.of(context)?.index ?? 0,
-                ),
-              ),
+      body: _buildBody(context),
     );
   }
 

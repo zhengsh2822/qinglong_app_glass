@@ -10,6 +10,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class UpdatePasswordPage extends ConsumerStatefulWidget {
   const UpdatePasswordPage({super.key});
@@ -61,6 +62,7 @@ class _UpdatePasswordPageState extends ConsumerState<UpdatePasswordPage>
                   const TitleWidget("用户名", required: true),
                   const SizedBox(height: 10),
                   TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     focusNode: focusNode,
                     controller: _nameController,
                     decoration: const InputDecoration(hintText: "请输入用户名"),
@@ -79,6 +81,7 @@ class _UpdatePasswordPageState extends ConsumerState<UpdatePasswordPage>
                   const TitleWidget("新密码", required: true),
                   const SizedBox(height: 10),
                   TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     obscureText: true,
                     controller: _passwordController,
                     maxLines: 1,
@@ -98,6 +101,7 @@ class _UpdatePasswordPageState extends ConsumerState<UpdatePasswordPage>
                   const TitleWidget("再次输入新密码", required: true),
                   const SizedBox(height: 10),
                   TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     obscureText: true,
                     maxLines: 1,
                     controller: _passwordAgainController,

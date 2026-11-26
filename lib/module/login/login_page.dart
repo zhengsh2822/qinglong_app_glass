@@ -28,6 +28,7 @@ import 'package:flip_card/flip_card.dart';
 
 import '../others/change_account_page.dart';
 import '../../base/ui/container_page_route.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   final bool fromAddNewAccount;
@@ -309,9 +310,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           GestureDetector(
             onDoubleTap: () {},
             child: ClipPath(
-              clipper: ShapeBorderClipper(
-                shape: appCornerBorder(radius: 12),
-              ),
+              clipper: ShapeBorderClipper(shape: appCornerBorder(radius: 12)),
               child: Image.asset("assets/images/ql.png", height: 45),
             ),
           ),
@@ -370,15 +369,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }) {
     final labelStyle =
         isCyber
-            ? const TextStyle(
-              fontSize: 14,
-              color: CyberColors.cyan,
-            )
+            ? const TextStyle(fontSize: 14, color: CyberColors.cyan)
             : TextStyle(
               fontSize: 14,
               color: ref.watch(themeProvider).themeColor.descColor(),
             );
     final field = TextField(
+      contextMenuBuilder: copyableEditableTextMenu,
       onChanged: (_) => setState(() {}),
       controller: controller,
       obscureText: obscureText,
@@ -585,10 +582,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 Text(
                   "历史账号",
                   style: TextStyle(
-                    color: ref
-                        .read(themeProvider)
-                        .themeColor
-                        .descColor(),
+                    color: ref.read(themeProvider).themeColor.descColor(),
                     fontSize: 14,
                   ),
                 ),
@@ -693,9 +687,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       borderRadius: const BorderRadius.all(Radius.circular(18)),
       child: ClipPath(
-        clipper: ShapeBorderClipper(
-          shape: appCornerBorder(radius: 18),
-        ),
+        clipper: ShapeBorderClipper(shape: appCornerBorder(radius: 18)),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -724,10 +716,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color: ref
-                                        .read(themeProvider)
-                                        .themeColor
-                                        .titleColor(),
+                                    color:
+                                        ref
+                                            .read(themeProvider)
+                                            .themeColor
+                                            .titleColor(),
                                     fontSize: 15,
                                   ),
                                 ),
@@ -736,10 +729,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               Icon(
                                 CupertinoIcons.pencil,
                                 size: 12,
-                                color: ref
-                                    .read(themeProvider)
-                                    .themeColor
-                                    .descColor(),
+                                color:
+                                    ref
+                                        .read(themeProvider)
+                                        .themeColor
+                                        .descColor(),
                               ),
                             ],
                           ),
@@ -752,10 +746,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: ref
-                                .read(themeProvider)
-                                .themeColor
-                                .descColor(),
+                            color:
+                                ref.read(themeProvider).themeColor.descColor(),
                             fontSize: 13,
                           ),
                         ),
@@ -776,10 +768,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       child: Icon(
                         CupertinoIcons.clear_thick,
                         size: 18,
-                        color: ref
-                            .read(themeProvider)
-                            .themeColor
-                            .descColor(),
+                        color: ref.read(themeProvider).themeColor.descColor(),
                       ),
                     ),
                   ),
@@ -868,9 +857,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         instanceName: name,
       ).currentState?.pushReplacementNamed(Routes.routeHomePage);
     }
-    context
-        .findAncestorStateOfType<MultiAccountPageState>()
-        ?.updateIndex(targetIndex);
+    context.findAncestorStateOfType<MultiAccountPageState>()?.updateIndex(
+      targetIndex,
+    );
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 

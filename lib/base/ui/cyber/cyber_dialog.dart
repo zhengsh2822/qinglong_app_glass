@@ -7,6 +7,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class CyberDialog {
   static const double borderRadius = 18.0;
@@ -28,7 +29,8 @@ class CyberDialog {
       barrierLabel: 'CyberDialog',
       barrierColor: Colors.transparent,
       transitionDuration: transitionDuration,
-      transitionBuilder: (context, animation, secondaryAnimation, child) => child,
+      transitionBuilder:
+          (context, animation, secondaryAnimation, child) => child,
       pageBuilder: (context, animation, secondaryAnimation) {
         final curved = CurvedAnimation(
           parent: animation,
@@ -36,8 +38,9 @@ class CyberDialog {
           reverseCurve: Curves.easeInCubic,
         );
         // 读取毛玻璃开关（动画期间不变化）
-        final bool blurEnabled =
-            ProviderScope.containerOf(context).read(blurEffectProvider);
+        final bool blurEnabled = ProviderScope.containerOf(
+          context,
+        ).read(blurEffectProvider);
         // 毛玻璃关闭时背景置为完全不透明（纯色），符合"关闭=纯色"契约
         final double cardAlpha = blurEnabled ? CyberDialog.dimOpacity : 1.0;
         return AnimatedBuilder(
@@ -78,10 +81,7 @@ class CyberDialog {
                                         sigmaX: 25,
                                         sigmaY: 25,
                                       ),
-                                      child: _cyberDialogCard(
-                                        cardAlpha,
-                                        child,
-                                      ),
+                                      child: _cyberDialogCard(cardAlpha, child),
                                     )
                                     : _cyberDialogCard(cardAlpha, child),
                           ),
@@ -183,18 +183,18 @@ class CyberGhostButton extends StatelessWidget {
           border: border,
         ),
         child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 15,
-                // 弹窗卡片按钮跟随全局字体粗细（原来固定 w600/w500 会无视设置）
-                fontWeight: FontWeight(
-                  ProviderScope.containerOf(context).read(textWeightProvider),
-                ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 15,
+              // 弹窗卡片按钮跟随全局字体粗细（原来固定 w600/w500 会无视设置）
+              fontWeight: FontWeight(
+                ProviderScope.containerOf(context).read(textWeightProvider),
               ),
             ),
           ),
+        ),
       ),
     );
 
@@ -211,10 +211,7 @@ Widget _buildCyberButtonRow({
 }) {
   return Row(
     children: [
-      CyberGhostButton(
-        label: cancelLabel,
-        onTap: onCancel,
-      ),
+      CyberGhostButton(label: cancelLabel, onTap: onCancel),
       const SizedBox(width: 12),
       CyberGhostButton(
         label: confirmLabel,
@@ -271,6 +268,7 @@ Future<bool?> showEditTaskDialog(
               ),
               const SizedBox(height: 6),
               TextFormField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: nameController,
                 style: _inputStyle,
                 decoration: CyberInputDecoration.standard.copyWith(
@@ -286,6 +284,7 @@ Future<bool?> showEditTaskDialog(
               ),
               const SizedBox(height: 6),
               TextFormField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: commandController,
                 style: _inputStyle,
                 maxLines: 3,
@@ -302,6 +301,7 @@ Future<bool?> showEditTaskDialog(
               ),
               const SizedBox(height: 6),
               TextFormField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: cronController,
                 style: _inputStyle,
                 decoration: CyberInputDecoration.standard.copyWith(
@@ -334,10 +334,7 @@ Future<bool?> showEditTaskDialog(
   });
 }
 
-const TextStyle _labelStyle = TextStyle(
-  color: Colors.white70,
-  fontSize: 12,
-);
+const TextStyle _labelStyle = TextStyle(color: Colors.white70, fontSize: 12);
 
 const TextStyle _inputStyle = TextStyle(
   color: CyberColors.titleWhite,
@@ -447,6 +444,7 @@ Future<String?> showEditScriptDialog(
                 padding: const EdgeInsets.all(12),
                 child: SingleChildScrollView(
                   child: TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     controller: contentController,
                     maxLines: null,
                     style: const TextStyle(
@@ -466,16 +464,17 @@ Future<String?> showEditScriptDialog(
             const SizedBox(height: 20),
 
             _buildCyberButtonRow(
-                cancelLabel: '取消',
-                confirmLabel: '保存',
-                danger: false,
-                onCancel: () => Navigator.of(context).pop(),
-                onConfirm: () => Navigator.of(context).pop(contentController.text),
-              ),
-            ],
-          ),
+              cancelLabel: '取消',
+              confirmLabel: '保存',
+              danger: false,
+              onCancel: () => Navigator.of(context).pop(),
+              onConfirm:
+                  () => Navigator.of(context).pop(contentController.text),
+            ),
+          ],
         ),
       ),
+    ),
   ).whenComplete(() {
     contentController.dispose();
   });
@@ -515,6 +514,7 @@ Future<String?> showCyberInputDialog(
             ),
             const SizedBox(height: 16),
             TextField(
+              contextMenuBuilder: copyableEditableTextMenu,
               controller: controller,
               keyboardType: keyboardType,
               obscureText: obscureText,
@@ -530,16 +530,16 @@ Future<String?> showCyberInputDialog(
             ),
             const SizedBox(height: 24),
             _buildCyberButtonRow(
-                cancelLabel: cancelLabel,
-                confirmLabel: confirmLabel,
-                danger: false,
-                onCancel: () => Navigator.of(context).pop(),
-                onConfirm: () => Navigator.of(context).pop(controller.text),
-              ),
-            ],
-          ),
+              cancelLabel: cancelLabel,
+              confirmLabel: confirmLabel,
+              danger: false,
+              onCancel: () => Navigator.of(context).pop(),
+              onConfirm: () => Navigator.of(context).pop(controller.text),
+            ),
+          ],
         ),
       ),
+    ),
   ).whenComplete(() {
     controller.dispose();
   });
@@ -582,15 +582,13 @@ Future<int?> showCyberFrequencyDialog(
               children: [
                 Text(
                   '每',
-                  style: TextStyle(
-                    color: CyberColors.titleWhite,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(color: CyberColors.titleWhite, fontSize: 15),
                 ),
                 const SizedBox(width: 12),
                 SizedBox(
                   width: 100,
                   child: TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     controller: controller,
                     textAlign: TextAlign.center,
                     keyboardType: TextInputType.number,
@@ -606,10 +604,7 @@ Future<int?> showCyberFrequencyDialog(
                 const SizedBox(width: 12),
                 Text(
                   unit,
-                  style: TextStyle(
-                    color: CyberColors.titleWhite,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(color: CyberColors.titleWhite, fontSize: 15),
                 ),
               ],
             ),
@@ -620,22 +615,22 @@ Future<int?> showCyberFrequencyDialog(
               danger: false,
               onCancel: () => Navigator.of(context).pop(),
               onConfirm: () {
-                  final value = int.tryParse(controller.text);
-                  if (value == null || value > maxValue) {
-                    '最大可设置$maxValue$unit'.toast();
-                    return;
-                  }
-                  if (value < minValue) {
-                    '最小可设置$minValue$unit'.toast();
-                    return;
-                  }
-                  Navigator.of(context).pop(value);
-                },
-              ),
-            ],
-          ),
+                final value = int.tryParse(controller.text);
+                if (value == null || value > maxValue) {
+                  '最大可设置$maxValue$unit'.toast();
+                  return;
+                }
+                if (value < minValue) {
+                  '最小可设置$minValue$unit'.toast();
+                  return;
+                }
+                Navigator.of(context).pop(value);
+              },
+            ),
+          ],
         ),
       ),
+    ),
   ).whenComplete(() {
     controller.dispose();
   });

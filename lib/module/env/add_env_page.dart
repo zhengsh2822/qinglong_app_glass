@@ -12,6 +12,7 @@ import 'package:qinglong_app/utils/extension.dart';
 
 import '../config/config_detail_page.dart';
 import '../subscribe/add_subscribe_page.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class AddEnvPage extends ConsumerStatefulWidget {
   final EnvBean? envBean;
@@ -93,6 +94,7 @@ class _AddEnvPageState extends ConsumerState<AddEnvPage>
                     const TitleWidget("名称", required: true),
                     const SizedBox(height: 10),
                     TextField(
+                      contextMenuBuilder: copyableEditableTextMenu,
                       focusNode:
                           (envBean.sId == null || envBean.sId!.isEmpty)
                               ? focusNode
@@ -140,6 +142,7 @@ class _AddEnvPageState extends ConsumerState<AddEnvPage>
                     const TitleWidget("备注"),
                     const SizedBox(height: 10),
                     TextField(
+                      contextMenuBuilder: copyableEditableTextMenu,
                       maxLines: 3,
                       minLines: 1,
                       controller: _remarkController,

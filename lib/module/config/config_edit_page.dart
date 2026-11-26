@@ -23,6 +23,7 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 import '../../base/sp_const.dart';
 import '../code_editor/codemirror/io.dart';
 import '../code_editor/editor.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class ConfigEditPage extends ConsumerStatefulWidget {
   final String content;
@@ -220,12 +221,9 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
                 },
                 itemBuilder:
                     (BuildContext context) => <PopupMenuEntry<String>>[
-                      ...operateList
-                          .map(
-                            (e) =>
-                                PopupMenuItem<String>(value: e, child: Text(e)),
-                          )
-                          ,
+                      ...operateList.map(
+                        (e) => PopupMenuItem<String>(value: e, child: Text(e)),
+                      ),
                     ],
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 15),
@@ -376,6 +374,7 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
               style: const TextStyle(fontWeight: FontWeight.w400),
             ),
             content: TextField(
+              contextMenuBuilder: copyableEditableTextMenu,
               controller: controller,
               decoration: const InputDecoration(
                 isDense: true,

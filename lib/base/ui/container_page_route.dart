@@ -148,7 +148,21 @@ class ContainerPageRoute<T> extends PageRoute<T> {
     // 页面全程实时渲染，不做快照、不加透明度包裹：透明度 <1 的包裹层
     // 会产生 saveLayer 隔离，玻璃组件（液态玻璃导航等）转场期间采样不到
     // 背景，出现「展开完才恢复」的跳变（壁纸版实测结论，同步适用）。
-    return builder(context);
+    final Widget page = builder(context);
+    if (!_classic) return page;
+    // 经典模式没有 ContainerReveal 壳（无整页底色），而本 App 有透明
+    // Scaffold 页面（文件备份 / WebDAV备份 / 备份与恢复），滑入完成后下层
+    // 路由的卡片与文字仍会从透明区域透出 = Issue #4「非赛博模式菜单叠影」。
+    // 与壁纸版 WallpaperPageRoute 同款做法：页面自身下垫整页背景（壁纸版
+    // 垫壁纸层，主题版垫主题页面底色，与 ContainerReveal 的 pageBackground
+    // 同源，浅色/暗色/赛博自动跟随）。
+    // ⚠️ 不能改用 opaque=true 来遮下层：Android 预测性返回手势直接改
+    // controller.value、动画状态不变，opaque 路由在手势期间仍会跳过下层
+    // 绘制，导致「关闭打断/侧滑取消」动画失效（release_211 实测回归）。
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: page,
+    );
   }
 
   /// 经典模式：向下层页面注入「左移 30% + 压暗 0.28」视差变换（用户选型，
@@ -156,9 +170,30 @@ class ContainerPageRoute<T> extends PageRoute<T> {
   /// 上层路由提供下层变换，与下层页面自身路由类型无关；SDK 会自动抑制下层
   /// 原有 secondary 变换，不会双重叠加。容器展开模式返回 null，下层保持
   /// 原行为（容器转场不依赖下层变换）。
+  /// ⚠️ 必须每次返回新的闭包，不能直接返回静态方法 tear-off：SDK 在
+  /// didChangeNext/didPopNext 中用
+  /// `nextRoute.delegatedTransition != delegatedTransition` 判断是否需要
+  /// 「上层把转场委托给下层」；同一个静态方法的两次 tear-off 相等，会被
+  /// 判定成「同款转场无需委托」而跳过 → 两个经典模式页面之间下层的
+  /// 视差/压暗完全不生效（壁纸版用闭包写法正是为此）。容器展开模式返回
+  /// null，下层保持原行为。
   @override
   DelegatedTransitionBuilder? get delegatedTransition =>
-      _classic ? _classicDelegatedTransition : null;
+      _classic
+          ? (
+              BuildContext context,
+              Animation<double> animation,
+              Animation<double> secondaryAnimation,
+              bool allowSnapshotting,
+              Widget? child,
+            ) => _classicDelegatedTransition(
+              context,
+              animation,
+              secondaryAnimation,
+              allowSnapshotting,
+              child,
+            )
+          : null;
 
   static Widget? _classicDelegatedTransition(
     BuildContext context,

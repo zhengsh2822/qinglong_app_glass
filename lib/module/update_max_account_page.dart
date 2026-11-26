@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class UpdateMaxAccountPage extends ConsumerStatefulWidget {
   const UpdateMaxAccountPage({super.key});
@@ -64,6 +65,7 @@ class _UpdateMaxAccountPageState extends ConsumerState<UpdateMaxAccountPage> {
               TitleWidget("设置最大个数:当前($count个)"),
               const SizedBox(height: 15),
               TextField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp("[0-9]")),
                 ],

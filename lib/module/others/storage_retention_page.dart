@@ -13,6 +13,7 @@ import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// 存储保留策略与清理（青龙 2.22 新增）
 ///
@@ -251,14 +252,20 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
         Text(label, style: TextStyle(fontSize: 13, color: desc)),
         const SizedBox(height: 6),
         CupertinoTextField(
+          contextMenuBuilder: copyableEditableTextMenu,
           controller: controller,
           keyboardType: TextInputType.number,
           placeholder: hint,
           style: TextStyle(
             fontSize: 14,
+            fontWeight: _globalFw,
             color: ref.watch(themeProvider).themeColor.titleColor(),
           ),
-          placeholderStyle: TextStyle(fontSize: 14, color: desc),
+          placeholderStyle: TextStyle(
+            fontSize: 14,
+            fontWeight: _globalFw,
+            color: desc,
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: desc.withValues(alpha: 0.08),
@@ -308,6 +315,7 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
                 '保存策略',
                 style: TextStyle(
                   fontSize: 13,
+                  fontWeight: _globalFw,
                   color: ref.watch(themeProvider).primaryColor,
                 ),
               ),
@@ -383,6 +391,7 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
                   _previewing ? '预览中…' : '预览',
                   style: TextStyle(
                     fontSize: 13,
+                    fontWeight: _globalFw,
                     color: ref.watch(themeProvider).primaryColor,
                   ),
                 ),
@@ -397,7 +406,11 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
                 onPressed: _doCleanup,
                 child: Text(
                   '执行清理',
-                  style: TextStyle(fontSize: 13, color: CyberColors.neonRed),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: _globalFw,
+                    color: CyberColors.neonRed,
+                  ),
                 ),
               ),
             ],

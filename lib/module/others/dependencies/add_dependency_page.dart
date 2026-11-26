@@ -10,11 +10,10 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/ui/selector_sheet.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_viewmodel.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class AddDependencyPage extends ConsumerStatefulWidget {
-  const AddDependencyPage({
-    super.key,
-  });
+  const AddDependencyPage({super.key});
 
   @override
   ConsumerState<AddDependencyPage> createState() => _AddDependencyPageState();
@@ -57,39 +56,29 @@ class _AddDependencyPageState extends ConsumerState<AddDependencyPage> {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 15,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 15),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(
-                  height: 10,
-                ),
-                const Text(
-                  "依赖类型",
-                  style: TextStyle(
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
+                const Text("依赖类型", style: TextStyle(fontSize: 16)),
+                const SizedBox(height: 10),
                 // 依赖类型选择：改用弹窗选择器（与 push_setting_page 风格一致）
                 SelectorFieldCard(
                   hintText: "请选择依赖类型",
                   currentValue: depedencyType.label,
                   emptyHint: "请选择",
                   onTap: () async {
-                    final options = DepedencyEnum.values
-                        .map(
-                          (e) => SelectorOption<DepedencyEnum>(
-                            value: e,
-                            label: e.label,
-                          ),
-                        )
-                        .toList();
+                    final options =
+                        DepedencyEnum.values
+                            .map(
+                              (e) => SelectorOption<DepedencyEnum>(
+                                value: e,
+                                label: e.label,
+                              ),
+                            )
+                            .toList();
                     await showSelectorSheet<DepedencyEnum>(
                       context: context,
                       title: "选择依赖类型",
@@ -107,32 +96,20 @@ class _AddDependencyPageState extends ConsumerState<AddDependencyPage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 15,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 15),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(
-                  height: 10,
-                ),
-                const Text(
-                  "名称",
-                  style: TextStyle(
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
+                const Text("名称", style: TextStyle(fontSize: 16)),
+                const SizedBox(height: 10),
                 TextField(
+                  contextMenuBuilder: copyableEditableTextMenu,
                   controller: _nameController,
                   maxLines: 10,
                   minLines: 1,
-                  decoration: const InputDecoration(
-                    hintText: "请输入名称多个依赖换行添加",
-                  ),
+                  decoration: const InputDecoration(hintText: "请输入名称多个依赖换行添加"),
                   autofocus: false,
                 ),
               ],
@@ -153,17 +130,14 @@ class _AddDependencyPageState extends ConsumerState<AddDependencyPage> {
       List<Map<String, dynamic>> list = [];
 
       List<String> names = _nameController.text.split("\n");
-      list.addAll(names
-          .map(
-            (e) => {
-              "name": e,
-              "type": depedencyType.index,
-            },
-          )
-          .toList());
+      list.addAll(
+        names.map((e) => {"name": e, "type": depedencyType.index}).toList(),
+      );
       await EasyLoading.show(status: " 提交中");
       if (!mounted) return;
-      HttpResponse<String> response = await SingleAccountPageState.ofApi(context).addDependency(list);
+      HttpResponse<String> response = await SingleAccountPageState.ofApi(
+        context,
+      ).addDependency(list);
 
       await EasyLoading.dismiss();
       if (!mounted) return;

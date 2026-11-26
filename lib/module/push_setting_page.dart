@@ -16,6 +16,7 @@ import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 import '../base/commit_button.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class PushSettingPage extends ConsumerStatefulWidget {
   const PushSettingPage({super.key});
@@ -131,6 +132,8 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                                         ),
                                         const SizedBox(height: 10),
                                         TextField(
+                                          contextMenuBuilder:
+                                              copyableEditableTextMenu,
                                           controller: e.controller,
                                           textAlignVertical:
                                               TextAlignVertical.center,

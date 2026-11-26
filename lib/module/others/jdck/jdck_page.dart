@@ -18,6 +18,7 @@ import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// 京东助手页面
 /// 集成自 jdck_flutter 项目，适配青龙客户端主题系统
@@ -816,7 +817,9 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                             ),
                             decoration: ShapeDecoration(
                               shape: appCornerBorder(radius: 10),
-                              color: const Color(0xFF34C759).withValues(alpha: 0.15),
+                              color: const Color(
+                                0xFF34C759,
+                              ).withValues(alpha: 0.15),
                             ),
                             child: const Text(
                               '已登录',
@@ -970,6 +973,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
     final Color labelColor = ref.read(themeProvider).customSecondaryTextColor;
     final Color hintColor = labelColor.withValues(alpha: 0.72);
     return TextField(
+      contextMenuBuilder: copyableEditableTextMenu,
       controller: controller,
       obscureText: obscureText,
       style: TextStyle(color: textColor, fontSize: 16),
@@ -1276,7 +1280,9 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                       onPressed: () => Navigator.pop(dialogContext),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: textColor,
-                        side: BorderSide(color: subTextColor.withValues(alpha: 0.3)),
+                        side: BorderSide(
+                          color: subTextColor.withValues(alpha: 0.3),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: appCornerBorder(radius: 12),
                       ),
@@ -1466,6 +1472,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
               ),
               const SizedBox(height: 12),
               TextField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: _restoreController,
                 maxLines: 6,
                 style: TextStyle(color: textColor, fontSize: 14),
@@ -1499,7 +1506,9 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                       onPressed: () => Navigator.pop(dialogContext),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: textColor,
-                        side: BorderSide(color: subTextColor.withValues(alpha: 0.3)),
+                        side: BorderSide(
+                          color: subTextColor.withValues(alpha: 0.3),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: appCornerBorder(radius: 12),
                       ),
@@ -1627,20 +1636,15 @@ class _JdckPageState extends ConsumerState<JdckPage> {
       appBar: AppBar(
         // 京东助手 AppBar：标题黑色 + 图标主色，覆盖主题默认的白色文字（看不清）
         backgroundColor: Colors.transparent,
-        foregroundColor:
-            ref.watch(themeProvider).customPrimaryTextColor,
+        foregroundColor: ref.watch(themeProvider).customPrimaryTextColor,
         // 标题跟随字体设置的主字体颜色
         titleTextStyle: TextStyle(
           color: ref.watch(themeProvider).customPrimaryTextColor,
           fontSize: 17,
           fontWeight: _globalFw,
         ),
-        iconTheme: IconThemeData(
-          color: primaryColor,
-        ),
-        actionsIconTheme: IconThemeData(
-          color: primaryColor,
-        ),
+        iconTheme: IconThemeData(color: primaryColor),
+        actionsIconTheme: IconThemeData(color: primaryColor),
         title: Text('京东助手'),
         actions: [
           IconButton(
@@ -1746,51 +1750,52 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                     ? const Color(0x80FFFFFF)
                     : AppleColors.bgSecondary),
         // 毛玻璃弹层叠加高光内发光，与 CapsuleGlowCard 视觉一致（保留毛玻璃）
-        shadows: isCyber
-            ? [
-                // 顶部青色高光（内发光）
-                BoxShadow(
-                  color: CyberColors.cyan.withValues(alpha: 0.28),
-                  blurRadius: 2.5,
-                  spreadRadius: 0.2,
-                  offset: const Offset(0, -1),
-                ),
-                // 底部青色内发光
-                BoxShadow(
-                  color: CyberColors.cyan.withValues(alpha: 0.12),
-                  blurRadius: 8,
-                  spreadRadius: 0.4,
-                  offset: const Offset(0, 2),
-                ),
-                // 外发光
-                BoxShadow(
-                  color: CyberColors.cyan.withValues(alpha: 0.08),
-                  blurRadius: 14,
-                  spreadRadius: 0.5,
-                ),
-              ]
-            : [
-                // 顶部浅灰高光（内发光）
-                BoxShadow(
-                  color: const Color(0xFFF2F2F4).withValues(alpha: 0.6),
-                  blurRadius: 2.5,
-                  spreadRadius: 0.2,
-                  offset: const Offset(0, -1),
-                ),
-                // 底部纯白内发光
-                BoxShadow(
-                  color: Colors.white.withValues(alpha: 0.16),
-                  blurRadius: 8,
-                  spreadRadius: 0.4,
-                  offset: const Offset(0, 2),
-                ),
-                // 外阴影
-                BoxShadow(
-                  color: const Color(0x1F000000),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+        shadows:
+            isCyber
+                ? [
+                  // 顶部青色高光（内发光）
+                  BoxShadow(
+                    color: CyberColors.cyan.withValues(alpha: 0.28),
+                    blurRadius: 2.5,
+                    spreadRadius: 0.2,
+                    offset: const Offset(0, -1),
+                  ),
+                  // 底部青色内发光
+                  BoxShadow(
+                    color: CyberColors.cyan.withValues(alpha: 0.12),
+                    blurRadius: 8,
+                    spreadRadius: 0.4,
+                    offset: const Offset(0, 2),
+                  ),
+                  // 外发光
+                  BoxShadow(
+                    color: CyberColors.cyan.withValues(alpha: 0.08),
+                    blurRadius: 14,
+                    spreadRadius: 0.5,
+                  ),
+                ]
+                : [
+                  // 顶部浅灰高光（内发光）
+                  BoxShadow(
+                    color: const Color(0xFFF2F2F4).withValues(alpha: 0.6),
+                    blurRadius: 2.5,
+                    spreadRadius: 0.2,
+                    offset: const Offset(0, -1),
+                  ),
+                  // 底部纯白内发光
+                  BoxShadow(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    blurRadius: 8,
+                    spreadRadius: 0.4,
+                    offset: const Offset(0, 2),
+                  ),
+                  // 外阴影
+                  BoxShadow(
+                    color: const Color(0x1F000000),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxHeight: 240),
@@ -1840,12 +1845,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                           ),
                         ),
                         if (isSelected)
-                          Icon(
-                            Icons.check,
-                            color:
-                                primaryColor,
-                            size: 18,
-                          ),
+                          Icon(Icons.check, color: primaryColor, size: 18),
                       ],
                     ),
                     if (parts.length > 1)
@@ -1889,10 +1889,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
             Expanded(
               child: Text(
                 '青龙面板已连接',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: _dialogSubTextColor(),
-                ),
+                style: TextStyle(fontSize: 13, color: _dialogSubTextColor()),
               ),
             ),
           ],
@@ -1905,19 +1902,12 @@ class _JdckPageState extends ConsumerState<JdckPage> {
       color: (primaryColor).withValues(alpha: 0.1),
       child: Row(
         children: [
-          Icon(
-            Icons.info_outline,
-            size: 16,
-            color: primaryColor,
-          ),
+          Icon(Icons.info_outline, size: 16, color: primaryColor),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               '未登录青龙面板，上传Cookie前请先登录',
-              style: TextStyle(
-                fontSize: 13,
-                color: _dialogSubTextColor(),
-              ),
+              style: TextStyle(fontSize: 13, color: _dialogSubTextColor()),
             ),
           ),
           GestureDetector(
@@ -1957,9 +1947,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                       vertical: 12,
                     ),
                     decoration: ShapeDecoration(
-                      shape: appCornerBorder(
-                        radius: AppleColors.radiusButton,
-                      ),
+                      shape: appCornerBorder(radius: AppleColors.radiusButton),
                       color:
                           isCyber
                               ? const Color(0x20FFFFFF)

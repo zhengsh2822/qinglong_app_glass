@@ -13,6 +13,7 @@ import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_subscribe_log_page.dart';
 import 'package:qinglong_app/utils/utils.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import '../../base/ui/container_page_route.dart';
 
 class SubscribeDetailPage extends ConsumerStatefulWidget {
@@ -476,9 +477,8 @@ class SubscribeDetailCell extends ConsumerWidget {
                   ? Expanded(
                     child: Align(
                       alignment: Alignment.centerRight,
-                      child: SelectableText(
+                      child: CopyableSelectableText(
                         desc!,
-                        selectionControls: cupertinoTextSelectionControls,
                         textAlign: TextAlign.right,
                         selectionHeightStyle: BoxHeightStyle.max,
                         selectionWidthStyle: BoxWidthStyle.max,

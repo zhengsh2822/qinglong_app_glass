@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_text_field.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
@@ -157,7 +158,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
     final detailLines = <String>[];
 
     // needRelogin（token 失效 / 网络异常）时，Http 层已重建 Dio + 静默刷新 + 重试一次
-    // 重试仍失败会触发 exitLogin() 弹窗，此时后续字段继续请求也会失败，应提前终止
+    // 重试仍失败：服务端仍返回 401 才触发 exitLogin() 弹窗；网络错误不再误弹
     bool abortDueToRelogin = false;
 
     for (int i = 0; i < fns.length; i++) {
@@ -220,8 +221,8 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
         '依赖设置已保存'.toast();
       }
     } else if (abortDueToRelogin) {
-      // needRelogin 失败：Http 层已触发 exitLogin() 弹窗（"连接失败，是否重新登录？"）
-      // 不再重复弹窗，仅 toast 提示
+      // 仅当服务端仍返回 401 时 Http 层才触发 exitLogin() 弹窗（"登录已失效，是否重新登录？"）
+      // 网络错误不会弹窗，这里只做 toast，不重复打扰
       final detail = detailLines.join('\n');
       debugPrint('[DependencySetting] 保存中断（登录/网络异常）:\n$detail');
       '登录已过期或网络异常，请重试'.toast();
@@ -239,7 +240,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
           content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
-              child: SelectableText(
+              child: CopyableSelectableText(
                 detail,
                 style: TextStyle(color: ref.read(themeProvider).themeColor.descColor(), fontSize: 12),
               ),

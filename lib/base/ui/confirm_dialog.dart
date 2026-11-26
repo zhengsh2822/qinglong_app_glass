@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 const double _dialogBorderRadius = 18.0;
 const double _dialogBarrierDim = 0.65;
@@ -283,9 +284,7 @@ Widget _buildDialogPage({
                       constraints: const BoxConstraints(maxWidth: 380),
                       child: ClipPath(
                         clipper: ShapeBorderClipper(
-                          shape: appCornerBorder(
-                            radius: _dialogBorderRadius,
-                          ),
+                          shape: appCornerBorder(radius: _dialogBorderRadius),
                         ),
                         child:
                             blurEnabled
@@ -317,10 +316,7 @@ Widget _dialogCard(Color cardBg, _DialogTheme theme, Widget child) {
     decoration: ShapeDecoration(
       shape: appCornerBorder(
         radius: _dialogBorderRadius,
-        side: BorderSide(
-          color: theme.borderColor,
-          width: theme.borderWidth,
-        ),
+        side: BorderSide(color: theme.borderColor, width: theme.borderWidth),
       ),
       color: cardBg,
       shadows: theme.shadows,
@@ -510,6 +506,7 @@ Future<String?> showInputDialog(
               ],
               const SizedBox(height: 16),
               TextField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: controller,
                 keyboardType: keyboardType,
                 obscureText: obscureText,
@@ -735,6 +732,7 @@ class _FrequencyDialogContentState extends State<_FrequencyDialogContent> {
                   alignment: Alignment.center,
                   children: [
                     TextField(
+                      contextMenuBuilder: copyableEditableTextMenu,
                       controller: widget.controller,
                       textAlign: TextAlign.center,
                       keyboardType: TextInputType.number,

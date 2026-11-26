@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/other_page_card.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// 客户端 IP 与代理链路（青龙 2.22 新增）
 ///
@@ -109,7 +110,10 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
       dynamic data = decoded;
       if (decoded is Map<String, dynamic>) data = decoded['data'];
       if (data is List) {
-        return data.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
+        return data
+            .map((e) => e.toString())
+            .where((e) => e.isNotEmpty)
+            .toList();
       }
       return [];
     } catch (_) {
@@ -171,7 +175,9 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
 
   Future<void> _removeIp(String ip) async {
     EasyLoading.show(status: "提交中");
-    final res = await SingleAccountPageState.ofApi(context).removeIpBlacklist(ip);
+    final res = await SingleAccountPageState.ofApi(
+      context,
+    ).removeIpBlacklist(ip);
     await EasyLoading.dismiss();
     if (res.success) {
       "已移出 IP 黑名单".toast();
@@ -260,9 +266,10 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
   // 可信代理解析配置
   Widget _buildProxyCard(bool isCyber) {
     final Color desc = ref.watch(themeProvider).themeColor.descColor();
-    final String sourceText = _source == 'environment'
-        ? '环境变量 QL_TRUST_PROXY'
-        : (_source == 'system' ? '系统设置' : '默认值 loopback');
+    final String sourceText =
+        _source == 'environment'
+            ? '环境变量 QL_TRUST_PROXY'
+            : (_source == 'system' ? '系统设置' : '默认值 loopback');
 
     return OtherPageCard.continuous(
       padding: const EdgeInsets.all(16),
@@ -278,14 +285,20 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
           ),
           const SizedBox(height: 12),
           CupertinoTextField(
+            contextMenuBuilder: copyableEditableTextMenu,
             controller: _trustProxyController,
             enabled: _editable,
             placeholder: 'loopback',
             style: TextStyle(
               fontSize: 14,
+              fontWeight: _globalFw,
               color: ref.watch(themeProvider).themeColor.titleColor(),
             ),
-            placeholderStyle: TextStyle(fontSize: 14, color: desc),
+            placeholderStyle: TextStyle(
+              fontSize: 14,
+              fontWeight: _globalFw,
+              color: desc,
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: desc.withValues(alpha: 0.08),
@@ -294,9 +307,7 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            _editable
-                ? '生效来源：$sourceText（可在下方修改）'
-                : '生效来源：$sourceText，已锁定不可修改',
+            _editable ? '生效来源：$sourceText（可在下方修改）' : '生效来源：$sourceText，已锁定不可修改',
             style: TextStyle(
               fontSize: 12,
               color: _editable ? desc : AppColors.warning,
@@ -309,19 +320,19 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               color:
                   _editable
-                      ? ref.watch(themeProvider).primaryColor.withValues(
-                        alpha: 0.15,
-                      )
+                      ? ref
+                          .watch(themeProvider)
+                          .primaryColor
+                          .withValues(alpha: 0.15)
                       : desc.withValues(alpha: 0.12),
               onPressed: _editable ? _saveProxy : null,
               child: Text(
                 '保存',
                 style: TextStyle(
                   fontSize: 13,
+                  fontWeight: _globalFw,
                   color:
-                      _editable
-                          ? ref.watch(themeProvider).primaryColor
-                          : desc,
+                      _editable ? ref.watch(themeProvider).primaryColor : desc,
                 ),
               ),
             ),
@@ -355,14 +366,16 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
             alignment: Alignment.centerRight,
             child: CupertinoButton(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              color: ref.watch(themeProvider).primaryColor.withValues(
-                alpha: 0.15,
-              ),
+              color: ref
+                  .watch(themeProvider)
+                  .primaryColor
+                  .withValues(alpha: 0.15),
               onPressed: _diagnosing ? null : _runDiagnose,
               child: Text(
                 _diagnosing ? '诊断中…' : '开始诊断',
                 style: TextStyle(
                   fontSize: 13,
+                  fontWeight: _globalFw,
                   color: ref.watch(themeProvider).primaryColor,
                 ),
               ),
@@ -385,20 +398,17 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
             ),
             if (hops.isNotEmpty) ...[
               const SizedBox(height: 10),
-              Text(
-                '链路跳数',
-                style: TextStyle(fontSize: 12, color: desc),
-              ),
+              Text('链路跳数', style: TextStyle(fontSize: 12, color: desc)),
               const SizedBox(height: 6),
               ...hops.map((item) {
                 final m = item as Map<String, dynamic>;
                 final String status = m['status']?.toString() ?? '';
-                final String statusText = status == 'trusted'
-                    ? '可信代理'
-                    : (status == 'client' ? '判定为客户端' : '未检查');
-                final Color c = status == 'client'
-                    ? CyberColors.neonGreen
-                    : desc;
+                final String statusText =
+                    status == 'trusted'
+                        ? '可信代理'
+                        : (status == 'client' ? '判定为客户端' : '未检查');
+                final Color c =
+                    status == 'client' ? CyberColors.neonGreen : desc;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
@@ -460,13 +470,19 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
             children: [
               Expanded(
                 child: CupertinoTextField(
+                  contextMenuBuilder: copyableEditableTextMenu,
                   controller: _newIpController,
                   placeholder: '例如 192.168.1.100',
                   style: TextStyle(
                     fontSize: 14,
+                    fontWeight: _globalFw,
                     color: ref.watch(themeProvider).themeColor.titleColor(),
                   ),
-                  placeholderStyle: TextStyle(fontSize: 14, color: desc),
+                  placeholderStyle: TextStyle(
+                    fontSize: 14,
+                    fontWeight: _globalFw,
+                    color: desc,
+                  ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 10,
@@ -483,14 +499,16 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
                   horizontal: 14,
                   vertical: 8,
                 ),
-                color: ref.watch(themeProvider).primaryColor.withValues(
-                  alpha: 0.15,
-                ),
+                color: ref
+                    .watch(themeProvider)
+                    .primaryColor
+                    .withValues(alpha: 0.15),
                 onPressed: _addIp,
                 child: Text(
                   '添加',
                   style: TextStyle(
                     fontSize: 13,
+                    fontWeight: _globalFw,
                     color: ref.watch(themeProvider).primaryColor,
                   ),
                 ),
@@ -499,10 +517,7 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
           ),
           const SizedBox(height: 12),
           if (_blacklist.isEmpty)
-            Text(
-              '暂无黑名单 IP',
-              style: TextStyle(fontSize: 13, color: desc),
-            )
+            Text('暂无黑名单 IP', style: TextStyle(fontSize: 13, color: desc))
           else
             ..._blacklist.map((ip) {
               return Padding(
@@ -559,10 +574,7 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
       children: [
         SizedBox(
           width: 104,
-          child: Text(
-            label,
-            style: TextStyle(fontSize: 12, color: desc),
-          ),
+          child: Text(label, style: TextStyle(fontSize: 12, color: desc)),
         ),
         Expanded(
           child: Text(

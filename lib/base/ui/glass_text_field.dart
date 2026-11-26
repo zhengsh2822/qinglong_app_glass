@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// 胶囊形输入框
 ///
@@ -53,21 +54,24 @@ class GlassTextField extends ConsumerWidget {
     // 毛玻璃关闭时背景置为完全不透明（纯色）
     final blurEnabled = ref.watch(blurEffectProvider);
     // 与卡片同色系描边，但宽度更细（0.5 vs 卡片 1.0）
-    final borderColor = isDark ? CyberColors.borderGlow : AppleColors.cardBorder;
+    final borderColor =
+        isDark ? CyberColors.borderGlow : AppleColors.cardBorder;
     const radius = 24.0;
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark
-            ? (blurEnabled
-                ? CyberColors.cardBg.withValues(alpha: 0.5)
-                : CyberColors.cardBg)
-            : AppleColors.bgSecondary,
+        color:
+            isDark
+                ? (blurEnabled
+                    ? CyberColors.cardBg.withValues(alpha: 0.5)
+                    : CyberColors.cardBg)
+                : AppleColors.bgSecondary,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: borderColor, width: 0.5),
       ),
       padding: padding,
       child: TextField(
+        contextMenuBuilder: copyableEditableTextMenu,
         controller: controller,
         focusNode: focusNode,
         maxLines: maxLines,

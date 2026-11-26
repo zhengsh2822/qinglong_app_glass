@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/selectable_chip.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// 一个青龙应用授权资源。中文名与 add_appkey_page.dart 的预设权限保持一致，
 /// 作为唯一数据源，避免两个页面各维护一份。
@@ -23,24 +24,25 @@ class ScopeResource {
 }
 
 const List<ScopeResource> kScopeResources = <ScopeResource>[
-  ScopeResource(
-      key: 'crons', label: '定时任务', description: '搜索/查看任务定义、运行与停止任务'),
-  ScopeResource(
-      key: 'envs', label: '环境变量', description: '查看环境变量元数据（值已脱敏）'),
+  ScopeResource(key: 'crons', label: '定时任务', description: '搜索/查看任务定义、运行与停止任务'),
+  ScopeResource(key: 'envs', label: '环境变量', description: '查看环境变量元数据（值已脱敏）'),
   ScopeResource(key: 'configs', label: '配置文件', description: '查看配置文件'),
   ScopeResource(key: 'scripts', label: '脚本管理', description: '查看脚本与目录'),
   ScopeResource(key: 'logs', label: '任务日志', description: '读取任务日志尾部'),
-  ScopeResource(
-      key: 'dependencies', label: '依赖管理', description: '查看依赖与安装状态'),
+  ScopeResource(key: 'dependencies', label: '依赖管理', description: '查看依赖与安装状态'),
   ScopeResource(key: 'subscriptions', label: '订阅管理', description: '查看订阅'),
   ScopeResource(
-      key: 'system', label: '系统信息', description: '面板系统状态',
-      supportsWrite: false),
+    key: 'system',
+    label: '系统信息',
+    description: '面板系统状态',
+    supportsWrite: false,
+  ),
   ScopeResource(
-      key: 'dashboard',
-      label: '仪表盘',
-      description: '今日运行明细、趋势、实时运行态（青龙 2.22+）',
-      supportsWrite: false),
+    key: 'dashboard',
+    label: '仪表盘',
+    description: '今日运行明细、趋势、实时运行态（青龙 2.22+）',
+    supportsWrite: false,
+  ),
 ];
 
 /// 共享的应用授权 scope 选择器：只读 / 读写分级、中文说明、自定义 key。
@@ -126,49 +128,58 @@ class _ScopePickerState extends ConsumerState<ScopePicker> {
           style: TextStyle(fontSize: 12, color: descColor),
         ),
         const SizedBox(height: 10),
-        ...kScopeResources.map((resource) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(resource.label,
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight(
-                              ref.watch(textWeightProvider)),
-                          color: titleColor)),
-                  const SizedBox(height: 2),
-                  Text(resource.description,
-                      style: TextStyle(fontSize: 11, color: descColor)),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: <Widget>[
-                      SelectableChip(
-                        label: '只读 ${resource.readKey}',
-                        selected: widget.selected.contains(resource.readKey),
-                        onToggle: (value) => _toggleRead(resource, value),
-                      ),
-                      if (resource.supportsWrite)
-                        SelectableChip(
-                          label: '读写 ${resource.key}',
-                          selected: widget.selected.contains(resource.key),
-                          onToggle: (value) => _toggleWrite(resource, value),
-                        ),
-                    ],
+        ...kScopeResources.map(
+          (resource) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  resource.label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight(ref.watch(textWeightProvider)),
+                    color: titleColor,
                   ),
-                ],
-              ),
-            )),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  resource.description,
+                  style: TextStyle(fontSize: 11, color: descColor),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: <Widget>[
+                    SelectableChip(
+                      label: '只读 ${resource.readKey}',
+                      selected: widget.selected.contains(resource.readKey),
+                      onToggle: (value) => _toggleRead(resource, value),
+                    ),
+                    if (resource.supportsWrite)
+                      SelectableChip(
+                        label: '读写 ${resource.key}',
+                        selected: widget.selected.contains(resource.key),
+                        onToggle: (value) => _toggleWrite(resource, value),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
         const SizedBox(height: 6),
-        Text('自定义 scope key',
-            style: TextStyle(fontSize: 13, color: titleColor)),
+        Text(
+          '自定义 scope key',
+          style: TextStyle(fontSize: 13, color: titleColor),
+        ),
         const SizedBox(height: 6),
         Row(
           children: <Widget>[
             Expanded(
               child: TextField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: _custom,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _addCustom(),
@@ -189,25 +200,30 @@ class _ScopePickerState extends ConsumerState<ScopePicker> {
           Wrap(
             spacing: 8,
             runSpacing: 6,
-            children: customKeys
-                .map((key) => GestureDetector(
-                      onTap: () {
-                        final next = Set<String>.from(widget.selected)
-                          ..remove(key);
-                        _emit(next);
-                      },
-                      child: Chip(
-                        label: Text(key,
-                            style: TextStyle(fontSize: 11, color: accent)),
-                        deleteIcon: const Icon(Icons.close, size: 14),
-                        onDeleted: () {
+            children:
+                customKeys
+                    .map(
+                      (key) => GestureDetector(
+                        onTap: () {
                           final next = Set<String>.from(widget.selected)
                             ..remove(key);
                           _emit(next);
                         },
+                        child: Chip(
+                          label: Text(
+                            key,
+                            style: TextStyle(fontSize: 11, color: accent),
+                          ),
+                          deleteIcon: const Icon(Icons.close, size: 14),
+                          onDeleted: () {
+                            final next = Set<String>.from(widget.selected)
+                              ..remove(key);
+                            _emit(next);
+                          },
+                        ),
                       ),
-                    ))
-                .toList(),
+                    )
+                    .toList(),
           ),
         ],
       ],

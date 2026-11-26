@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// 选区滚动跟随多行文本框 —— 嵌套滚动 + 边缘自动滚动（A 方案，同步主题版）
 ///
@@ -141,8 +142,7 @@ class _NoImplicitScrollPhysics extends ScrollPhysics {
   bool get allowImplicitScrolling => false;
 }
 
-class _SelectionFollowTextFieldState
-    extends State<SelectionFollowTextField> {
+class _SelectionFollowTextFieldState extends State<SelectionFollowTextField> {
   final GlobalKey _fieldKey = GlobalKey();
   TextSelection? _lastSelection;
   double _lastDeltaPx = 0;
@@ -357,6 +357,7 @@ class _SelectionFollowTextFieldState
   @override
   Widget build(BuildContext context) {
     return TextField(
+      contextMenuBuilder: copyableEditableTextMenu,
       key: _fieldKey,
       controller: widget.controller,
       focusNode: widget.focusNode,
@@ -787,8 +788,10 @@ class _SelectionFollowTextFieldState
     // "最后一行怎么拖都选不到，只能一路跳到文本末尾"。半行高与字号无关，
     // 永远命中边缘那一行；行内具体字符由 x 坐标决定，于是最后一行的中间
     // 位置也能自由选（原来"已滚到底 → 端点=文本末尾"的短路会把 x 丢掉）。
-    final double margin =
-        math.min(widget.edgePadding, re.preferredLineHeight * 0.5);
+    final double margin = math.min(
+      widget.edgePadding,
+      re.preferredLineHeight * 0.5,
+    );
     final double anchorY = below ? e.bottom - margin : e.top + margin;
     final double x = _pointer.dx.clamp(vp.left + 1, vp.right - 1);
     // getPositionForPoint 收全局坐标（内部 globalToLocal - _paintOffset）

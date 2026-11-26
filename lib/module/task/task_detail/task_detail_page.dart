@@ -18,6 +18,7 @@ import 'package:qinglong_app/module/task/intime_log/intime_log_page.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 import 'package:qinglong_app/utils/utils.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:timezone/standalone.dart';
 
 import '../../../base/cron_parse.dart';
@@ -584,9 +585,8 @@ class TaskDetailCell extends ConsumerWidget {
                       child: Align(
                         alignment:
                             left ? Alignment.centerLeft : Alignment.centerRight,
-                        child: SelectableText(
+                        child: CopyableSelectableText(
                           desc!,
-                          selectionControls: cupertinoTextSelectionControls,
                           selectionHeightStyle: BoxHeightStyle.max,
                           selectionWidthStyle: BoxWidthStyle.max,
                           onTap: () {

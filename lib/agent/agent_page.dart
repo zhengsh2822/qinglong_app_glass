@@ -21,6 +21,7 @@ import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class _ChatEntry {
   final bool fromUser;
@@ -921,6 +922,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
           children: <Widget>[
             Expanded(
               child: TextField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: _input,
                 minLines: 1,
                 maxLines: 4,

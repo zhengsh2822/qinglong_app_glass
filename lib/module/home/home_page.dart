@@ -30,6 +30,7 @@ import 'package:qinglong_app/utils/utils.dart';
 
 import '../../base/multi_account_userinfo_viewmodel.dart';
 import '../../base/userinfo_viewmodel.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -207,6 +208,7 @@ class HomePageState extends ConsumerState<HomePage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     child: TextField(
+                      contextMenuBuilder: copyableEditableTextMenu,
                       textAlign: TextAlign.center,
                       controller: controller,
                       autofocus: false,
@@ -645,10 +647,7 @@ class HomePageState extends ConsumerState<HomePage> {
           );
           return Text(
             label.text ?? '',
-            style: label.textStyle.copyWith(
-              color: label.color,
-              fontWeight: fw,
-            ),
+            style: label.textStyle.copyWith(color: label.color, fontWeight: fw),
           );
         },
         iconBuilder:
@@ -684,6 +683,7 @@ class HomePageState extends ConsumerState<HomePage> {
                 Material(
                   color: Colors.transparent,
                   child: TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     onChanged: (value) {
                       twoFact = value;
                     },
