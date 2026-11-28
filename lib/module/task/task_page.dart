@@ -1109,12 +1109,10 @@ class TaskItemCell extends StatelessWidget {
                       : CupertinoIcons.pin_slash,
               color: const Color(0xFFFFC107),
               onTap: () {
-                WidgetsBinding.instance.endOfFrame.then(
-                  (_) {
-                    if (!context.mounted) return;
-                    pinTask(context);
-                  },
-                );
+                WidgetsBinding.instance.endOfFrame.then((_) {
+                  if (!context.mounted) return;
+                  pinTask(context);
+                });
               },
             ),
             CyberSlideAction(
@@ -1125,12 +1123,10 @@ class TaskItemCell extends StatelessWidget {
                       : CupertinoIcons.checkmark_alt_circle,
               color: const Color(0xFF333333),
               onTap: () {
-                WidgetsBinding.instance.endOfFrame.then(
-                  (_) {
-                    if (!context.mounted) return;
-                    enableTask(context);
-                  },
-                );
+                WidgetsBinding.instance.endOfFrame.then((_) {
+                  if (!context.mounted) return;
+                  enableTask(context);
+                });
               },
             ),
             CyberSlideAction(
@@ -1139,12 +1135,10 @@ class TaskItemCell extends StatelessWidget {
               color: const Color(0xFFFF3D00),
               onTap: () {
                 HapticFeedback.mediumImpact();
-                WidgetsBinding.instance.endOfFrame.then(
-                  (_) {
-                    if (!context.mounted) return;
-                    delTask(context, ref);
-                  },
-                );
+                WidgetsBinding.instance.endOfFrame.then((_) {
+                  if (!context.mounted) return;
+                  delTask(context, ref);
+                });
               },
             ),
           ],
@@ -1161,9 +1155,7 @@ class TaskItemCell extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
       borderRadius: const BorderRadius.all(Radius.circular(18)),
       child: ClipPath(
-        clipper: ShapeBorderClipper(
-          shape: appCornerBorder(radius: 18),
-        ),
+        clipper: ShapeBorderClipper(shape: appCornerBorder(radius: 18)),
         child: Slidable(
           enabled: !editMode,
           key: ValueKey(bean.sId),
@@ -1200,12 +1192,10 @@ class TaskItemCell extends StatelessWidget {
                 cyberMode: isCyber,
                 width: double.infinity,
                 onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then(
-                    (_) {
-                      if (!context.mounted) return;
-                      pinTask(context);
-                    },
-                  );
+                  WidgetsBinding.instance.endOfFrame.then((_) {
+                    if (!context.mounted) return;
+                    pinTask(context);
+                  });
                 },
               ),
               AppSlideButton(
@@ -1219,12 +1209,10 @@ class TaskItemCell extends StatelessWidget {
                 cyberMode: isCyber,
                 width: double.infinity,
                 onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then(
-                    (_) {
-                      if (!context.mounted) return;
-                      enableTask(context);
-                    },
-                  );
+                  WidgetsBinding.instance.endOfFrame.then((_) {
+                    if (!context.mounted) return;
+                    enableTask(context);
+                  });
                 },
               ),
               AppSlideButton(
@@ -1235,12 +1223,10 @@ class TaskItemCell extends StatelessWidget {
                 cyberMode: isCyber,
                 width: double.infinity,
                 onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then(
-                    (_) {
-                      if (!context.mounted) return;
-                      delTask(context, ref);
-                    },
-                  );
+                  WidgetsBinding.instance.endOfFrame.then((_) {
+                    if (!context.mounted) return;
+                    delTask(context, ref);
+                  });
                 },
               ),
             ],
@@ -1314,7 +1300,10 @@ class TaskItemCell extends StatelessWidget {
     final bool dark = isCyber;
     final bool isPinnedT = bean.isPinned == 1;
     final bool isDisabled = (bean.isDisabled ?? 0) == 1;
-    final bool isRunning = !isDisabled && (bean.status ?? 1) == 0;
+    // 运行状态与是否禁用相互独立：青龙 status=0 即运行中，禁用任务也可以在
+    // 详情页手动运行。原实现用 !isDisabled 把禁用任务的运行状态吞掉，
+    // 导致卡片一直显示"已禁用"、看不到"运行中"。
+    final bool isRunning = (bean.status ?? 1) == 0;
     final Color sc = _stateColor(isRunning, isDisabled);
     final Color accent =
         isCyber ? CyberColors.cyan : ref.watch(themeProvider).primaryColor;
@@ -1506,7 +1495,10 @@ class TaskItemCell extends StatelessWidget {
                               ),
                               child: Text(
                                 "+${bean.extraSchedules!.length}",
-                                style: TextStyle(fontSize: 10, color: cronColor),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: cronColor,
+                                ),
                               ),
                             ),
                         ],
@@ -1546,21 +1538,22 @@ class TaskItemCell extends StatelessWidget {
     );
   }
 
-  /// 卡片状态色：运行中=主色 / 待机=灰 / 禁用=红（赛博 neonRed，苹果 iOS 红）
+  /// 卡片状态色：运行中=主色（禁用任务运行中也按运行中显示）/ 待机=灰 /
+  /// 禁用=红（赛博 neonRed，苹果 iOS 红）
   Color _stateColor(bool isRunning, bool isDisabled) {
     final Color accent =
         isCyber ? CyberColors.cyan : ref.watch(themeProvider).primaryColor;
+    if (isRunning) return accent;
     if (isDisabled) {
       return isCyber ? CyberColors.neonRed : const Color(0xFFFF3B30);
     }
-    if (isRunning) return accent;
     return isCyber ? CyberColors.idleGray : const Color(0xFFB0B0B8);
   }
 
-  /// 状态文案：运行中 / 待机 / 已禁用
+  /// 状态文案：运行中 / 已禁用 / 待机（运行中优先，禁用任务运行中同样可见）
   String _stateText(bool isRunning, bool isDisabled) {
-    if (isDisabled) return '已禁用';
     if (isRunning) return '运行中';
+    if (isDisabled) return '已禁用';
     return '待机';
   }
 
@@ -1575,7 +1568,9 @@ class TaskItemCell extends StatelessWidget {
     required Color accent,
   }) {
     final bool dark = isCyber;
-    final bool inactive = isDisabled || editMode;
+    // 运行中的禁用任务仍允许"停止"，否则手动跑起来的禁用任务无法从卡片停掉；
+    // 未运行且禁用时保持灰色不可点（禁止从卡片启动禁用任务）
+    final bool inactive = editMode || (isDisabled && !isRunning);
     final Color c =
         inactive
             ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFB0B0B8))

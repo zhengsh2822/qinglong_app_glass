@@ -832,8 +832,12 @@ class _AgentPageState extends ConsumerState<AgentPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
+            // 对话文本走项目统一的可复制文本（长按选择 + 复制/全选菜单）
             if (entry.text.isNotEmpty)
-              Text(_plainText(entry.text), style: TextStyle(color: foreground)),
+              CopyableSelectableText(
+                _plainText(entry.text),
+                style: TextStyle(color: foreground),
+              ),
             if (entry.candidates.isNotEmpty)
               ...entry.candidates.map(
                 (candidate) => Padding(
@@ -844,7 +848,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
                       Icon(Icons.task_alt_outlined, size: 15, color: accent),
                       const SizedBox(width: 6),
                       Flexible(
-                        child: Text(
+                        child: CopyableSelectableText(
                           '#${candidate.id} ${candidate.title}'
                           '${candidate.subtitle.isEmpty ? '' : ' · ${candidate.subtitle}'}',
                           style: TextStyle(color: foreground, fontSize: 12),
